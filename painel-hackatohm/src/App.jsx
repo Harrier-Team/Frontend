@@ -14,7 +14,6 @@ export default function App() {
     erro: erroMotores,
     recarregar: recarregarMotores,
     cadastrarMotor,
-    deletarMotor,
     motoresComStatus,
     kpis,
     statusConexaoHub,
@@ -144,7 +143,6 @@ export default function App() {
               <MotorCard
                 key={motor.id}
                 motor={motor}
-                onDeletar={deletarMotor}
               />
             ))}
           </div>

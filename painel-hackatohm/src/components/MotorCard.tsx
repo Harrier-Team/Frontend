@@ -1,29 +1,16 @@
-import React, { useState } from 'react';
-import { Trash2, AlertTriangle, ShieldCheck, Flame, Radio } from 'lucide-react';
+import React from 'react';
+import { ArrowUpRight, AlertTriangle, ShieldCheck, Flame, Radio } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { MotorComStatus } from '../types/telemetria';
 import { STATUS_THEME, formatarTemperatura } from '../utils/statusHelper';
 import { EscovaItem } from './EscovaItem';
 
 interface MotorCardProps {
   motor: MotorComStatus;
-  onDeletar: (id: number) => Promise<void>;
 }
 
-export const MotorCard: React.FC<MotorCardProps> = ({ motor, onDeletar }) => {
-  const [excluindo, setExcluindo] = useState(false);
+export const MotorCard: React.FC<MotorCardProps> = ({ motor }) => {
   const statusTheme = STATUS_THEME[motor.statusGeral];
-
-  const handleDeletar = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm(`Tem certeza que deseja remover o motor "${motor.nome}"?`)) {
-      setExcluindo(true);
-      try {
-        await onDeletar(motor.id);
-      } finally {
-        setExcluindo(false);
-      }
-    }
-  };
 
   return (
     <div
@@ -114,7 +101,7 @@ export const MotorCard: React.FC<MotorCardProps> = ({ motor, onDeletar }) => {
         </div>
       </div>
 
-      {/* Rodapé do Card com Ações Limpas */}
+      {/* Rodapé do card com acesso à operação detalhada */}
       <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
         <span className="text-[11px]">
           {motor.totalAlertas > 0 ? (
@@ -126,17 +113,15 @@ export const MotorCard: React.FC<MotorCardProps> = ({ motor, onDeletar }) => {
           )}
         </span>
 
-        <button
-          onClick={handleDeletar}
-          disabled={excluindo}
-          className="text-slate-400 hover:text-rose-600 transition p-1 rounded hover:bg-white flex items-center gap-1 text-[11px]"
-          title="Remover motor"
+        <Link
+          to={`/motores/${motor.id}`}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+          title={`Ver detalhes de ${motor.nome}`}
         >
-          <Trash2 className="w-3.5 h-3.5" />
-          <span>Excluir</span>
-        </button>
+          <span>Ver detalhes</span>
+          <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Link>
       </div>
     </div>
   );
 };
-

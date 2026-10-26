@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Gauge, Thermometer } from 'lucide-react';
 import { ResultadoGateRealtime } from '../../types/qualityGate';
 import { SEVERIDADE_THEME } from '../../utils/qualityGateHelper';
 
@@ -7,8 +7,8 @@ interface QualityGateResultProps {
   resultado: ResultadoGateRealtime;
 }
 
-function formatarValor(valor: number | null): string {
-  return valor === null ? 'Não informado' : `${valor} °C`;
+function formatarValor(valor: number | null): string | null {
+  return valor === null ? null : `${valor} °C`;
 }
 
 export const QualityGateResult: React.FC<QualityGateResultProps> = ({ resultado }) => {
@@ -19,35 +19,70 @@ export const QualityGateResult: React.FC<QualityGateResultProps> = ({ resultado 
     : [];
   const alerta = resultado.disparouAlerta || resultado.severidade !== 'Normal';
 
+  const valorObservado = formatarValor(resultado.valorObservado);
+  const valorLimite = formatarValor(resultado.valorLimite);
+
   return (
-    <article className={`rounded-lg border p-3 ${theme.classes}`}>
-      <div className="flex items-start gap-2">
+    <article className={`overflow-hidden rounded-xl border ${theme.classes}`}>
+      <div className="flex items-start gap-3 p-4">
         {alerta ? (
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/70">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+          </span>
         ) : (
-          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/70">
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+          </span>
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <strong className="text-xs">{theme.label}</strong>
-            <span className="text-[11px] font-semibold opacity-80">
-              {resultado.nomeRegra || 'Regra de qualidade'}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] opacity-70">
+                Quality Gate
+              </p>
+              <h5 className="mt-0.5 text-sm font-bold">
+                {resultado.nomeRegra || 'Regra de qualidade'}
+              </h5>
+            </div>
+            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold">
+              {theme.label}
             </span>
-            <span className="rounded border border-current/20 px-1.5 py-0.5 text-[10px] font-mono">
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-white/60 px-2 py-1 font-semibold">
+              <Gauge className="h-3.5 w-3.5" aria-hidden="true" />
+              {resultado.tipoRegra}
+            </span>
+            <span className="rounded-md border border-current/20 px-2 py-1 font-mono">
               {resultado.codigoRegra}
             </span>
           </div>
-          <p className="mt-1 text-xs leading-relaxed">{resultado.mensagemDiagnostico}</p>
-          <dl className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
-            <div>
-              <dt className="opacity-70">Observado</dt>
-              <dd className="font-semibold">{formatarValor(resultado.valorObservado)}</dd>
-            </div>
-            <div>
-              <dt className="opacity-70">Limite</dt>
-              <dd className="font-semibold">{formatarValor(resultado.valorLimite)}</dd>
-            </div>
-          </dl>
+          <p className="mt-3 text-xs leading-relaxed">{resultado.mensagemDiagnostico}</p>
+          {(valorObservado || valorLimite) ? (
+            <dl className="mt-3 grid grid-cols-2 gap-2">
+              {valorObservado && (
+                <div className="rounded-lg bg-white/55 p-2.5">
+                  <dt className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                    <Thermometer className="h-3 w-3" aria-hidden="true" />
+                    Observado
+                  </dt>
+                  <dd className="mt-1 text-sm font-bold">{valorObservado}</dd>
+                </div>
+              )}
+              {valorLimite && (
+                <div className="rounded-lg bg-white/55 p-2.5">
+                  <dt className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                    Limite
+                  </dt>
+                  <dd className="mt-1 text-sm font-bold">{valorLimite}</dd>
+                </div>
+              )}
+            </dl>
+          ) : (
+            <p className="mt-3 rounded-lg bg-white/50 px-3 py-2 text-[11px] font-medium">
+              Nenhum limiar foi excedido nesta leitura.
+            </p>
+          )}
           {metadados.length > 0 && (
             <div className="mt-2 border-t border-current/15 pt-2">
               <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
