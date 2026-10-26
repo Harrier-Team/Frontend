@@ -67,6 +67,7 @@ export const DetalhesMotor: React.FC = () => {
         <button
           type="button"
           onClick={() => setConfirmandoExclusao(true)}
+          aria-label={`Excluir motor ${motor.nome}`}
           className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-50"
         >
           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />

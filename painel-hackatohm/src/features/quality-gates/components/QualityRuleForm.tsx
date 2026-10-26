@@ -34,6 +34,8 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
   const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
+    // Sincroniza o formulário quando o registro editado muda.
+    // oxlint-disable-next-line react/set-state-in-effect
     setValues(
       regra
         ? {

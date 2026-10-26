@@ -22,6 +22,8 @@ export function useRegrasQualidadeMotor(motorId: number) {
   }, [motorId]);
 
   useEffect(() => {
+    // A troca de motor exige sincronização com os vínculos persistidos.
+    // oxlint-disable-next-line react/set-state-in-effect
     void recarregar();
   }, [recarregar]);
 

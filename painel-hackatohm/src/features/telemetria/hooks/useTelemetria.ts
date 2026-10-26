@@ -52,6 +52,7 @@ export function useTelemetria(motores: MotorResponse[]) {
   // 1. Inicializa o estado dos motores imediatamente na tela (sem disparar loop de GETs lentos)
   useEffect(() => {
     if (!motores || motores.length === 0) {
+      // oxlint-disable-next-line react/set-state-in-effect
       setMotoresComStatus([]);
       return;
     }

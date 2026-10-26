@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MotorResponse, MotorInput } from '../types/motor';
 import { motorService } from '../services/motorService';
+import { obterMensagemErro } from '@/utils/errorHelper';
 
 export function useMotores() {
   const [motores, setMotores] = useState<MotorResponse[]>([]);
@@ -13,14 +14,16 @@ export function useMotores() {
     try {
       const data = await motorService.listar();
       setMotores(data);
-    } catch (err: any) {
-      setErro(err.message || 'Falha ao buscar lista de motores');
+    } catch (error: unknown) {
+      setErro(obterMensagemErro(error, 'Falha ao buscar lista de motores'));
     } finally {
       setCarregando(false);
     }
   }, []);
 
   useEffect(() => {
+    // A carga inicial sincroniza o estado com a API externa.
+    // oxlint-disable-next-line react/set-state-in-effect
     carregarMotores();
   }, [carregarMotores]);
 

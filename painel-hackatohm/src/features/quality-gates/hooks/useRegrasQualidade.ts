@@ -28,6 +28,8 @@ export function useRegrasQualidade() {
   }, []);
 
   useEffect(() => {
+    // O catálogo precisa sincronizar seu estado com a API ao montar.
+    // oxlint-disable-next-line react/set-state-in-effect
     void recarregar();
   }, [recarregar]);
 
