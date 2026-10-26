@@ -1,5 +1,6 @@
 import React from 'react';
 import { Activity, Plus, RefreshCw, WifiOff } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { formatarHora } from '../utils/statusHelper';
 import { StatusConexaoHub } from '../services/signalrService';
 
@@ -99,6 +100,12 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {/* Botão Adicionar Motor */}
+            <Link
+              to="/regras-qualidade"
+              className="hidden sm:inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Regras
+            </Link>
             <button
               onClick={onNovoMotor}
               className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow-sm shadow-indigo-200"

@@ -36,6 +36,17 @@ export const Layout: React.FC = () => {
             >
               Motores
             </NavLink>
+
+            <NavLink
+              to="/regras-qualidade"
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-md text-sm font-medium transition ${
+                  isActive ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-slate-800'
+                }`
+              }
+            >
+              Regras de qualidade
+            </NavLink>
           </nav>
         </div>
       </header>
