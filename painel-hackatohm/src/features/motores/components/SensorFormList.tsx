@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
-import { SensorInput } from '../../types/motor';
+import { SensorInput } from '../types/motor';
 import { SensorFormRow } from './SensorFormRow';
 
 interface SensorFormListProps {

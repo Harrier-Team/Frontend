@@ -1,6 +1,6 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
-import { SensorInput } from '../../types/motor';
+import { SensorInput } from '../types/motor';
 
 interface SensorFormRowProps {
   sensor: SensorInput;

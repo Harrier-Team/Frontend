@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { VinculoRegraQualidade } from '../types/regraQualidade';
+import { VinculoRegraQualidade } from '../../../types/regraQualidade';
 import { vinculoRegraQualidadeService } from '../services/vinculoRegraQualidadeService';
-import { obterMensagemErro } from '../utils/errorHelper';
+import { obterMensagemErro } from '../../../utils/errorHelper';
 
 export function useRegrasQualidadeMotor(motorId: number) {
   const [vinculos, setVinculos] = useState<VinculoRegraQualidade[]>([]);

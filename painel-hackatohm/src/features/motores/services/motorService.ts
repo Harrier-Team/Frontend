@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api } from '../../../services/api';
 import { MotorResponse, MotorInput } from '../types/motor';
 
 export const motorService = {
@@ -21,4 +21,3 @@ export const motorService = {
     await api.delete(`/motores/${id}`);
   },
 };
-

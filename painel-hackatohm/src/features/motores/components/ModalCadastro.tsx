@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Cpu, X } from 'lucide-react';
 import { MotorInput, MotorResponse } from '../types/motor';
-import { MotorForm } from './motores/MotorForm';
+import { MotorForm } from './MotorForm';
 import { validarMotorForm } from '../hooks/useMotorForm';
-import { obterMensagemErro } from '../utils/errorHelper';
+import { obterMensagemErro } from '../../../utils/errorHelper';
 
 interface ModalCadastroProps {
   aberto: boolean;

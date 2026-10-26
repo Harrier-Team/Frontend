@@ -3,10 +3,10 @@ import { useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
 import { ModalCadastro } from '../components/ModalCadastro';
 import { MotorCard } from '../components/MotorCard';
-import { Alert } from '../components/ui/Alert';
-import { EmptyState } from '../components/ui/EmptyState';
-import { LoadingState } from '../components/ui/LoadingState';
-import { useMonitoramento } from '../hooks/MonitoramentoContext';
+import { Alert } from '../../../components/ui/Alert';
+import { EmptyState } from '../../../components/ui/EmptyState';
+import { LoadingState } from '../../../components/ui/LoadingState';
+import { useMonitoramento } from '../../../hooks/MonitoramentoContext';
 
 export const ListaMotores: React.FC = () => {
   const {

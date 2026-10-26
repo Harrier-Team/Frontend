@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { Link2, Power, Trash2 } from 'lucide-react';
-import { useRegrasQualidade } from '../../hooks/useRegrasQualidade';
-import { useRegrasQualidadeMotor } from '../../hooks/useRegrasQualidadeMotor';
-import { RegraQualidade, VinculoRegraQualidade } from '../../types/regraQualidade';
-import { Alert } from '../ui/Alert';
-import { Button } from '../ui/Button';
-import { ConfirmDialog } from '../ui/ConfirmDialog';
-import { EmptyState } from '../ui/EmptyState';
-import { LoadingState } from '../ui/LoadingState';
+import { useRegrasQualidade } from '../../../hooks/useRegrasQualidade';
+import { useRegrasQualidadeMotor } from '../hooks/useRegrasQualidadeMotor';
+import { RegraQualidade, VinculoRegraQualidade } from '../../../types/regraQualidade';
+import { Alert } from '../../../components/ui/Alert';
+import { Button } from '../../../components/ui/Button';
+import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
+import { EmptyState } from '../../../components/ui/EmptyState';
+import { LoadingState } from '../../../components/ui/LoadingState';
 
 interface MotorQualityRulesSectionProps {
   motorId: number;

@@ -1,8 +1,8 @@
 import React from 'react';
 import { ArrowUpRight, AlertTriangle, ShieldCheck, Flame, Radio } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { MotorComStatus } from '../types/telemetria';
-import { STATUS_THEME, formatarTemperatura } from '../utils/statusHelper';
+import { MotorComStatus } from '../../../types/telemetria';
+import { STATUS_THEME, formatarTemperatura } from '../../../utils/statusHelper';
 import { EscovaItem } from './EscovaItem';
 
 interface MotorCardProps {

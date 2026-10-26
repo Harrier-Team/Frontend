@@ -1,7 +1,7 @@
 import React from 'react';
-import { MotorInput } from '../../types/motor';
+import { MotorInput } from '../types/motor';
 import { SensorFormList } from './SensorFormList';
-import { useMotorForm } from '../../hooks/useMotorForm';
+import { useMotorForm } from '../hooks/useMotorForm';
 
 interface MotorFormProps {
   salvando: boolean;

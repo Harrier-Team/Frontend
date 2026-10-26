@@ -3,11 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Cpu, Trash2 } from 'lucide-react';
 import { MotorResponse } from '../types/motor';
 import { motorService } from '../services/motorService';
-import { MotorQualityRulesSection } from '../components/motores/MotorQualityRulesSection';
+import { MotorQualityRulesSection } from '../components/MotorQualityRulesSection';
 import { EscovaItem } from '../components/EscovaItem';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { Alert } from '../components/ui/Alert';
-import { useMonitoramento } from '../hooks/MonitoramentoContext';
+import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
+import { Alert } from '../../../components/ui/Alert';
+import { useMonitoramento } from '../../../hooks/MonitoramentoContext';
 
 export const DetalhesMotor: React.FC = () => {
   const { id } = useParams<{ id: string }>();

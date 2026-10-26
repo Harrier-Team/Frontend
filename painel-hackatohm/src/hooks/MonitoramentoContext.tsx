@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import { useMotores } from './useMotores';
+import { useMotores } from '../features/motores/hooks/useMotores';
 import { useTelemetria } from './useTelemetria';
 
 type MonitoramentoContextValue = ReturnType<typeof useMotores> &

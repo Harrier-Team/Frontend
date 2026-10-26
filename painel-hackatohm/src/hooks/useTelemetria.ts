@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MotorResponse } from '../types/motor';
+import { MotorResponse } from '../features/motores/types/motor';
 import {
   MotorComStatus,
   SensorComTelemetria,
