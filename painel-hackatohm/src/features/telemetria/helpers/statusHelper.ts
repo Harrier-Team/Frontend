@@ -2,7 +2,7 @@ import { NivelStatus, SensorComTelemetria } from '@/features/telemetria/types/te
 
 export const LIMITE_ATENCAO = 60;
 export const LIMITE_PERIGO = 80;
-export const ESCALA_MAXIMA = 100;
+export const ESCALA_MAXIMA = 200;
 
 export interface StatusConfig {
   label: string;

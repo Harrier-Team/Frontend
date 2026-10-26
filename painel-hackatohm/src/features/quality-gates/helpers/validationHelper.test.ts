@@ -20,7 +20,7 @@ describe('validarRegraQualidade', () => {
     const erros = validarRegraQualidade({
       ...valoresValidos,
       nome: ' ',
-      parametros: { aviso: 130, critico: -60 },
+      parametros: { aviso: 201, critico: -60 },
     });
 
     expect(erros.nome).toBe('O nome da regra é obrigatório.');
@@ -35,5 +35,25 @@ describe('validarRegraQualidade', () => {
     });
 
     expect(erros.critico).toContain('maior');
+  });
+
+  it('aceita os extremos -55 e 200 graus', () => {
+    expect(validarRegraQualidade({
+      ...valoresValidos,
+      parametros: { aviso: -55, critico: 200 },
+    })).toEqual({});
+  });
+
+  it('permite regras acima de 125 e rejeita valores fora da nova faixa', () => {
+    expect(validarRegraQualidade({
+      ...valoresValidos,
+      parametros: { aviso: 150, critico: 200 },
+    })).toEqual({});
+    const erros = validarRegraQualidade({
+      ...valoresValidos,
+      parametros: { aviso: -55.1, critico: 200.1 },
+    });
+    expect(erros.aviso).toBeDefined();
+    expect(erros.critico).toBeDefined();
   });
 });

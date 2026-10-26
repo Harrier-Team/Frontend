@@ -16,7 +16,7 @@ interface ThermalGaugeProps {
 const pct = (valor: number) => `${(Math.min(Math.max(valor, 0), ESCALA_MAXIMA) / ESCALA_MAXIMA) * 100}%`;
 
 /**
- * Linha fina de 0 a 100 °C. As faixas de atenção e perigo aparecem em tom
+ * Linha fina de 0 a 200 °C. As faixas de atenção e perigo aparecem em tom
  * discreto e o ponto de luz mostra a leitura atual, ou seja, a distância até o limite.
  */
 export const ThermalGauge: React.FC<ThermalGaugeProps> = ({ valor, status, label }) => {

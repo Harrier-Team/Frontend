@@ -28,12 +28,12 @@ export function validarRegraQualidade(
     errors.descricao = 'A descrição deve ter no máximo 255 caracteres.';
   }
 
-  if (!Number.isFinite(aviso) || aviso < -55 || aviso > 125) {
-    errors.aviso = 'O limite de aviso deve estar entre -55 °C e 125 °C.';
+  if (!Number.isFinite(aviso) || aviso < -55 || aviso > 200) {
+    errors.aviso = 'O limite de aviso deve estar entre -55 °C e 200 °C.';
   }
 
-  if (!Number.isFinite(critico) || critico < -55 || critico > 125) {
-    errors.critico = 'O limite crítico deve estar entre -55 °C e 125 °C.';
+  if (!Number.isFinite(critico) || critico < -55 || critico > 200) {
+    errors.critico = 'O limite crítico deve estar entre -55 °C e 200 °C.';
   }
 
   if (!errors.aviso && !errors.critico && aviso >= critico) {
