@@ -1,0 +1,13 @@
+:root {
+  --color-brand-500: #4f46e5;
+  --color-brand-600: #4338ca;
+  --color-success-500: #10b981;
+  --color-warning-500: #f59e0b;
+  --color-danger-500: #f43f5e;
+  --color-neutral-500: #64748b;
+  --color-surface: #ffffff;
+  --color-background: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+}

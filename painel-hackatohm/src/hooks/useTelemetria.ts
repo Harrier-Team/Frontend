@@ -143,6 +143,7 @@ export function useTelemetria(motores: MotorResponse[]) {
                 valorCelsius: leituraMatch.valorCelsius,
                 dataHora: leituraMatch.dataHora,
                 alertaDesgaste: leituraMatch.alertaDesgaste,
+                resultadosQualityGates: leituraMatch.resultadosQualityGates ?? [],
               },
               status,
             };

@@ -11,6 +11,16 @@ type CallbackLote = (leituras: TelemetriaRealtimeDto[]) => void;
 type CallbackIndividual = (leitura: TelemetriaRealtimeDto) => void;
 type CallbackStatus = (status: StatusConexaoHub) => void;
 
+function normalizarTelemetria(
+  leitura: TelemetriaRealtimeDto
+): TelemetriaRealtimeDto {
+  return {
+    ...leitura,
+    motorId: leitura.motorId ?? null,
+    resultadosQualityGates: leitura.resultadosQualityGates ?? [],
+  };
+}
+
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
   private callbacksLote: Set<CallbackLote> = new Set();
@@ -55,7 +65,7 @@ class SignalRService {
       'ReceberLoteTelemetria',
       (leituras: TelemetriaRealtimeDto[]) => {
         console.info('[SignalR Live Push] Lote de leituras recebido:', leituras);
-        this.callbacksLote.forEach((cb) => cb(leituras));
+        this.callbacksLote.forEach((cb) => cb(leituras.map(normalizarTelemetria)));
       }
     );
 
@@ -63,7 +73,7 @@ class SignalRService {
       'ReceberTelemetria',
       (leitura: TelemetriaRealtimeDto) => {
         console.info('[SignalR Live Push] Leitura individual recebida:', leitura);
-        this.callbacksIndividual.forEach((cb) => cb(leitura));
+        this.callbacksIndividual.forEach((cb) => cb(normalizarTelemetria(leitura)));
       }
     );
 

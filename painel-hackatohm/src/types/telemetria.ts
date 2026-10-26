@@ -1,3 +1,5 @@
+import { ResultadoGateRealtime } from './qualityGate';
+
 export interface TelemetriaRealtimeDto {
   sensorId: string;
   espMacAddress: string;
@@ -5,7 +7,8 @@ export interface TelemetriaRealtimeDto {
   valorCelsius: number;
   dataHora: string;
   alertaDesgaste: boolean;
-  motorId?: number;
+  motorId: number | null;
+  resultadosQualityGates?: ResultadoGateRealtime[];
 }
 
 export interface LeituraMaisRecente {
@@ -13,6 +16,7 @@ export interface LeituraMaisRecente {
   valorCelsius: number;
   dataHora: string;
   alertaDesgaste: boolean;
+  resultadosQualityGates: ResultadoGateRealtime[];
 }
 
 export type NivelStatus = 'normal' | 'warning' | 'perigo' | 'offline';

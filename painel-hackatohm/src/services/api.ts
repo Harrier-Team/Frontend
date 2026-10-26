@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ApiErrorPayload, ApiRequestError } from '../types/api';
 
 export const api = axios.create({
   baseURL: '/api',
@@ -11,16 +12,20 @@ export const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const errorData = error.response?.data;
+    const errorData: ApiErrorPayload | string | undefined = error.response?.data;
+    const isPayload = typeof errorData === 'object' && errorData !== null;
     const message =
       (typeof errorData === 'string' && errorData) ||
-      errorData?.detail ||
-      errorData?.title ||
+      (isPayload && (errorData.detail || errorData.title)) ||
       error.message ||
       'Erro inesperado na comunicação com o servidor';
-      
+
     console.error(`[API Error ${error.response?.status || 'Network'}]:`, message);
-    return Promise.reject(new Error(message));
+    return Promise.reject(
+      new ApiRequestError(message, {
+        ...(isPayload ? errorData : {}),
+        status: error.response?.status,
+      })
+    );
   }
 );
-
