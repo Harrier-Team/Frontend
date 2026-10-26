@@ -12,7 +12,8 @@ function formatarValor(valor: number | null): string {
 }
 
 export const QualityGateResult: React.FC<QualityGateResultProps> = ({ resultado }) => {
-  const theme = SEVERIDADE_THEME[resultado.severidade];
+  const theme =
+    SEVERIDADE_THEME[resultado.severidade] ?? SEVERIDADE_THEME.Normal;
   const metadados = resultado.metadados
     ? Object.entries(resultado.metadados)
     : [];
@@ -30,7 +31,7 @@ export const QualityGateResult: React.FC<QualityGateResultProps> = ({ resultado 
           <div className="flex flex-wrap items-center gap-2">
             <strong className="text-xs">{theme.label}</strong>
             <span className="text-[11px] font-semibold opacity-80">
-              {resultado.nomeRegra}
+              {resultado.nomeRegra || 'Regra de qualidade'}
             </span>
             <span className="rounded border border-current/20 px-1.5 py-0.5 text-[10px] font-mono">
               {resultado.codigoRegra}

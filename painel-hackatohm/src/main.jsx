@@ -9,21 +9,24 @@ import { Home } from './pages/Home'
 import { ListaMotores } from './pages/ListaMotores'
 import { RegrasQualidade } from './pages/RegrasQualidade'
 import { MonitoramentoProvider } from './hooks/MonitoramentoContext'
+import { AppErrorBoundary } from './components/AppErrorBoundary'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <MonitoramentoProvider>
-        <Routes>
-          <Route path="/" element={<App />} />
-          <Route element={<Layout />}>
-            <Route path="/inicio" element={<Home />} />
-            <Route path="/motores" element={<ListaMotores />} />
-            <Route path="/motores/:id" element={<DetalhesMotor />} />
-            <Route path="/regras-qualidade" element={<RegrasQualidade />} />
-          </Route>
-        </Routes>
-      </MonitoramentoProvider>
-    </BrowserRouter>
+    <AppErrorBoundary>
+      <BrowserRouter>
+        <MonitoramentoProvider>
+          <Routes>
+            <Route path="/" element={<App />} />
+            <Route element={<Layout />}>
+              <Route path="/inicio" element={<Home />} />
+              <Route path="/motores" element={<ListaMotores />} />
+              <Route path="/motores/:id" element={<DetalhesMotor />} />
+              <Route path="/regras-qualidade" element={<RegrasQualidade />} />
+            </Route>
+          </Routes>
+        </MonitoramentoProvider>
+      </BrowserRouter>
+    </AppErrorBoundary>
   </StrictMode>,
 )
