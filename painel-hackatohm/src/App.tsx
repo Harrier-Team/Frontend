@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { AlertCircle, Layers, Plus, RefreshCw, WifiOff } from 'lucide-react';
-import { useMonitoramento } from './hooks/MonitoramentoContext';
+import { useMonitoramento } from './hooks/useMonitoramento';
 import { Header } from './components/Header';
 import { KpiStatsBar } from './components/KpiStatsBar';
 import { ModalCadastro } from './features/motores/components/ModalCadastro';

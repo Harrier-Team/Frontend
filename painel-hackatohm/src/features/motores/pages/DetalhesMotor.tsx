@@ -7,7 +7,7 @@ import { MotorQualityRulesSection } from '../components/MotorQualityRulesSection
 import { EscovaItem } from '../components/EscovaItem';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Alert } from '../../../components/ui/Alert';
-import { useMonitoramento } from '../../../hooks/MonitoramentoContext';
+import { useMonitoramento } from '../../../hooks/useMonitoramento';
 
 export const DetalhesMotor: React.FC = () => {
   const { id } = useParams<{ id: string }>();

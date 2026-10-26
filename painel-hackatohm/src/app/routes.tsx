@@ -1,7 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import App from '../App';
 import { Layout } from '../components/Layout';
-import { MonitoramentoProvider } from '../hooks/MonitoramentoContext';
+import { MonitoramentoProvider } from '../hooks/MonitoramentoProvider';
 import { DetalhesMotor } from '../features/motores/pages/DetalhesMotor';
 import { Home } from '../pages/Home';
 import { ListaMotores } from '../features/motores/pages/ListaMotores';

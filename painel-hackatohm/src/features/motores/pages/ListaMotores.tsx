@@ -6,7 +6,7 @@ import { MotorCard } from '../components/MotorCard';
 import { Alert } from '../../../components/ui/Alert';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { LoadingState } from '../../../components/ui/LoadingState';
-import { useMonitoramento } from '../../../hooks/MonitoramentoContext';
+import { useMonitoramento } from '../../../hooks/useMonitoramento';
 
 export const ListaMotores: React.FC = () => {
   const {
