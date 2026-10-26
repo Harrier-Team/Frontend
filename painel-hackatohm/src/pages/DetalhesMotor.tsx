@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MotorResponse } from '../types/motor';
+import { motorService } from '../services/motorService';
+import { MotorQualityRulesSection } from '../components/motores/MotorQualityRulesSection';
 
 export const DetalhesMotor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -8,8 +10,8 @@ export const DetalhesMotor: React.FC = () => {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/motores/${id}`)
-      .then((res) => res.json())
+    if (!id) return;
+    motorService.obterPorId(Number(id))
       .then((data) => setMotor(data))
       .catch((err) => console.error(err))
       .finally(() => setCarregando(false));
@@ -56,6 +58,8 @@ export const DetalhesMotor: React.FC = () => {
           ))}
         </div>
       </div>
+
+      <MotorQualityRulesSection motorId={motor.id} />
     </div>
   );
 };
