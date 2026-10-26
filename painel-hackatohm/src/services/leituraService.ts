@@ -2,19 +2,29 @@ import { api } from './api';
 import { LeituraMaisRecente } from '../types/telemetria';
 import { ApiRequestError } from '../types/api';
 
+interface UltimaLeituraApiResponse {
+  sensorId: string;
+  valorCelsius: number;
+  dataHora: string;
+  alertaDesgaste: boolean;
+}
+
 export const leituraService = {
   async obterUltimaLeitura(
     espMacAddress: string,
     numeroEscova: number
   ): Promise<LeituraMaisRecente | null> {
     try {
-      const response = await api.get<LeituraMaisRecente>('/leituras', {
+      const response = await api.get<UltimaLeituraApiResponse>('/leituras', {
         params: {
           espMacAddress: espMacAddress.trim().toUpperCase(),
           numeroEscova,
         },
       });
-      return response.data;
+      return {
+        ...response.data,
+        resultadosQualityGates: [],
+      };
     } catch (error: unknown) {
       // 404 significa que o sensor ainda não enviou telemetria
       if (error instanceof ApiRequestError && error.status === 404) {

@@ -1,12 +1,31 @@
 import { api } from './api';
 import { VinculoRegraQualidade } from '../types/regraQualidade';
 
+function validarVinculo(
+  vinculo: VinculoRegraQualidade,
+  contexto: string
+): VinculoRegraQualidade {
+  if (
+    !vinculo ||
+    !vinculo.regra ||
+    !vinculo.regra.parametros ||
+    typeof vinculo.regra.nome !== 'string'
+  ) {
+    throw new Error(
+      `A API retornou um vínculo de regra incompleto ao ${contexto}.`
+    );
+  }
+  return vinculo;
+}
+
 export const vinculoRegraQualidadeService = {
   async listarPorMotor(motorId: number): Promise<VinculoRegraQualidade[]> {
     const response = await api.get<VinculoRegraQualidade[]>(
       `/motores/${motorId}/regras-qualidade`
     );
-    return response.data;
+    return response.data.map((vinculo) =>
+      validarVinculo(vinculo, 'listar regras do motor')
+    );
   },
 
   async obter(
@@ -16,7 +35,7 @@ export const vinculoRegraQualidadeService = {
     const response = await api.get<VinculoRegraQualidade>(
       `/motores/${motorId}/regras-qualidade/${regraId}`
     );
-    return response.data;
+    return validarVinculo(response.data, 'obter vínculo');
   },
 
   async associar(
@@ -28,7 +47,7 @@ export const vinculoRegraQualidadeService = {
       `/motores/${motorId}/regras-qualidade/${regraId}`,
       { ativo }
     );
-    return response.data;
+    return validarVinculo(response.data, 'associar regra');
   },
 
   async atualizar(
@@ -40,7 +59,7 @@ export const vinculoRegraQualidadeService = {
       `/motores/${motorId}/regras-qualidade/${regraId}`,
       { ativo }
     );
-    return response.data;
+    return validarVinculo(response.data, 'atualizar vínculo');
   },
 
   async remover(motorId: number, regraId: string): Promise<void> {

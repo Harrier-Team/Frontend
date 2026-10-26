@@ -155,7 +155,15 @@ const VinculoCard: React.FC<VinculoCardProps> = ({
   onToggle,
   onRemove,
 }) => {
-  const regra: RegraQualidade = vinculo.regra;
+  const regra: RegraQualidade | null = vinculo.regra ?? null;
+  if (!regra) {
+    return (
+      <article className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+        A API retornou um vínculo sem os dados da regra. Atualize a página ou tente
+        novamente.
+      </article>
+    );
+  }
   const executando = regra.ativo && vinculo.ativo;
 
   return (
