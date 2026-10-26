@@ -1,6 +1,6 @@
 import React from 'react';
-import { Activity, Plus, RefreshCw, WifiOff } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Activity, Gauge, Plus, RefreshCw, Settings2, WifiOff } from 'lucide-react';
+import { Link, NavLink } from 'react-router-dom';
 import { formatarHora } from '../utils/statusHelper';
 import { StatusConexaoHub } from '../services/signalrService';
 
@@ -20,33 +20,75 @@ export const Header: React.FC<HeaderProps> = ({
   onNovoMotor,
 }) => {
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
+        <div className="flex min-h-[76px] flex-wrap items-center justify-between gap-4 py-3">
           {/* Logotipo e Identificação */}
-          <div className="flex items-center space-x-4">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center text-white shadow-md shadow-indigo-100">
-              <Activity className="w-6 h-6 animate-pulse" />
+          <Link to="/" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
+              <Activity className="h-5 w-5" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xl font-extrabold tracking-tight text-slate-900">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-extrabold tracking-[0.12em] text-slate-900">
                   HACKATOHM
                 </span>
-                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold border border-slate-200">
-                  Monitoramento IoT
+                <span className="hidden rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:inline">
+                  Operações
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium">
-                Supervisão de Motores e Telemetria em Tempo Real (SignalR)
+              <p className="text-[11px] font-medium text-slate-500">
+                Supervisão de motores e telemetria
               </p>
             </div>
-          </div>
+          </Link>
+
+          <nav className="order-3 flex w-full items-center gap-1 overflow-x-auto border-t border-slate-100 pt-2 sm:order-none sm:w-auto sm:border-0 sm:pt-0" aria-label="Navegação principal">
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) =>
+                `inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                  isActive
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                }`
+              }
+            >
+              <Gauge className="h-4 w-4" aria-hidden="true" />
+              Visão geral
+            </NavLink>
+            <NavLink
+              to="/motores"
+              className={({ isActive }) =>
+                `whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                  isActive
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                }`
+              }
+            >
+              Motores
+            </NavLink>
+            <NavLink
+              to="/regras-qualidade"
+              className={({ isActive }) =>
+                `inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                  isActive
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                }`
+              }
+            >
+              <Settings2 className="h-4 w-4" aria-hidden="true" />
+              Quality Gates
+            </NavLink>
+          </nav>
 
           {/* Sincronização em Tempo Real e Ações */}
-          <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Status SignalR / WebSocket */}
-            <div className="hidden sm:flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600">
+            <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 lg:flex">
               {statusConexaoHub === 'conectado' && (
                 <>
                   <span className="relative flex h-2.5 w-2.5">
@@ -78,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </>
               )}
 
-              <span className="text-slate-300">|</span>
+              <span className="text-slate-300">·</span>
               <span>
                 Último evento:{' '}
                 <strong className="font-mono text-slate-700">
@@ -91,8 +133,9 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onAtualizar}
               disabled={atualizando}
-              title="Recarregar snapshot agora"
-              className="p-2.5 text-slate-600 bg-white hover:bg-slate-50 hover:text-indigo-600 active:scale-95 border border-slate-200 rounded-lg transition shadow-xs disabled:opacity-50"
+              title="Recarregar dados"
+              aria-label="Recarregar dados"
+              className="rounded-lg border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
             >
               <RefreshCw
                 className={`w-4 h-4 ${atualizando ? 'animate-spin text-indigo-600' : ''}`}
@@ -100,15 +143,9 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {/* Botão Adicionar Motor */}
-            <Link
-              to="/regras-qualidade"
-              className="hidden sm:inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Regras
-            </Link>
             <button
               onClick={onNovoMotor}
-              className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow-sm shadow-indigo-200"
+              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700"
             >
               <Plus className="w-4 h-4" />
               <span>Novo Motor</span>

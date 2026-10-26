@@ -35,7 +35,7 @@ export default function App() {
   }, [motoresComStatus, filtroStatus]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans antialiased text-slate-800 selection:bg-indigo-100 selection:text-indigo-800">
+    <div className="min-h-screen bg-slate-50 font-sans antialiased text-slate-800 selection:bg-indigo-100 selection:text-indigo-800">
       {/* Header com Status do WebSocket SignalR */}
       <Header
         ultimaAtualizacao={ultimaAtualizacao}
@@ -46,7 +46,7 @@ export default function App() {
       />
 
       {/* Conteúdo Principal do Dashboard */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
         {/* Banner de Erro de Conexão com a API */}
         {erroMotores && (
           <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-between shadow-xs">
@@ -78,14 +78,19 @@ export default function App() {
         />
 
         {/* Título da Seção e Filtro Ativo */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center space-x-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Motores em Monitoramento
-            </h1>
-            <span className="text-xs bg-slate-200/80 text-slate-700 px-2.5 py-0.5 rounded-full font-bold">
-              {motoresFiltrados.length}
-            </span>
+        <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+              Visão geral
+            </p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+                Motores em monitoramento
+              </h1>
+              <span className="rounded-full bg-slate-200/80 px-2.5 py-0.5 text-xs font-bold text-slate-700">
+                {motoresFiltrados.length}
+              </span>
+            </div>
           </div>
 
           {filtroStatus !== 'todos' && (
