@@ -14,12 +14,11 @@ const marcador: Record<string, string> = {
 export const MotorRow: React.FC<{ motor: MotorComStatus }> = ({ motor }) => {
   const tema = STATUS_THEME[motor.statusGeral];
   const sensores = [...motor.sensores].sort((a, b) => a.numeroEscova - b.numeroEscova);
-  const calmo = motor.statusGeral === 'normal';
 
   return (
     <Link
       to={`/motores/${motor.id}`}
-      className="group relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-4 px-5 py-5 transition-colors hover:bg-raised/70 md:grid-cols-[minmax(200px,0.9fr)_minmax(0,2fr)_104px]"
+      className="group relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-4 px-5 py-5 transition-colors hover:bg-raised/70 sm:gap-x-6 md:grid-cols-[minmax(200px,0.9fr)_minmax(0,2fr)_104px]"
       aria-label={`${motor.nome}, ${tema.label}`}
     >
       {marcador[motor.statusGeral] && (
@@ -35,8 +34,8 @@ export const MotorRow: React.FC<{ motor: MotorComStatus }> = ({ motor }) => {
           <StatusDot status={motor.statusGeral} />
         </span>
         <div className="min-w-0">
-          <h3 className="truncate text-[15px] text-ink">{motor.nome}</h3>
-          <p className="truncate text-[13px] text-ink-2">{motor.tipo}</p>
+          <h3 className="break-words text-[15px] font-medium text-ink sm:truncate">{motor.nome}</h3>
+          <p className="break-words text-[13px] text-ink-2 sm:truncate">{motor.tipo}</p>
         </div>
       </div>
 
@@ -60,7 +59,7 @@ export const MotorRow: React.FC<{ motor: MotorComStatus }> = ({ motor }) => {
                       }}
                     >
                       {formatarGrau(valor)}
-                      <span className="text-ink-3">°</span>
+                      <span className="ml-0.5 text-[10px] text-ink-3">°C</span>
                     </span>
                   </div>
                   <ThermalGauge
@@ -76,7 +75,7 @@ export const MotorRow: React.FC<{ motor: MotorComStatus }> = ({ motor }) => {
       </div>
 
       <div className="flex items-center justify-end gap-2 md:order-none">
-        {!calmo && <span className={`text-[13px] ${tema.textClass}`}>{tema.label}</span>}
+        <span className={`status-pill ${motor.statusGeral === 'normal' ? 'text-ok' : tema.textClass}`}>{tema.label}</span>
         <ChevronRight
           className="h-4 w-4 text-ink-3 transition-transform group-hover:translate-x-0.5 group-hover:text-ink"
           aria-hidden="true"

@@ -4,7 +4,7 @@ import { MotorInput, SensorInput } from '../types/motor';
 const sensorInicial: SensorInput = {
   macAddress: '',
   numeroEscova: 1,
-  modelo: 'ESP32-DS18B20',
+  modelo: '',
 };
 
 export function validarMotorForm(nome: string, tipo: string, sensores: SensorInput[]) {

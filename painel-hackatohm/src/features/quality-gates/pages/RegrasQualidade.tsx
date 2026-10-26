@@ -89,9 +89,10 @@ export const RegrasQualidade: React.FC = () => {
     <div className="space-y-10">
       <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="display text-[28px] leading-tight sm:text-[34px]">Quality gates</h1>
+          <p className="eyebrow mb-2">Critérios de acompanhamento</p>
+          <h1 className="display text-[28px] leading-tight sm:text-[32px]">Regras de qualidade</h1>
           <p className="mt-2 text-[15px] text-ink-2">
-            Limites de temperatura avaliados a cada leitura.
+            Defina os alertas de temperatura e vincule as regras a cada motor.
           </p>
         </div>
         {regras.length > 0 && (

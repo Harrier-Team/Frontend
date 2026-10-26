@@ -34,7 +34,7 @@ export const MotorForm: React.FC<MotorFormProps> = ({ salvando, erro, onSubmit, 
             type="text"
             required
             autoFocus
-            placeholder="Motor trastejador 01"
+            placeholder="Compensador síncrono 01"
             value={form.nome}
             onChange={(event) => form.setNome(event.target.value)}
             className="field"
@@ -48,7 +48,7 @@ export const MotorForm: React.FC<MotorFormProps> = ({ salvando, erro, onSubmit, 
             id="motor-tipo"
             type="text"
             required
-            placeholder="Trifásico 220 V"
+            placeholder="Síncrono com anéis coletores"
             value={form.tipo}
             onChange={(event) => form.setTipo(event.target.value)}
             className="field"

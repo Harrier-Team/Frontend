@@ -1,26 +1,32 @@
-# Sistema visual
+# Sistema visual Harrier
 
-Derivado da logo Harrier: grafite frio, aço escovado e um único ponto de luz.
+A identidade segue as duas referências da pasta [Fontes para o Frontend](https://drive.google.com/drive/folders/1-Dt7jn4NVHQD9gUebfiisPHf0TV7BXV_) do projeto, consultadas em 26/10/2026: a marca Harrier metálica e a ilustração do anel coletor. Os arquivos originais foram incorporados como `src/assets/harrier-identity.jpg` e `src/assets/collector-reference.jpg`.
 
-## Princípios
-1. **Calmo por padrão.** O estado estável usa tons neutros. Cor (âmbar, brasa) só aparece onde há atenção.
-2. **Mostrar só o que decide.** Lista de motores com temperatura por escova; diagnósticos de quality gates só aparecem quando disparam, o resto fica recolhido.
-3. **Um gesto de marca.** O ponto de luz do eclipse vira o marcador do `ThermalGauge`: mostra a leitura e a distância até os limites de 60 °C e 80 °C.
-4. **Cor nunca sozinha.** Todo estado tem texto ou `aria-label` além da cor.
+## Paleta e marca
 
-## Tokens (`src/styles/tokens.css`)
-| Token | Uso |
-| --- | --- |
-| `canvas` `panel` `raised` | fundo, superfícies, hover |
-| `line` `line-strong` | divisores, bordas de campos |
-| `ink` `ink-2` `ink-3` | texto primário, secundário, terciário |
-| `flare` | acento da marca: ação primária, foco, "ao vivo" |
-| `ok` `warn` `hot` `off` | estados (pontos, marcadores, valores) |
+Grafite frio, superfícies em aço e texto prata. O branco quente do ponto de luz da logo destaca ações primárias e foco. Verde, âmbar e coral identificam os estados com texto sempre presente. Os tokens ficam em `src/styles/tokens.css`; bordas e textos secundários foram clareados para separar melhor as superfícies.
 
-## Tipografia
-Archivo Variable (self-hosted via `@fontsource-variable/archivo`). Títulos usam largura 118% (`.display`), ecoando as letras estendidas da logo. Números usam `.num` (tabulares).
+A logo usa o arquivo de maior resolução do Drive, com enquadramento em CSS do símbolo e nome tipográfico ao lado. A proporção original é preservada; o fundo escuro se integra ao cabeçalho por mistura de tela. A ilustração do anel é contextual e decorativa: não representa geometria medida ou estado dos sensores.
+
+## Tipografia e hierarquia
+
+Archivo Variable, hospedada localmente por `@fontsource-variable/archivo`. Títulos usam largura 118% (`.display`); números são tabulares (`.num`). O painel separa o resumo do sistema, cinco indicadores por estado e a lista de motores. A maior leitura é identificada como registrada, sem prometer atualização ao vivo quando a telemetria está desconectada.
+
+## Interação
+
+- Os indicadores filtram os motores, incluindo estados com zero resultados. Selecionar novamente o indicador ativo volta a todos.
+- Busca por nome e tipo ignora acentos e maiúsculas. Busca e filtro de estado podem ser combinados e limpos juntos.
+- Erro inicial mostra indicadores indisponíveis em vez de zeros. Falha com dados existentes preserva a lista e exibe o erro.
+- Cadastro inicial explica motor, MAC do ESP32 e escovas. O modelo do sensor é preenchido pelo usuário; MLX90614 aparece somente como exemplo, coerente com a bancada descrita no Drive.
+- Cabeçalho adapta a navegação em telas menores. Foco visível, link para pular navegação e movimento reduzido permanecem disponíveis.
+- Estados de motor e escova têm rótulos; graus Celsius ficam explícitos nas leituras.
+
+## Classificação térmica
+
+Os limiares existentes do painel foram preservados: atenção a partir de 60 °C, crítico a partir de 80 °C ou alerta de desgaste. A legenda lê as constantes de `statusHelper.ts`. A explicação distingue essas faixas visuais dos limites operacionais, que exigem validação por equipamento, e das regras de qualidade vinculadas a cada motor. O índice de contexto no Drive não valida os relatos de 75–90 °C como limites de alarme.
 
 ## Estrutura
-- `/` visão geral (substitui `/motores` e `/inicio`, que redirecionam)
-- `/motores/:id` detalhe do motor
-- `/regras-qualidade` quality gates
+
+- `/`: visão geral; `/motores` e `/inicio` redirecionam para ela.
+- `/motores/:id`: escovas e regras do motor.
+- `/regras-qualidade`: catálogo de regras de qualidade.

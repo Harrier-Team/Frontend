@@ -24,6 +24,11 @@ export const Dialog: React.FC<DialogProps> = ({ open, title, onClose, children, 
       el.querySelector<HTMLElement>('input, textarea, select, [data-autofocus]')?.focus();
     }
     if (!open && el.open) el.close();
+    if (open) {
+      const overflowAnterior = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = overflowAnterior; };
+    }
   }, [open]);
 
   if (!open) return <dialog ref={ref} className="sheet" />;

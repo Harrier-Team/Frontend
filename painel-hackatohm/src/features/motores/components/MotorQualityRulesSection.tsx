@@ -73,15 +73,15 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
     <section className="space-y-4" aria-labelledby="gates">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <h2 id="gates" className="display text-base">
-          Quality gates<span className="num ml-2 text-ink-3">{vinculos.length}</span>
+          Regras de qualidade<span className="num ml-2 text-ink-3">{vinculos.length}</span>
         </h2>
-        <div className="flex gap-2">
+        <div className="flex min-w-0 flex-wrap gap-2">
           <select
             aria-label="Regra para associar"
             value={regraSelecionada}
             onChange={(event) => setRegraSelecionada(event.target.value)}
             disabled={disponiveis.length === 0}
-            className="field h-8 w-auto min-w-44 max-w-56 py-0 text-[13px]"
+            className="field min-h-9 w-auto min-w-0 max-w-full flex-1 py-1 text-[13px] sm:max-w-56"
           >
             <option value="">
               {disponiveis.length === 0 ? 'Nenhuma regra disponível' : 'Escolher regra'}
@@ -125,7 +125,7 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
       <ConfirmDialog
         open={Boolean(vinculoRemovendo)}
         title={`Remover ${vinculoRemovendo?.regra.nome ?? 'regra'} deste motor?`}
-        description="A regra continua disponível em Quality gates. Só o vínculo com este motor é removido."
+        description="A regra continua disponível em Regras de qualidade. Só o vínculo com este motor é removido."
         confirmLabel="Remover"
         busy={operando}
         onCancel={() => setVinculoRemovendo(null)}
@@ -161,7 +161,7 @@ const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, operando, onToggle, on
           Aviso em {regra.parametros.aviso} °C, crítico em {regra.parametros.critico} °C
         </p>
         {vinculo.ativo && !regra.ativo && (
-          <p className="mt-1 text-[13px] text-warn">Desativada em Quality gates, não está sendo avaliada.</p>
+          <p className="mt-1 text-[13px] text-warn">Desativada em Regras de qualidade, não está sendo avaliada.</p>
         )}
       </div>
       <Switch

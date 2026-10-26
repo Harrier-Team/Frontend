@@ -17,14 +17,12 @@ export const EscovaItem: React.FC<{ sensor: SensorComTelemetria }> = ({ sensor }
   return (
     <article className="px-5 py-6 sm:px-6">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
           <StatusDot status={sensor.status} />
           <h3 className="text-[15px] text-ink">Escova {sensor.numeroEscova}</h3>
-          <span className="text-[13px] text-ink-3">{sensor.modelo}</span>
+          <span className="break-all text-[13px] text-ink-3">{sensor.modelo}</span>
         </div>
-        {sensor.status !== 'normal' && (
-          <span className={`text-[13px] ${tema.textClass}`}>{tema.label}</span>
-        )}
+        <span className={`status-pill ${sensor.status === 'normal' ? 'text-ok' : tema.textClass}`}>{tema.label}</span>
       </div>
 
       <div className="mt-5 grid items-end gap-x-10 gap-y-4 sm:grid-cols-[180px_minmax(0,1fr)]">

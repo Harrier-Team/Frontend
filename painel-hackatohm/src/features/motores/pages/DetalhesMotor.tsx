@@ -5,6 +5,7 @@ import { MotorResponse } from '../types/motor';
 import { motorService } from '../services/motorService';
 import { MotorQualityRulesSection } from '../components/MotorQualityRulesSection';
 import { EscovaItem } from '../components/EscovaItem';
+import { ThermalLegend } from '@/features/telemetria/components/ThermalLegend';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
@@ -83,6 +84,7 @@ export const DetalhesMotor: React.FC = () => {
 
         <header className="flex items-start justify-between gap-4">
           <div className="min-w-0">
+            <p className="eyebrow mb-2">Detalhes do equipamento</p>
             <h1 className="display text-[28px] leading-tight sm:text-[34px]">{motor.nome}</h1>
             <p className="mt-1 text-[15px] text-ink-2">{motor.tipo}</p>
           </div>
@@ -123,6 +125,7 @@ export const DetalhesMotor: React.FC = () => {
             ))}
           </Panel>
         )}
+        <ThermalLegend />
       </section>
 
       <MotorQualityRulesSection motorId={motor.id} />

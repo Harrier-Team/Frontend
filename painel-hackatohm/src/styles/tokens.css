@@ -5,25 +5,25 @@
 */
 @theme {
   /* Superfícies */
-  --color-canvas: #0b0d10;
-  --color-panel: #101317;
-  --color-raised: #161a1f;
-  --color-line: #1d2228;
-  --color-line-strong: #2a313a;
+  --color-canvas: #0c0f12;
+  --color-panel: #13171b;
+  --color-raised: #1c2228;
+  --color-line: #282f36;
+  --color-line-strong: #3b4651;
 
   /* Texto (aço) */
-  --color-ink: #e4e8ec;
-  --color-ink-2: #9aa4af;
-  --color-ink-3: #828c98;
+  --color-ink: #edf0f3;
+  --color-ink-2: #aab4bf;
+  --color-ink-3: #8c98a5;
 
   /* Flare: o único acento da marca */
   --color-flare: #f1ede4;
 
   /* Estados, dessaturados para conviver com o grafite */
-  --color-ok: #7fb3a0;
-  --color-warn: #d2a553;
-  --color-hot: #e0735f;
-  --color-off: #5f6975;
+  --color-ok: #8bc4ae;
+  --color-warn: #e1b96b;
+  --color-hot: #f08b7c;
+  --color-off: #8c98a5;
 
   --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 

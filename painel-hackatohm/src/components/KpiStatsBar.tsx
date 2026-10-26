@@ -1,135 +1,37 @@
 import React from 'react';
-import { Cpu, CheckCircle2, AlertTriangle, Flame } from 'lucide-react';
+import { ArrowUpRight, Cpu, CheckCircle2, AlertTriangle, Flame, Radio } from 'lucide-react';
 import { NivelStatus } from '@/features/telemetria/types/telemetria';
 
 interface KpiStatsBarProps {
-  kpis: {
-    totalMotores: number;
-    normais: number;
-    atencao: number;
-    perigo: number;
-    offline: number;
-    totalSensores: number;
-  };
+  kpis: { totalMotores: number; normais: number; atencao: number; perigo: number; offline: number; totalSensores: number };
   filtroAtivo: NivelStatus | 'todos';
   onSelecionarFiltro: (filtro: NivelStatus | 'todos') => void;
+  indisponivel?: boolean;
 }
 
-export const KpiStatsBar: React.FC<KpiStatsBarProps> = ({
-  kpis,
-  filtroAtivo,
-  onSelecionarFiltro,
-}) => {
+export const KpiStatsBar: React.FC<KpiStatsBarProps> = ({ kpis, filtroAtivo, onSelecionarFiltro, indisponivel }) => {
+  const indicadores = [
+    { filtro: 'todos' as const, label: 'Motores', valor: kpis.totalMotores, detalhe: `${kpis.totalSensores} escovas vinculadas`, Icon: Cpu, cor: 'text-ink' },
+    { filtro: 'normal' as const, label: 'Estáveis', valor: kpis.normais, detalhe: 'Dentro da faixa do painel', Icon: CheckCircle2, cor: 'text-ok' },
+    { filtro: 'warning' as const, label: 'Em atenção', valor: kpis.atencao, detalhe: 'Requerem acompanhamento', Icon: AlertTriangle, cor: 'text-warn' },
+    { filtro: 'perigo' as const, label: 'Críticos', valor: kpis.perigo, detalhe: 'Prioridade de verificação', Icon: Flame, cor: 'text-hot' },
+    { filtro: 'offline' as const, label: 'Sem sinal', valor: kpis.offline, detalhe: 'Aguardando comunicação', Icon: Radio, cor: 'text-ink-2' },
+  ];
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      {/* Total de Motores */}
-      <button
-        type="button"
-        onClick={() => onSelecionarFiltro('todos')}
-        className={`p-4 rounded-xl border text-left transition bg-white shadow-xs hover:shadow-md ${
-          filtroAtivo === 'todos'
-            ? 'ring-2 ring-indigo-500 border-indigo-200'
-            : 'border-slate-200 hover:border-slate-300'
-        }`}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Total de Motores
-          </span>
-          <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
-            <Cpu className="w-4 h-4" />
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" role="group" aria-label="Filtrar motores por estado">
+      {indicadores.map(({ filtro, label, valor, detalhe, Icon, cor }) => (
+        <button key={filtro} type="button" aria-pressed={filtroAtivo === filtro} disabled={indisponivel}
+          onClick={() => onSelecionarFiltro(filtroAtivo === filtro ? 'todos' : filtro)}
+          className={`group relative min-w-0 rounded-xl border bg-panel p-4 text-left transition-colors disabled:cursor-default sm:p-5 ${filtroAtivo === filtro ? 'border-ink-3 bg-raised/70' : 'border-line hover:border-line-strong hover:bg-raised/50'}`}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-ink-2">{label}</span>
+            <Icon className={`h-4 w-4 ${cor}`} aria-hidden="true" />
           </div>
-        </div>
-        <div className="flex items-baseline space-x-2">
-          <span className="text-2xl font-black text-slate-900">{kpis.totalMotores}</span>
-          <span className="text-xs text-slate-500">
-            ({kpis.totalSensores} escovas)
-          </span>
-        </div>
-      </button>
-
-      {/* Operando Normal */}
-      <button
-        type="button"
-        onClick={() => onSelecionarFiltro('normal')}
-        className={`p-4 rounded-xl border text-left transition bg-white shadow-xs hover:shadow-md ${
-          filtroAtivo === 'normal'
-            ? 'ring-2 ring-emerald-500 border-emerald-300'
-            : 'border-slate-200 hover:border-slate-300'
-        }`}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
-            Operando Normal
-          </span>
-          <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
-            <CheckCircle2 className="w-4 h-4" />
-          </div>
-        </div>
-        <div className="flex items-baseline space-x-2">
-          <span className="text-2xl font-black text-emerald-700">{kpis.normais}</span>
-          <span className="text-xs text-emerald-600 font-medium">
-            {kpis.totalMotores > 0
-              ? `${Math.round((kpis.normais / kpis.totalMotores) * 100)}%`
-              : '0%'}
-          </span>
-        </div>
-      </button>
-
-      {/* Em Atenção / Warning */}
-      <button
-        type="button"
-        onClick={() => onSelecionarFiltro('warning')}
-        className={`p-4 rounded-xl border text-left transition bg-white shadow-xs hover:shadow-md ${
-          filtroAtivo === 'warning'
-            ? 'ring-2 ring-amber-500 border-amber-300'
-            : 'border-slate-200 hover:border-slate-300'
-        }`}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-amber-700">
-            Atenção (60-79°C)
-          </span>
-          <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
-            <AlertTriangle className="w-4 h-4" />
-          </div>
-        </div>
-        <div className="flex items-baseline space-x-2">
-          <span className="text-2xl font-black text-amber-700">{kpis.atencao}</span>
-          <span className="text-xs text-amber-600">requer observação</span>
-        </div>
-      </button>
-
-      {/* Perigo / Desgaste */}
-      <button
-        type="button"
-        onClick={() => onSelecionarFiltro('perigo')}
-        className={`p-4 rounded-xl border text-left transition bg-white shadow-xs hover:shadow-md ${
-          kpis.perigo > 0 ? 'bg-rose-50/50' : ''
-        } ${
-          filtroAtivo === 'perigo'
-            ? 'ring-2 ring-rose-500 border-rose-300'
-            : 'border-slate-200 hover:border-slate-300'
-        }`}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-rose-700 flex items-center gap-1">
-            {kpis.perigo > 0 && (
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-            )}
-            Perigo / Desgaste (≥80°C)
-          </span>
-          <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
-            <Flame className="w-4 h-4" />
-          </div>
-        </div>
-        <div className="flex items-baseline space-x-2">
-          <span className="text-2xl font-black text-rose-700">{kpis.perigo}</span>
-          <span className="text-xs text-rose-600 font-semibold">
-            {kpis.perigo > 0 ? 'AÇÃO IMEDIATA' : 'Nenhum alerta'}
-          </span>
-        </div>
-      </button>
+          <div className={`num mt-4 text-[32px] font-medium leading-none ${cor}`}>{indisponivel ? '—' : valor}</div>
+          <p className="mt-2 text-[11px] text-ink-3">{indisponivel ? 'Dados indisponíveis' : detalhe}</p>
+          <ArrowUpRight className="absolute bottom-4 right-3 hidden h-3 w-3 text-ink-3 group-hover:block" aria-hidden="true" />
+        </button>
+      ))}
     </div>
   );
 };

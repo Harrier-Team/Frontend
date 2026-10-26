@@ -1,127 +1,32 @@
 import React from 'react';
-import { ArrowUpRight, AlertTriangle, ShieldCheck, Flame, Radio } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { MotorComStatus } from '@/features/telemetria/types/telemetria';
 import { STATUS_THEME, formatarTemperatura } from '@/features/telemetria/helpers/statusHelper';
+import { Panel } from '@/components/ui/Panel';
 import { EscovaItem } from './EscovaItem';
 
-interface MotorCardProps {
-  motor: MotorComStatus;
-}
-
-export const MotorCard: React.FC<MotorCardProps> = ({ motor }) => {
-  const statusTheme = STATUS_THEME[motor.statusGeral];
-
+export const MotorCard: React.FC<{ motor: MotorComStatus }> = ({ motor }) => {
+  const tema = STATUS_THEME[motor.statusGeral];
   return (
-    <div
-      className={`bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-md transition flex flex-col justify-between overflow-hidden ${
-        motor.statusGeral === 'perigo'
-          ? 'border-rose-300 ring-2 ring-rose-100'
-          : ''
-      }`}
-    >
-      {/* Faixa Superior Semântica Colorida */}
-      <div
-        className="h-1.5 w-full"
-        style={{ backgroundColor: statusTheme.accent }}
-      />
-
-      <div className="p-5 flex-1 flex flex-col">
-        {/* Cabeçalho do Card */}
-        <div className="flex justify-between items-start gap-3 mb-3">
-          <div>
-            <div className="flex items-center space-x-2">
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">
-                {motor.nome}
-              </h3>
-              <span className="text-[11px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
-                #{motor.id}
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">{motor.tipo}</p>
+    <Panel>
+      <div className="space-y-4 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="display truncate text-base">{motor.nome}</h3>
+            <p className="mt-1 text-xs text-ink-2">{motor.tipo}</p>
           </div>
-
-          {/* Badge de Status Geral Consolidado */}
-          <div
-            className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-bold border shrink-0 ${statusTheme.badgeBg}`}
-          >
-            {motor.statusGeral === 'normal' && (
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            )}
-            {motor.statusGeral === 'warning' && (
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-            )}
-            {motor.statusGeral === 'perigo' && (
-              <Flame className="w-3.5 h-3.5 text-rose-600 animate-pulse" />
-            )}
-            {motor.statusGeral === 'offline' && (
-              <Radio className="w-3.5 h-3.5 text-slate-400" />
-            )}
-            <span>{statusTheme.label}</span>
-          </div>
+          <span className={`status-pill ${motor.statusGeral === 'normal' ? 'text-ok' : tema.textClass}`}>{tema.label}</span>
         </div>
-
-        {/* Resumo de Métricas Rápidas do Motor */}
-        <div className="bg-slate-50/80 rounded-lg p-3 border border-slate-100 mb-4 flex justify-between items-center text-xs">
-          <div>
-            <span className="text-slate-500 block text-[11px]">Temp. Máx. do Motor</span>
-            <span
-              className="text-sm font-black font-mono"
-              style={{ color: statusTheme.accent }}
-            >
-              {formatarTemperatura(motor.temperaturaMaxima)}
-            </span>
-          </div>
-
-          <div className="text-right">
-            <span className="text-slate-500 block text-[11px]">Escovas Ativas</span>
-            <span className="text-sm font-bold text-slate-800">
-              {motor.sensores.length} {motor.sensores.length === 1 ? 'sensor' : 'sensores'}
-            </span>
-          </div>
-        </div>
-
-        {/* Lista de Escovas do Motor */}
-        <div className="space-y-2 flex-1">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Escovas Monitoradas (ESP32)
-          </p>
-
-          {motor.sensores.length === 0 ? (
-            <p className="text-xs text-slate-400 italic py-2">
-              Nenhuma escova associada a este motor.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {motor.sensores.map((sensor) => (
-                <EscovaItem key={sensor.id} sensor={sensor} />
-              ))}
-            </div>
-          )}
+        <div className="flex flex-wrap justify-between gap-3 rounded-lg bg-raised p-3 text-xs text-ink-2">
+          <span>Maior leitura <strong className="num ml-1 text-ink">{formatarTemperatura(motor.temperaturaMaxima)}</strong></span>
+          <span>{motor.sensores.length} escovas vinculadas</span>
         </div>
       </div>
-
-      {/* Rodapé do card com acesso à operação detalhada */}
-      <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
-        <span className="text-[11px]">
-          {motor.totalAlertas > 0 ? (
-            <strong className="text-rose-600">
-              ⚠️ {motor.totalAlertas} {motor.totalAlertas === 1 ? 'escova em perigo' : 'escovas em perigo'}
-            </strong>
-          ) : (
-            <span className="text-emerald-700 font-medium">✓ Tudo estável</span>
-          )}
-        </span>
-
-        <Link
-          to={`/motores/${motor.id}`}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-          title={`Ver detalhes de ${motor.nome}`}
-        >
-          <span>Ver detalhes</span>
-          <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-        </Link>
-      </div>
-    </div>
+      {motor.sensores.map((sensor) => <EscovaItem key={sensor.id} sensor={sensor} />)}
+      <Link to={`/motores/${motor.id}`} className="flex min-h-11 items-center justify-between gap-2 px-5 py-3 text-xs text-ink-2 hover:bg-raised hover:text-ink">
+        Ver detalhes <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+      </Link>
+    </Panel>
   );
 };

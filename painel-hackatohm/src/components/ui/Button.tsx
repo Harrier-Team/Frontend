@@ -7,15 +7,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses = {
-  primary: 'bg-flare text-canvas hover:bg-white',
+  primary: 'border border-white/15 bg-flare text-canvas shadow-[0_1px_0_0_rgb(255_255_255/0.15)_inset,0_2px_8px_rgb(0_0_0/0.15)] hover:bg-white',
   secondary: 'border border-line-strong text-ink hover:bg-raised hover:border-[#38414c]',
   danger: 'bg-hot text-canvas hover:brightness-110',
   ghost: 'text-ink-2 hover:bg-raised hover:text-ink',
 };
 
 const sizeClasses = {
-  md: 'h-10 px-4 text-sm',
-  sm: 'h-8 px-3 text-[13px]',
+  md: 'min-h-11 px-4 py-2 text-sm',
+  sm: 'min-h-9 px-3 py-1.5 text-[13px]',
 };
 
 export const Button: React.FC<ButtonProps> = ({
