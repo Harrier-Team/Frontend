@@ -56,11 +56,6 @@ SignalR necessária no ambiente de produção.
 - Atualizações de temperatura e conexão em tempo real.
 - Reconexão automática do cliente SignalR.
 
-O gerenciamento de regras de qualidade e a apresentação detalhada dos
-resultados estão especificados em
-[`painel-hackatohm/docs/specs/quality-gates-frontend.spec.md`](painel-hackatohm/docs/specs/quality-gates-frontend.spec.md)
-e serão implementados em etapa própria.
-
 ## Estrutura
 
 ```text
