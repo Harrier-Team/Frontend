@@ -1,5 +1,5 @@
 import * as signalR from '@microsoft/signalr';
-import { TelemetriaRealtimeDto } from '../types/telemetria';
+import { TelemetriaRealtimeDto } from '@/features/telemetria/types/telemetria';
 
 export type StatusConexaoHub =
   | 'conectado'

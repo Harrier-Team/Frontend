@@ -1,4 +1,4 @@
-import { NivelStatus, SensorComTelemetria } from '../types/telemetria';
+import { NivelStatus, SensorComTelemetria } from '@/features/telemetria/types/telemetria';
 
 export interface StatusConfig {
   label: string;

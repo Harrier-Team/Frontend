@@ -5,7 +5,7 @@ import { Header } from './components/Header';
 import { KpiStatsBar } from './components/KpiStatsBar';
 import { ModalCadastro } from './features/motores/components/ModalCadastro';
 import { MotorCard } from './features/motores/components/MotorCard';
-import { NivelStatus } from './types/telemetria';
+import { NivelStatus } from '@/features/telemetria/types/telemetria';
 
 type FiltroStatus = NivelStatus | 'todos';
 

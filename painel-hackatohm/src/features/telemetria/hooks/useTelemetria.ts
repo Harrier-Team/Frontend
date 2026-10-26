@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
-import { MotorResponse } from '../features/motores/types/motor';
+import { MotorResponse } from '@/features/motores/types/motor';
 import {
   MotorComStatus,
   SensorComTelemetria,
   NivelStatus,
   TelemetriaRealtimeDto,
-} from '../types/telemetria';
-import { signalRService, StatusConexaoHub } from '../services/signalrService';
+} from '@/features/telemetria/types/telemetria';
+import { signalRService, StatusConexaoHub } from '@/features/telemetria/services/signalrService';
 import {
   classificarSensor,
   calcularStatusGeralDoMotor,
-} from '../utils/statusHelper';
-import { leituraService } from '../services/leituraService';
+} from '@/features/telemetria/helpers/statusHelper';
+import { leituraService } from '@/features/telemetria/services/leituraService';
 
 // Função utilitária para normalizar MAC addresses (remove : - e espaços)
 function normalizarMac(mac?: string | null): string {

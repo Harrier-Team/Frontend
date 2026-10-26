@@ -1,6 +1,6 @@
 import React from 'react';
 import { Cpu, CheckCircle2, AlertTriangle, Flame } from 'lucide-react';
-import { NivelStatus } from '../types/telemetria';
+import { NivelStatus } from '@/features/telemetria/types/telemetria';
 
 interface KpiStatsBarProps {
   kpis: {

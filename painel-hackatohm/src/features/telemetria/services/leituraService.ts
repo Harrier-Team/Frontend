@@ -1,6 +1,6 @@
-import { api } from './api';
-import { LeituraMaisRecente } from '../types/telemetria';
-import { ApiRequestError } from '../types/api';
+import { api } from '@/services/api';
+import { LeituraMaisRecente } from '@/features/telemetria/types/telemetria';
+import { ApiRequestError } from '@/types/api';
 
 interface UltimaLeituraApiResponse {
   sensorId: string;

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Wifi, WifiOff, AlertOctagon } from 'lucide-react';
-import { SensorComTelemetria } from '../../../types/telemetria';
+import { SensorComTelemetria } from '@/features/telemetria/types/telemetria';
 import {
   STATUS_THEME,
   formatarTemperatura,
   formatarHora,
-} from '../../../utils/statusHelper';
+} from '@/features/telemetria/helpers/statusHelper';
 import { QualityGateResultList } from '@/features/quality-gates/components/QualityGateResultList';
 
 interface EscovaItemProps {

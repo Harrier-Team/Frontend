@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMotores } from '../features/motores/hooks/useMotores';
-import { useTelemetria } from './useTelemetria';
+import { useTelemetria } from '@/features/telemetria/hooks/useTelemetria';
 import { MonitoramentoContext } from './monitoramentoContext';
 
 export const MonitoramentoProvider: React.FC<{ children: React.ReactNode }> = ({
