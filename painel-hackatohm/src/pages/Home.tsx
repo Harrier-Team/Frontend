@@ -20,7 +20,7 @@ export const Home: React.FC = () => {
           </Link>
 
           <Link
-            to="/motores/cadastrar"
+            to="/motores?novo=true"
             className="p-6 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition block text-left"
           >
             <h2 className="text-xl font-bold text-slate-800 mb-1">➕ Cadastrar Motor</h2>

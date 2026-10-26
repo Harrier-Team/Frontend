@@ -1,78 +1,102 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { MotorResponse } from '../types/motor';
+import React from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Plus, RefreshCw } from 'lucide-react';
+import { ModalCadastro } from '../components/ModalCadastro';
+import { MotorCard } from '../components/MotorCard';
+import { Alert } from '../components/ui/Alert';
+import { EmptyState } from '../components/ui/EmptyState';
+import { LoadingState } from '../components/ui/LoadingState';
+import { useMonitoramento } from '../hooks/MonitoramentoContext';
 
 export const ListaMotores: React.FC = () => {
-  const [motores, setMotores] = useState<MotorResponse[]>([]);
-  const [carregando, setCarregando] = useState(true);
-  const navigate = useNavigate();
+  const {
+    motores,
+    motoresComStatus,
+    carregando,
+    erro,
+    recarregar,
+    cadastrarMotor,
+  } = useMonitoramento();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const modalCadastroAberto = searchParams.get('novo') === 'true';
 
-  useEffect(() => {
-    fetch('/api/motores')
-      .then((res) => res.json())
-      .then((data) => setMotores(data))
-      .catch((err) => console.error('Erro ao carregar motores:', err))
-      .finally(() => setCarregando(false));
-  }, []);
+  const abrirCadastro = () => setSearchParams({ novo: 'true' });
+
+  const fecharCadastro = () => setSearchParams({}, { replace: true });
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Motores Cadastrados</h1>
-          <p className="text-sm text-gray-500">Selecione um motor para acessar seu painel de monitoramento.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+            Ativos monitorados
+          </p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">
+            Motores
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Consulte o estado operacional e a telemetria dos motores cadastrados.
+          </p>
         </div>
-        <Link
-          to="/motores/cadastrar"
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded shadow transition"
-        >
-          + Novo Motor
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void recarregar()}
+            disabled={carregando}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60"
+          >
+            <RefreshCw className={`h-4 w-4 ${carregando ? 'animate-spin' : ''}`} />
+            Atualizar
+          </button>
+          <button
+            type="button"
+            onClick={abrirCadastro}
+            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Novo motor
+          </button>
+        </div>
       </div>
 
-      {carregando ? (
-        <p className="text-gray-500 text-center py-8">Carregando lista...</p>
+      {erro && (
+        <Alert
+          title="Não foi possível carregar os motores"
+          message={erro}
+          tone="error"
+        />
+      )}
+
+      {carregando && motores.length === 0 ? (
+        <LoadingState label="Carregando motores..." />
       ) : motores.length === 0 ? (
-        <div className="bg-white p-8 rounded text-center border border-gray-200">
-          <p className="text-gray-500">Nenhum motor cadastrado até o momento.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {motores.map((motor) => (
-            <div
-              key={motor.id}
-              onClick={() => navigate(`/motores/${motor.id}`)}
-              className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-400 cursor-pointer transition flex flex-col justify-between"
+        <EmptyState
+          title="Nenhum motor cadastrado"
+          description="Cadastre um motor e informe o endereço MAC do ESP32 acoplado para iniciar o monitoramento."
+          action={
+            <button
+              type="button"
+              onClick={abrirCadastro}
+              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
             >
-              <div>
-                <div className="flex justify-between items-start mb-2">
-                  <h2 className="text-lg font-bold text-gray-800">{motor.nome}</h2>
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-mono">
-                    ID: #{motor.id}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500 mb-4">Tipo: {motor.tipo}</p>
-
-                <div className="bg-gray-50 p-3 rounded border text-xs text-gray-600 space-y-1">
-                  <p className="font-semibold text-gray-700">Sensores vinculados:</p>
-                  {motor.sensores.map((s) => (
-                    <div key={s.id} className="flex justify-between">
-                      <span>Escova #{s.numeroEscova} ({s.modelo})</span>
-                      <span className="font-mono text-gray-400">{s.id}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t flex justify-end">
-                <span className="text-xs font-bold text-indigo-600 hover:underline">
-                  Abrir Monitoramento &rarr;
-                </span>
-              </div>
-            </div>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Cadastrar primeiro motor
+            </button>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {motoresComStatus.map((motor) => (
+            <MotorCard key={motor.id} motor={motor} />
           ))}
         </div>
       )}
+
+      <ModalCadastro
+        aberto={modalCadastroAberto}
+        onFechar={fecharCadastro}
+        onCadastrar={cadastrarMotor}
+      />
     </div>
   );
 };
