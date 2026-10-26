@@ -6,7 +6,7 @@ import {
   formatarTemperatura,
   formatarHora,
 } from '../../../utils/statusHelper';
-import { QualityGateResultList } from '../../../components/quality-gates/QualityGateResultList';
+import { QualityGateResultList } from '@/features/quality-gates/components/QualityGateResultList';
 
 interface EscovaItemProps {
   sensor: SensorComTelemetria;

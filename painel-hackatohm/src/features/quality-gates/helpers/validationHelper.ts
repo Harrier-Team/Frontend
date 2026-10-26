@@ -1,4 +1,4 @@
-import { ParametrosLimiarTemperatura } from '../types/regraQualidade';
+import { ParametrosLimiarTemperatura } from '@/features/quality-gates/types/regraQualidade';
 
 export interface RegraQualidadeFormValues {
   nome: string;

@@ -1,8 +1,8 @@
-import { api } from './api';
+import { api } from '@/services/api';
 import {
   RegraQualidade,
   RegraQualidadeRequest,
-} from '../types/regraQualidade';
+} from '@/features/quality-gates/types/regraQualidade';
 
 export const regraQualidadeService = {
   async listar(): Promise<RegraQualidade[]> {

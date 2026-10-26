@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { Alert } from '../components/ui/Alert';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
-import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { EmptyState } from '../components/ui/EmptyState';
-import { LoadingState } from '../components/ui/LoadingState';
-import { QualityRuleForm } from '../components/quality-gates/QualityRuleForm';
-import { QualityRuleList } from '../components/quality-gates/QualityRuleList';
-import { useRegrasQualidade } from '../hooks/useRegrasQualidade';
+import { Alert } from '@/components/ui/Alert';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { QualityRuleForm } from '@/features/quality-gates/components/QualityRuleForm';
+import { QualityRuleList } from '@/features/quality-gates/components/QualityRuleList';
+import { useRegrasQualidade } from '@/features/quality-gates/hooks/useRegrasQualidade';
 import {
   RegraQualidade,
   RegraQualidadeRequest,
-} from '../types/regraQualidade';
-import { obterMensagemErro } from '../utils/errorHelper';
+} from '@/features/quality-gates/types/regraQualidade';
+import { obterMensagemErro } from '@/utils/errorHelper';
 
 export const RegrasQualidade: React.FC = () => {
   const {

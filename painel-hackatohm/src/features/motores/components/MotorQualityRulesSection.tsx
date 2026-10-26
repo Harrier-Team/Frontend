@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Link2, Power, Trash2 } from 'lucide-react';
-import { useRegrasQualidade } from '../../../hooks/useRegrasQualidade';
+import { useRegrasQualidade } from '@/features/quality-gates/hooks/useRegrasQualidade';
 import { useRegrasQualidadeMotor } from '../hooks/useRegrasQualidadeMotor';
-import { RegraQualidade, VinculoRegraQualidade } from '../../../types/regraQualidade';
+import { RegraQualidade, VinculoRegraQualidade } from '@/features/quality-gates/types/regraQualidade';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';

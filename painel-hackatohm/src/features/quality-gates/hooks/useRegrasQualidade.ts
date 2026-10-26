@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ApiRequestError } from '../types/api';
+import { ApiRequestError } from '@/types/api';
 import {
   RegraQualidade,
   RegraQualidadeRequest,
-} from '../types/regraQualidade';
-import { regraQualidadeService } from '../services/regraQualidadeService';
-import { obterMensagemErro } from '../utils/errorHelper';
+} from '@/features/quality-gates/types/regraQualidade';
+import { regraQualidadeService } from '@/features/quality-gates/services/regraQualidadeService';
+import { obterMensagemErro } from '@/utils/errorHelper';
 
 export function useRegrasQualidade() {
   const [regras, setRegras] = useState<RegraQualidade[]>([]);

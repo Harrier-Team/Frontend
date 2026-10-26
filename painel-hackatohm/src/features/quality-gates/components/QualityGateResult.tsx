@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, CheckCircle2, Gauge, Thermometer } from 'lucide-react';
-import { ResultadoGateRealtime } from '../../types/qualityGate';
-import { SEVERIDADE_THEME } from '../../utils/qualityGateHelper';
+import { ResultadoGateRealtime } from '@/features/quality-gates/types/qualityGate';
+import { SEVERIDADE_THEME } from '@/features/quality-gates/helpers/qualityGateHelper';
 
 interface QualityGateResultProps {
   resultado: ResultadoGateRealtime;

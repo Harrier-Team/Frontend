@@ -1,5 +1,5 @@
 import { api } from '../../../services/api';
-import { VinculoRegraQualidade } from '../../../types/regraQualidade';
+import { VinculoRegraQualidade } from '@/features/quality-gates/types/regraQualidade';
 
 function validarVinculo(
   vinculo: VinculoRegraQualidade,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Radio } from 'lucide-react';
-import { ResultadoGateRealtime } from '../../types/qualityGate';
+import { ResultadoGateRealtime } from '@/features/quality-gates/types/qualityGate';
 import { QualityGateResult } from './QualityGateResult';
 
 interface QualityGateResultListProps {

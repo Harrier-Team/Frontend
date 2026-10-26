@@ -5,7 +5,7 @@ import { MonitoramentoProvider } from '../hooks/MonitoramentoProvider';
 import { DetalhesMotor } from '../features/motores/pages/DetalhesMotor';
 import { Home } from '../pages/Home';
 import { ListaMotores } from '../features/motores/pages/ListaMotores';
-import { RegrasQualidade } from '../pages/RegrasQualidade';
+import { RegrasQualidade } from '../features/quality-gates/pages/RegrasQualidade';
 
 export function AppRoutes() {
   return (

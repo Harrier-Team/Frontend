@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Button } from '../ui/Button';
+import { Button } from '@/components/ui/Button';
 import {
   RegraQualidade,
   RegraQualidadeRequest,
-} from '../../types/regraQualidade';
+} from '@/features/quality-gates/types/regraQualidade';
 import {
   FormErrors,
   RegraQualidadeFormValues,
   validarRegraQualidade,
-} from '../../utils/validationHelper';
+} from '@/features/quality-gates/helpers/validationHelper';
 
 interface QualityRuleFormProps {
   regra?: RegraQualidade | null;

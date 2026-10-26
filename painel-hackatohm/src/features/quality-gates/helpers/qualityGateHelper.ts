@@ -1,4 +1,4 @@
-import { NivelSeveridade } from '../types/qualityGate';
+import { NivelSeveridade } from '@/features/quality-gates/types/qualityGate';
 
 export const SEVERIDADE_THEME: Record<
   NivelSeveridade,

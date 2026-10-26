@@ -1,4 +1,4 @@
-import { ResultadoGateRealtime } from './qualityGate';
+import { ResultadoGateRealtime } from '@/features/quality-gates/types/qualityGate';
 
 export interface TelemetriaRealtimeDto {
   sensorId: string;

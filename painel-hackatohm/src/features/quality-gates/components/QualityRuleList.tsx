@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pencil, Power, Trash2 } from 'lucide-react';
-import { RegraQualidade } from '../../types/regraQualidade';
-import { Button } from '../ui/Button';
+import { RegraQualidade } from '@/features/quality-gates/types/regraQualidade';
+import { Button } from '@/components/ui/Button';
 
 interface QualityRuleListProps {
   regras: RegraQualidade[];
