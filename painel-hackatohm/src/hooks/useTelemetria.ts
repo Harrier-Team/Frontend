@@ -188,9 +188,12 @@ export function useTelemetria(motores: MotorResponse[]) {
       setMotoresComStatus((anteriores) => {
         return anteriores.map((motor) => {
           let houveAlteracao = false;
+          const leiturasDoMotor = novasLeituras.filter(
+            (leitura) => leitura.motorId === motor.id
+          );
 
           const sensoresAtualizados = motor.sensores.map((sensor) => {
-            const leituraMatch = novasLeituras.find((dto) =>
+            const leituraMatch = leiturasDoMotor.find((dto) =>
               ehMesmoSensor(sensor.id, sensor.numeroEscova, dto)
             );
 

@@ -4,6 +4,7 @@ import { ArrowLeft, Cpu, Trash2 } from 'lucide-react';
 import { MotorResponse } from '../types/motor';
 import { motorService } from '../services/motorService';
 import { MotorQualityRulesSection } from '../components/motores/MotorQualityRulesSection';
+import { EscovaItem } from '../components/EscovaItem';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Alert } from '../components/ui/Alert';
 import { useMonitoramento } from '../hooks/MonitoramentoContext';
@@ -11,12 +12,15 @@ import { useMonitoramento } from '../hooks/MonitoramentoContext';
 export const DetalhesMotor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { deletarMotor } = useMonitoramento();
+  const { deletarMotor, motoresComStatus } = useMonitoramento();
   const [motor, setMotor] = useState<MotorResponse | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
   const [erroOperacao, setErroOperacao] = useState<string | null>(null);
+  const motorMonitorado = motor
+    ? motoresComStatus.find((item) => item.id === motor.id)
+    : undefined;
 
   useEffect(() => {
     if (!id) return;
@@ -97,20 +101,17 @@ export const DetalhesMotor: React.FC = () => {
               {motor.sensores.length} {motor.sensores.length === 1 ? 'sensor' : 'sensores'}
             </span>
           </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {motor.sensores.map((sensor) => (
-            <div key={sensor.id} className="p-4 border rounded bg-slate-50 space-y-2">
-              <div className="flex justify-between">
-                <span className="font-bold text-slate-700">Escova #{sensor.numeroEscova}</span>
-                <span className="text-xs bg-slate-200 px-2 py-0.5 rounded font-mono">{sensor.modelo}</span>
-              </div>
-              <p className="text-xs text-slate-500 font-mono">ID / MAC: {sensor.id}</p>
-              
-              {/* Espaço reservado para gráficos ou medições em tempo real */}
-              <div className="mt-2 p-3 bg-white rounded border text-center text-xs text-gray-400">
-                Aguardando telemetria em tempo real do ESP32...
-              </div>
-            </div>
+            <EscovaItem
+              key={sensor.id}
+              sensor={
+                motorMonitorado?.sensores.find((item) => item.id === sensor.id) ?? {
+                  ...sensor,
+                  status: 'offline',
+                }
+              }
+            />
           ))}
         </div>
         </div>
