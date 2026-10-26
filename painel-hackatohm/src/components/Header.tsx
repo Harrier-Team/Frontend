@@ -1,23 +1,20 @@
 import React from 'react';
-import { Activity, Gauge, Plus, RefreshCw, Settings2, WifiOff } from 'lucide-react';
+import { Gauge, Settings2, WifiOff } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
 import { formatarHora } from '../utils/statusHelper';
 import { StatusConexaoHub } from '../services/signalrService';
+import harrierLogo from '../assets/HarrierTeam.jpeg';
 
 interface HeaderProps {
   ultimaAtualizacao: Date | null;
-  atualizando: boolean;
   statusConexaoHub: StatusConexaoHub;
-  onAtualizar: () => void;
-  onNovoMotor: () => void;
+  mostrarStatus?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   ultimaAtualizacao,
-  atualizando,
   statusConexaoHub,
-  onAtualizar,
-  onNovoMotor,
+  mostrarStatus = false,
 }) => {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
@@ -25,8 +22,12 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex min-h-[76px] flex-wrap items-center justify-between gap-4 py-3">
           {/* Logotipo e Identificação */}
           <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
-              <Activity className="h-5 w-5" />
+            <div className="h-10 w-10 overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-sm">
+              <img
+                src={harrierLogo}
+                alt="Harrier Team"
+                className="h-full w-full scale-[1.65] object-cover object-[50%_35%]"
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -43,7 +44,8 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </Link>
 
-          <nav className="order-3 flex w-full items-center gap-1 overflow-x-auto border-t border-slate-100 pt-2 sm:order-none sm:w-auto sm:border-0 sm:pt-0" aria-label="Navegação principal">
+          <div className="order-3 flex w-full items-center justify-end gap-3 border-t border-slate-100 pt-2 sm:order-none sm:w-auto sm:border-0 sm:pt-0">
+          <nav className="flex items-center gap-1 overflow-x-auto" aria-label="Navegação principal">
             <NavLink
               to="/"
               end
@@ -84,9 +86,9 @@ export const Header: React.FC<HeaderProps> = ({
               Quality Gates
             </NavLink>
           </nav>
-
-          {/* Sincronização em Tempo Real e Ações */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Sincronização em Tempo Real */}
+          {mostrarStatus && (
+            <div className="flex items-center">
             {/* Status SignalR / WebSocket */}
             <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 lg:flex">
               {statusConexaoHub === 'conectado' && (
@@ -128,28 +130,8 @@ export const Header: React.FC<HeaderProps> = ({
                 </strong>
               </span>
             </div>
-
-            {/* Botão de Forçar Atualização */}
-            <button
-              onClick={onAtualizar}
-              disabled={atualizando}
-              title="Recarregar dados"
-              aria-label="Recarregar dados"
-              className="rounded-lg border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
-            >
-              <RefreshCw
-                className={`w-4 h-4 ${atualizando ? 'animate-spin text-indigo-600' : ''}`}
-              />
-            </button>
-
-            {/* Botão Adicionar Motor */}
-            <button
-              onClick={onNovoMotor}
-              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Novo Motor</span>
-            </button>
+            </div>
+          )}
           </div>
         </div>
       </div>

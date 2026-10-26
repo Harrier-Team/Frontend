@@ -25,4 +25,17 @@
     display: flex;
     flex-direction: column;
   }
+
+  button,
+  a,
+  select,
+  input[type='checkbox'] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
 }

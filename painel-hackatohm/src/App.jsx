@@ -39,10 +39,8 @@ export default function App() {
       {/* Header com Status do WebSocket SignalR */}
       <Header
         ultimaAtualizacao={ultimaAtualizacao}
-        atualizando={carregandoMotores}
         statusConexaoHub={statusConexaoHub}
-        onAtualizar={recarregarMotores}
-        onNovoMotor={() => setModalCadastroAberto(true)}
+        mostrarStatus
       />
 
       {/* Conteúdo Principal do Dashboard */}
@@ -130,8 +128,8 @@ export default function App() {
               Nenhum motor cadastrado ainda
             </h2>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              Comece cadastrando o primeiro motor e informando os endereços MAC dos
-              sensores ESP32 acoplados às escovas.
+              Comece cadastrando o primeiro motor e informando o endereço MAC do
+              ESP32 acoplado.
             </p>
             <button
               onClick={() => setModalCadastroAberto(true)}
