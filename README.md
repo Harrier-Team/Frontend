@@ -73,7 +73,6 @@ painel-hackatohm/
 │   ├── services/
 │   ├── types/
 │   └── utils/
-├── docs/specs/   Especificações funcionais
 ├── package.json
 └── vite.config.js
 ```
