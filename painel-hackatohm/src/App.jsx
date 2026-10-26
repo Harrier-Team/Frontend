@@ -6,7 +6,7 @@ import { KpiStatsBar } from './components/KpiStatsBar';
 import { MotorCard } from './components/MotorCard';
 import { ModalCadastro } from './components/ModalCadastro';
 import { Plus, AlertCircle, RefreshCw, Layers } from 'lucide-react';
-import { LiveDataNotice } from './components/feedback/LiveDataNotice';
+import { WifiOff } from 'lucide-react';
 
 export default function App() {
   const {
@@ -21,7 +21,6 @@ export default function App() {
   const {
     motoresComStatus,
     kpis,
-    ultimaAtualizacao,
     statusConexaoHub,
   } = useTelemetria(motores);
 
@@ -37,11 +36,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans antialiased text-slate-800 selection:bg-indigo-100 selection:text-indigo-800">
       {/* Header com Status do WebSocket SignalR */}
-      <Header
-        ultimaAtualizacao={ultimaAtualizacao}
-        statusConexaoHub={statusConexaoHub}
-        mostrarStatus
-      />
+      <Header />
 
       {/* Conteúdo Principal do Dashboard */}
       <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
@@ -66,9 +61,6 @@ export default function App() {
         )}
 
         {/* Barra de Métricas Globais (KPIs com filtro rápido) */}
-        <div className="mb-6">
-          <LiveDataNotice />
-        </div>
         <KpiStatsBar
           kpis={kpis}
           filtroAtivo={filtroStatus}
@@ -89,6 +81,16 @@ export default function App() {
                 {motoresFiltrados.length}
               </span>
             </div>
+            {statusConexaoHub !== 'conectado' && (
+              <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800">
+                <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />
+                {statusConexaoHub === 'reconectando'
+                  ? 'Telemetria reconectando'
+                  : statusConexaoHub === 'conectando'
+                    ? 'Conectando à telemetria'
+                    : 'Telemetria desconectada'}
+              </div>
+            )}
           </div>
 
           {filtroStatus !== 'todos' && (

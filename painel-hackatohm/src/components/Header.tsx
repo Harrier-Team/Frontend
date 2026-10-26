@@ -1,21 +1,9 @@
 import React from 'react';
-import { Gauge, Settings2, WifiOff } from 'lucide-react';
+import { Gauge, Settings2 } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
-import { formatarHora } from '../utils/statusHelper';
-import { StatusConexaoHub } from '../services/signalrService';
-import harrierLogo from '../assets/HarrierTeam.jpeg';
+import harrierLogo from '../assets/HarrierTeamLogo.jpeg';
 
-interface HeaderProps {
-  ultimaAtualizacao: Date | null;
-  statusConexaoHub: StatusConexaoHub;
-  mostrarStatus?: boolean;
-}
-
-export const Header: React.FC<HeaderProps> = ({
-  ultimaAtualizacao,
-  statusConexaoHub,
-  mostrarStatus = false,
-}) => {
+export const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
@@ -26,7 +14,7 @@ export const Header: React.FC<HeaderProps> = ({
               <img
                 src={harrierLogo}
                 alt="Harrier Team"
-                className="h-full w-full scale-[1.65] object-cover object-[50%_35%]"
+                className="h-full w-full object-cover object-center"
               />
             </div>
             <div>
@@ -86,52 +74,6 @@ export const Header: React.FC<HeaderProps> = ({
               Quality Gates
             </NavLink>
           </nav>
-          {/* Sincronização em Tempo Real */}
-          {mostrarStatus && (
-            <div className="flex items-center">
-            {/* Status SignalR / WebSocket */}
-            <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 lg:flex">
-              {statusConexaoHub === 'conectado' && (
-                <>
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                  </span>
-                  <span className="font-semibold text-emerald-700">Ao Vivo</span>
-                </>
-              )}
-
-              {statusConexaoHub === 'conectando' && (
-                <>
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                  <span className="font-semibold text-amber-700">Conectando...</span>
-                </>
-              )}
-
-              {statusConexaoHub === 'reconectando' && (
-                <>
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-ping"></span>
-                  <span className="font-semibold text-amber-800">Reconectando...</span>
-                </>
-              )}
-
-              {statusConexaoHub === 'desconectado' && (
-                <>
-                  <WifiOff className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="font-semibold text-slate-500">Desconectado</span>
-                </>
-              )}
-
-              <span className="text-slate-300">·</span>
-              <span>
-                Último evento:{' '}
-                <strong className="font-mono text-slate-700">
-                  {formatarHora(ultimaAtualizacao?.toISOString())}
-                </strong>
-              </span>
-            </div>
-            </div>
-          )}
           </div>
         </div>
       </div>
