@@ -6,6 +6,7 @@ import { KpiStatsBar } from './components/KpiStatsBar';
 import { MotorCard } from './components/MotorCard';
 import { ModalCadastro } from './components/ModalCadastro';
 import { Plus, AlertCircle, RefreshCw, Layers } from 'lucide-react';
+import { LiveDataNotice } from './components/feedback/LiveDataNotice';
 
 export default function App() {
   const {
@@ -67,6 +68,9 @@ export default function App() {
         )}
 
         {/* Barra de Métricas Globais (KPIs com filtro rápido) */}
+        <div className="mb-6">
+          <LiveDataNotice />
+        </div>
         <KpiStatsBar
           kpis={kpis}
           filtroAtivo={filtroStatus}

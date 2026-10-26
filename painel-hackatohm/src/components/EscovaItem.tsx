@@ -6,6 +6,7 @@ import {
   formatarTemperatura,
   formatarHora,
 } from '../utils/statusHelper';
+import { QualityGateResultList } from './quality-gates/QualityGateResultList';
 
 interface EscovaItemProps {
   sensor: SensorComTelemetria;
@@ -89,7 +90,12 @@ export const EscovaItem: React.FC<EscovaItemProps> = ({ sensor }) => {
           <span>Alerta: Limiar crítico (≥ 80°C) violado!</span>
         </div>
       )}
+
+      {sensor.ultimaLeitura && (
+        <QualityGateResultList
+          resultados={sensor.ultimaLeitura.resultadosQualityGates}
+        />
+      )}
     </div>
   );
 };
-
