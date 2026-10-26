@@ -1,101 +1,60 @@
 import React from 'react';
-import { Wifi, WifiOff, AlertOctagon } from 'lucide-react';
 import { SensorComTelemetria } from '@/features/telemetria/types/telemetria';
 import {
   STATUS_THEME,
-  formatarTemperatura,
-  formatarHora,
+  formatarGrau,
+  formatarRelativo,
 } from '@/features/telemetria/helpers/statusHelper';
+import { ThermalGauge } from '@/features/telemetria/components/ThermalGauge';
+import { StatusDot } from '@/features/telemetria/components/StatusDot';
 import { QualityGateResultList } from '@/features/quality-gates/components/QualityGateResultList';
 
-interface EscovaItemProps {
-  sensor: SensorComTelemetria;
-}
-
-export const EscovaItem: React.FC<EscovaItemProps> = ({ sensor }) => {
-  const statusTheme = STATUS_THEME[sensor.status];
+export const EscovaItem: React.FC<{ sensor: SensorComTelemetria }> = ({ sensor }) => {
+  const tema = STATUS_THEME[sensor.status];
   const temperatura = sensor.ultimaLeitura?.valorCelsius ?? null;
-  const isPerigo = sensor.status === 'perigo';
-  const isOnline = Boolean(sensor.ipAtual);
-
-  // Calcula porcentagem para a barra térmica (0 a 100°C)
-  const percentualBarra = Math.min(Math.max(temperatura || 0, 0), 100);
+  const destaque = sensor.status === 'warning' || sensor.status === 'perigo';
 
   return (
-    <div
-      className={`p-3.5 rounded-lg border transition ${
-        isPerigo
-          ? 'bg-rose-50/60 border-rose-300'
-          : 'bg-slate-50/70 border-slate-200/80 hover:bg-slate-50'
-      }`}
-    >
-      <div className="flex justify-between items-start mb-2">
-        <div>
-          <div className="flex items-center space-x-1.5">
-            <span className="text-xs font-bold text-slate-800">
-              Escova #{sensor.numeroEscova}
-            </span>
-            <span className="text-[10px] bg-white text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 font-mono">
-              {sensor.modelo}
-            </span>
-          </div>
-          <div className="flex items-center space-x-1 text-[11px] text-slate-400 font-mono mt-0.5">
-            {isOnline ? (
-              <span className="flex items-center text-emerald-600 gap-1" title="ESP32 conectado">
-                <Wifi className="w-3 h-3" />
-                <span>{sensor.ipAtual}</span>
-              </span>
-            ) : (
-              <span className="flex items-center text-slate-400 gap-1" title="Sem IP reportado">
-                <WifiOff className="w-3 h-3" />
-                <span>Offline</span>
-              </span>
-            )}
-          </div>
+    <article className="px-5 py-6 sm:px-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <StatusDot status={sensor.status} />
+          <h3 className="text-[15px] text-ink">Escova {sensor.numeroEscova}</h3>
+          <span className="text-[13px] text-ink-3">{sensor.modelo}</span>
         </div>
-
-        {/* Temperatura Atual em destaque */}
-        <div className="text-right">
-          <span
-            className="text-lg font-black font-mono tracking-tight"
-            style={{ color: statusTheme.accent }}
-          >
-            {formatarTemperatura(temperatura)}
-          </span>
-          <p className="text-[10px] text-slate-400">
-            {sensor.ultimaLeitura?.dataHora
-              ? formatarHora(sensor.ultimaLeitura.dataHora)
-              : 'Sem leitura'}
-          </p>
-        </div>
+        {sensor.status !== 'normal' && (
+          <span className={`text-[13px] ${tema.textClass}`}>{tema.label}</span>
+        )}
       </div>
 
-      {/* Barra de progresso térmico */}
-      <div className="mt-2">
-        <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-          <div
-            className="h-1.5 rounded-full transition-all duration-500"
-            style={{
-              width: `${percentualBarra}%`,
-              backgroundColor: statusTheme.accent,
-            }}
+      <div className="mt-5 grid items-end gap-x-10 gap-y-4 sm:grid-cols-[180px_minmax(0,1fr)]">
+        <p
+          className="display num text-[40px] leading-none"
+          style={{ color: destaque ? tema.color : 'var(--color-ink)' }}
+        >
+          {formatarGrau(temperatura)}
+          <span className="ml-1 text-lg text-ink-3">°C</span>
+        </p>
+        <div className="pb-1">
+          <ThermalGauge
+            valor={temperatura}
+            status={sensor.status}
+            label={`Temperatura da escova ${sensor.numeroEscova}`}
           />
+          <div className="mt-1 flex justify-between text-xs text-ink-3">
+            <span className="num">
+              {sensor.ultimaLeitura
+                ? `Atualizado ${formatarRelativo(sensor.ultimaLeitura.dataHora)}`
+                : 'Sem leitura'}
+            </span>
+            <span className="num">{sensor.ipAtual ?? 'Sem IP'}</span>
+          </div>
         </div>
       </div>
-
-      {/* Alerta de Desgaste Térmico Crítico */}
-      {isPerigo && (
-        <div className="mt-2.5 flex items-center space-x-1.5 p-1.5 bg-rose-100/80 text-rose-800 text-[11px] font-semibold rounded border border-rose-200">
-          <AlertOctagon className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-          <span>Alerta: Limiar crítico (≥ 80°C) violado!</span>
-        </div>
-      )}
 
       {sensor.ultimaLeitura && (
-        <QualityGateResultList
-          resultados={sensor.ultimaLeitura.resultadosQualityGates}
-        />
+        <QualityGateResultList resultados={sensor.ultimaLeitura.resultadosQualityGates} />
       )}
-    </div>
+    </article>
   );
 };

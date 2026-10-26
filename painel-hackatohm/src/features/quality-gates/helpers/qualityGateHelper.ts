@@ -2,28 +2,12 @@ import { NivelSeveridade } from '@/features/quality-gates/types/qualityGate';
 
 export const SEVERIDADE_THEME: Record<
   NivelSeveridade,
-  { label: string; icon: string; classes: string }
+  { label: string; color: string; textClass: string }
 > = {
-  Normal: {
-    label: 'Normal',
-    icon: '✓',
-    classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  },
-  Atencao: {
-    label: 'Atenção',
-    icon: '!',
-    classes: 'bg-amber-50 text-amber-800 border-amber-200',
-  },
-  AlertaPreditivo: {
-    label: 'Alerta preditivo',
-    icon: '△',
-    classes: 'bg-orange-50 text-orange-800 border-orange-200',
-  },
-  Critico: {
-    label: 'Crítico',
-    icon: '⚠',
-    classes: 'bg-rose-50 text-rose-800 border-rose-200',
-  },
+  Normal: { label: 'Normal', color: 'var(--color-ok)', textClass: 'text-ink-2' },
+  Atencao: { label: 'Atenção', color: 'var(--color-warn)', textClass: 'text-warn' },
+  AlertaPreditivo: { label: 'Alerta preditivo', color: 'var(--color-warn)', textClass: 'text-warn' },
+  Critico: { label: 'Crítico', color: 'var(--color-hot)', textClass: 'text-hot' },
 };
 
 export function formatarSeveridade(severidade: NivelSeveridade): string {

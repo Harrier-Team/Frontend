@@ -1,51 +1,32 @@
-@import "tailwindcss";
-@import "./styles/tokens.css";
+@import '@fontsource-variable/archivo/wdth.css';
+@import 'tailwindcss';
+@import './styles/tokens.css';
 
 @layer base {
   * {
     box-sizing: border-box;
   }
 
-  body {
-    margin: 0;
-    padding: 0;
-    background-color: var(--color-background);
-    color: #0f172a;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    min-height: 100vh;
-  }
-
   html {
-    scrollbar-color: #94a3b8 #f1f5f9;
+    color-scheme: dark;
+    scrollbar-color: var(--color-line-strong) transparent;
     scrollbar-width: thin;
   }
 
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #f1f5f9;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    border: 2px solid #f1f5f9;
-    border-radius: 9999px;
-    background: #94a3b8;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   #root {
     min-height: 100vh;
-    width: 100%;
-    margin: 0;
-    padding: 0;
     display: flex;
     flex-direction: column;
   }
@@ -53,6 +34,7 @@
   button,
   a,
   select,
+  summary,
   input[type='checkbox'] {
     cursor: pointer;
   }
@@ -63,9 +45,21 @@
     cursor: not-allowed;
   }
 
-  :where(button, a, input, select, textarea):focus-visible {
-    outline: 3px solid #818cf8;
+  ::selection {
+    background: color-mix(in srgb, var(--color-flare) 28%, transparent);
+  }
+
+  :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-flare);
     outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    margin: 0;
+    font-weight: 500;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -77,5 +71,92 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+@layer components {
+  /* Título largo: ecoa as letras estendidas da logo */
+  .display {
+    font-stretch: 118%;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  .field {
+    width: 100%;
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font: inherit;
+    transition: border-color 0.15s;
+  }
+  .field::placeholder {
+    color: var(--color-ink-3);
+  }
+  .field:hover {
+    border-color: #38414c;
+  }
+  .field:focus-visible {
+    outline: none;
+    border-color: var(--color-ink-2);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-flare) 16%, transparent);
+  }
+  .field[aria-invalid='true'] {
+    border-color: var(--color-hot);
+  }
+
+  .field-label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--color-ink-2);
+    font-size: 13px;
+  }
+
+  .field-error {
+    margin-top: 6px;
+    color: var(--color-hot);
+    font-size: 13px;
+  }
+}
+
+dialog.sheet {
+  border: 1px solid var(--color-line-strong);
+  background: var(--color-panel);
+  color: var(--color-ink);
+  border-radius: 16px;
+  margin: auto;
+  padding: 0;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.7);
+}
+dialog.sheet::backdrop {
+  background: rgb(5 6 8 / 0.7);
+  backdrop-filter: blur(2px);
+}
+dialog.sheet[open] {
+  animation: sheet-in 0.22s var(--ease-out);
+}
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
+
+@keyframes flare-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
   }
 }

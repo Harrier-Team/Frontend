@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { Switch } from '@/components/ui/Switch';
 import {
   RegraQualidade,
   RegraQualidadeRequest,
@@ -76,87 +77,87 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4 rounded-xl border border-indigo-100 bg-indigo-50/40 p-5">
+    <form onSubmit={submit} className="space-y-5 px-6 pb-6 pt-5" noValidate>
       <div>
-        <h2 className="text-lg font-bold text-slate-900">
-          {regra ? 'Editar regra' : 'Nova regra'}
-        </h2>
-        <p className="mt-1 text-xs text-slate-500">
-          Tipo: temperatura.limiar_estatico
-        </p>
-      </div>
-
-      <div>
-        <label htmlFor="regra-nome" className="mb-1 block text-sm font-semibold text-slate-700">
+        <label htmlFor="regra-nome" className="field-label">
           Nome
         </label>
         <input
           id="regra-nome"
           value={values.nome}
           maxLength={120}
+          autoFocus
+          aria-invalid={Boolean(errors.nome)}
           onChange={(event) => updateValue('nome', event.target.value)}
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          className="field"
         />
-        {errors.nome && <p className="mt-1 text-xs text-rose-700">{errors.nome}</p>}
+        {errors.nome && <p className="field-error">{errors.nome}</p>}
       </div>
 
       <div>
-        <label htmlFor="regra-descricao" className="mb-1 block text-sm font-semibold text-slate-700">
-          Descrição
+        <label htmlFor="regra-descricao" className="field-label">
+          Descrição <span className="text-ink-3">(opcional)</span>
         </label>
         <textarea
           id="regra-descricao"
           value={values.descricao}
           maxLength={255}
-          rows={3}
+          rows={2}
+          aria-invalid={Boolean(errors.descricao)}
           onChange={(event) => updateValue('descricao', event.target.value)}
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          className="field resize-none"
         />
-        {errors.descricao && <p className="mt-1 text-xs text-rose-700">{errors.descricao}</p>}
+        {errors.descricao && <p className="field-error">{errors.descricao}</p>}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="regra-aviso" className="mb-1 block text-sm font-semibold text-slate-700">
-            Limite de aviso (°C)
+          <label htmlFor="regra-aviso" className="field-label">
+            Aviso a partir de (°C)
           </label>
           <input
             id="regra-aviso"
             type="number"
+            inputMode="decimal"
             step="any"
             value={Number.isNaN(values.parametros.aviso) ? '' : values.parametros.aviso}
+            aria-invalid={Boolean(errors.aviso)}
             onChange={(event) => updateLimit('aviso', event.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            className="field num"
           />
-          {errors.aviso && <p className="mt-1 text-xs text-rose-700">{errors.aviso}</p>}
+          {errors.aviso && <p className="field-error">{errors.aviso}</p>}
         </div>
         <div>
-          <label htmlFor="regra-critico" className="mb-1 block text-sm font-semibold text-slate-700">
-            Limite crítico (°C)
+          <label htmlFor="regra-critico" className="field-label">
+            Crítico a partir de (°C)
           </label>
           <input
             id="regra-critico"
             type="number"
+            inputMode="decimal"
             step="any"
             value={Number.isNaN(values.parametros.critico) ? '' : values.parametros.critico}
+            aria-invalid={Boolean(errors.critico)}
             onChange={(event) => updateLimit('critico', event.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            className="field num"
           />
-          {errors.critico && <p className="mt-1 text-xs text-rose-700">{errors.critico}</p>}
+          {errors.critico && <p className="field-error">{errors.critico}</p>}
         </div>
       </div>
 
-      <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-        <input
-          type="checkbox"
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-line px-4 py-3">
+        <span id="regra-ativa-label" className="text-sm text-ink">
+          Regra ativa
+        </span>
+        <Switch
           checked={values.ativo}
-          onChange={(event) => updateValue('ativo', event.target.checked)}
+          label="Regra ativa"
+          onChange={(valor) => updateValue('ativo', valor)}
         />
-        Regra globalmente ativa
-      </label>
+      </div>
 
-      <div className="flex justify-end gap-3">
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={salvando}>
+      <div className="flex justify-end gap-2 pt-1">
+        <Button variant="ghost" onClick={onCancel} disabled={salvando}>
           Cancelar
         </Button>
         <Button type="submit" busy={salvando}>

@@ -3,23 +3,30 @@ import React from 'react';
 interface AlertProps {
   title: string;
   message?: string;
-  tone?: 'info' | 'success' | 'warning' | 'error';
+  tone?: 'info' | 'warning' | 'error';
+  action?: React.ReactNode;
 }
 
-const toneClasses = {
-  info: 'bg-indigo-50 border-indigo-200 text-indigo-900',
-  success: 'bg-emerald-50 border-emerald-200 text-emerald-900',
-  warning: 'bg-amber-50 border-amber-200 text-amber-900',
-  error: 'bg-rose-50 border-rose-200 text-rose-900',
+const dot = {
+  info: 'var(--color-ink-2)',
+  warning: 'var(--color-warn)',
+  error: 'var(--color-hot)',
 };
 
-export const Alert: React.FC<AlertProps> = ({
-  title,
-  message,
-  tone = 'info',
-}) => (
-  <div className={`rounded-lg border p-4 ${toneClasses[tone]}`} role="status">
-    <p className="text-sm font-semibold">{title}</p>
-    {message && <p className="mt-1 text-sm opacity-80">{message}</p>}
+export const Alert: React.FC<AlertProps> = ({ title, message, tone = 'info', action }) => (
+  <div
+    role={tone === 'error' ? 'alert' : 'status'}
+    className="flex items-start gap-3 rounded-xl border border-line bg-panel px-4 py-3"
+  >
+    <span
+      aria-hidden="true"
+      className="mt-[7px] h-2 w-2 shrink-0 rounded-full"
+      style={{ background: dot[tone] }}
+    />
+    <div className="min-w-0 flex-1">
+      <p className="text-sm text-ink">{title}</p>
+      {message && <p className="mt-0.5 text-[13px] text-ink-2">{message}</p>}
+    </div>
+    {action}
   </div>
 );

@@ -1,57 +1,24 @@
 import { NivelStatus, SensorComTelemetria } from '@/features/telemetria/types/telemetria';
 
+export const LIMITE_ATENCAO = 60;
+export const LIMITE_PERIGO = 80;
+export const ESCALA_MAXIMA = 100;
+
 export interface StatusConfig {
   label: string;
-  badgeBg: string;
-  badgeText: string;
-  badgeBorder: string;
-  accent: string;
-  indicatorClass: string;
-  cardBorderHighlight: string;
-  description: string;
+  /** Cor semântica (token CSS) usada em pontos, marcadores e valores. */
+  color: string;
+  /** Classe de texto para rótulos de estado. */
+  textClass: string;
+  /** Peso de ordenação: maior = mais urgente. */
+  prioridade: number;
 }
 
 export const STATUS_THEME: Record<NivelStatus, StatusConfig> = {
-  normal: {
-    label: 'Normal',
-    badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    badgeText: 'text-emerald-700',
-    badgeBorder: 'border-emerald-200',
-    accent: '#10B981',
-    indicatorClass: 'bg-emerald-500',
-    cardBorderHighlight: 'border-l-4 border-l-emerald-500',
-    description: 'Temperatura e sensores em níveis operacionais ideais.',
-  },
-  warning: {
-    label: 'Atenção',
-    badgeBg: 'bg-amber-50 text-amber-800 border-amber-200',
-    badgeText: 'text-amber-800',
-    badgeBorder: 'border-amber-200',
-    accent: '#F59E0B',
-    indicatorClass: 'bg-amber-500',
-    cardBorderHighlight: 'border-l-4 border-l-amber-500',
-    description: 'Temperatura moderadamente elevada ou sensor oscilando.',
-  },
-  perigo: {
-    label: 'Desgaste / Perigo',
-    badgeBg: 'bg-rose-50 text-rose-700 border-rose-200',
-    badgeText: 'text-rose-700',
-    badgeBorder: 'border-rose-200',
-    accent: '#EF4444',
-    indicatorClass: 'bg-rose-500 animate-pulse',
-    cardBorderHighlight: 'border-l-4 border-l-rose-500 ring-1 ring-rose-300',
-    description: 'Temperatura crítica (≥ 80°C) com risco de dano térmico.',
-  },
-  offline: {
-    label: 'Sem Sinal',
-    badgeBg: 'bg-slate-100 text-slate-600 border-slate-200',
-    badgeText: 'text-slate-500',
-    badgeBorder: 'border-slate-200',
-    accent: '#94A3B8',
-    indicatorClass: 'bg-slate-300',
-    cardBorderHighlight: 'border-l-4 border-l-slate-300',
-    description: 'Aguardando primeira leitura de telemetria.',
-  },
+  normal: { label: 'Estável', color: 'var(--color-ok)', textClass: 'text-ink-2', prioridade: 0 },
+  warning: { label: 'Atenção', color: 'var(--color-warn)', textClass: 'text-warn', prioridade: 2 },
+  perigo: { label: 'Crítico', color: 'var(--color-hot)', textClass: 'text-hot', prioridade: 3 },
+  offline: { label: 'Sem sinal', color: 'var(--color-off)', textClass: 'text-ink-2', prioridade: 1 },
 };
 
 /**
@@ -66,11 +33,11 @@ export function classificarSensor(
     return temConexao ? 'normal' : 'offline';
   }
 
-  if (alertaDesgaste || valorCelsius >= 80) {
+  if (alertaDesgaste || valorCelsius >= LIMITE_PERIGO) {
     return 'perigo';
   }
 
-  if (valorCelsius >= 60) {
+  if (valorCelsius >= LIMITE_ATENCAO) {
     return 'warning';
   }
 
@@ -122,3 +89,30 @@ export function formatarHora(dataIso?: string | null): string {
   }
 }
 
+
+/**
+ * Número no padrão brasileiro, sem unidade (ex.: 54,2).
+ */
+export function formatarGrau(temp?: number | null): string {
+  if (temp === null || temp === undefined || isNaN(temp)) return '--';
+  return temp.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+/**
+ * Tempo decorrido em linguagem curta (ex.: "agora", "há 12 s", "há 5 min").
+ */
+export function formatarRelativo(dataIso?: string | null, agora: number = Date.now()): string {
+  if (!dataIso) return 'sem leitura';
+  const diff = Math.max(0, Math.round((agora - new Date(dataIso).getTime()) / 1000));
+  if (Number.isNaN(diff)) return 'sem leitura';
+  if (diff < 5) return 'agora';
+  if (diff < 60) return `há ${diff} s`;
+  if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `há ${Math.floor(diff / 3600)} h`;
+  return `há ${Math.floor(diff / 86400)} d`;
+}
+
+/** Ordena do mais urgente para o mais estável. */
+export function compararPorUrgencia(a: NivelStatus, b: NivelStatus): number {
+  return STATUS_THEME[b].prioridade - STATUS_THEME[a].prioridade;
+}

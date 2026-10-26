@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from './Button';
+import { Dialog } from './Dialog';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -19,36 +20,18 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   busy = false,
   onCancel,
   onConfirm,
-}) => {
-  if (!open) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onCancel();
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
-      >
-        <h2 id="confirm-dialog-title" className="text-lg font-bold text-slate-900">
-          {title}
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">{description}</p>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" variant="secondary" onClick={onCancel} disabled={busy}>
-            Cancelar
-          </Button>
-          <Button type="button" variant="danger" busy={busy} onClick={onConfirm}>
-            {confirmLabel}
-          </Button>
-        </div>
+}) => (
+  <Dialog open={open} title={title} onClose={onCancel} locked={busy}>
+    <div className="px-6 pb-6 pt-3">
+      <p className="text-sm leading-relaxed text-ink-2">{description}</p>
+      <div className="mt-6 flex justify-end gap-2">
+        <Button variant="ghost" onClick={onCancel} disabled={busy} data-autofocus>
+          Cancelar
+        </Button>
+        <Button variant="danger" busy={busy} onClick={onConfirm}>
+          {confirmLabel}
+        </Button>
       </div>
     </div>
-  );
-};
+  </Dialog>
+);

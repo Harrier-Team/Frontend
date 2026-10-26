@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { Link2, Power, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useRegrasQualidade } from '@/features/quality-gates/hooks/useRegrasQualidade';
 import { useRegrasQualidadeMotor } from '../hooks/useRegrasQualidadeMotor';
 import { RegraQualidade, VinculoRegraQualidade } from '@/features/quality-gates/types/regraQualidade';
 import { Alert } from '../../../components/ui/Alert';
-import { Button } from '../../../components/ui/Button';
+import { Button, IconButton } from '../../../components/ui/Button';
+import { Panel } from '../../../components/ui/Panel';
+import { Switch } from '../../../components/ui/Switch';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { LoadingState } from '../../../components/ui/LoadingState';
@@ -43,7 +45,7 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
       setRegraSelecionada('');
       setOperacaoErro(null);
     } catch {
-      setOperacaoErro('A regra pode já estar vinculada a este motor. Atualize a seção e tente novamente.');
+      setOperacaoErro('Não foi possível associar. A regra pode já estar vinculada a este motor.');
     }
   };
 
@@ -52,7 +54,7 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
       await alternar(vinculo);
       setOperacaoErro(null);
     } catch {
-      setOperacaoErro('Não foi possível alterar o estado deste vínculo.');
+      setOperacaoErro('Não foi possível alterar a regra neste motor.');
     }
   };
 
@@ -63,62 +65,53 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
       setVinculoRemovendo(null);
       setOperacaoErro(null);
     } catch {
-      setOperacaoErro('Não foi possível remover este vínculo.');
+      setOperacaoErro('Não foi possível remover a regra deste motor.');
     }
   };
 
   return (
-    <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-800">Regras de qualidade</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Regras ativas no motor são avaliadas junto às leituras em tempo real.
-          </p>
-        </div>
+    <section className="space-y-4" aria-labelledby="gates">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <h2 id="gates" className="display text-base">
+          Quality gates<span className="num ml-2 text-ink-3">{vinculos.length}</span>
+        </h2>
         <div className="flex gap-2">
           <select
-            aria-label="Regra disponível para associar"
+            aria-label="Regra para associar"
             value={regraSelecionada}
             onChange={(event) => setRegraSelecionada(event.target.value)}
-            className="max-w-56 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+            disabled={disponiveis.length === 0}
+            className="field h-8 w-auto min-w-44 max-w-56 py-0 text-[13px]"
           >
-            <option value="">Selecionar regra</option>
+            <option value="">
+              {disponiveis.length === 0 ? 'Nenhuma regra disponível' : 'Escolher regra'}
+            </option>
             {disponiveis.map((regra) => (
               <option key={regra.id} value={regra.id}>
                 {regra.nome}
               </option>
             ))}
           </select>
-          <Button
-            type="button"
-            className="px-3 py-2 text-xs"
-            disabled={!regraSelecionada}
-            busy={operando}
-            onClick={handleAssociar}
-          >
-            <Link2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+          <Button size="sm" variant="secondary" disabled={!regraSelecionada} busy={operando} onClick={handleAssociar}>
             Associar
           </Button>
         </div>
       </div>
 
-      {erro && <Alert title="Falha ao carregar vínculos" message={erro} tone="error" />}
-      {operacaoErro && (
-        <Alert title="Operação não concluída" message={operacaoErro} tone="error" />
-      )}
+      {erro && <Alert tone="error" title="Não foi possível carregar as regras" message={erro} />}
+      {operacaoErro && <Alert tone="error" title="Operação não concluída" message={operacaoErro} />}
 
       {carregando ? (
-        <LoadingState label="Carregando regras do motor..." />
+        <LoadingState label="Carregando regras" rows={2} />
       ) : vinculos.length === 0 ? (
         <EmptyState
-          title="Nenhuma regra vinculada"
-          description="Associe uma regra do catálogo para habilitar a avaliação neste motor."
+          title="Nenhuma regra neste motor"
+          description="Associe uma regra para avaliar cada leitura contra os limites."
         />
       ) : (
-        <div className="space-y-3">
+        <Panel>
           {vinculos.map((vinculo) => (
-            <VinculoCard
+            <VinculoRow
               key={vinculo.regraQualidadeId}
               vinculo={vinculo}
               operando={operando}
@@ -126,14 +119,14 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
               onRemove={setVinculoRemovendo}
             />
           ))}
-        </div>
+        </Panel>
       )}
 
       <ConfirmDialog
         open={Boolean(vinculoRemovendo)}
-        title={`Remover "${vinculoRemovendo?.regra.nome}" deste motor?`}
-        description="A regra continuará disponível no catálogo e será removido somente este vínculo."
-        confirmLabel="Remover vínculo"
+        title={`Remover ${vinculoRemovendo?.regra.nome ?? 'regra'} deste motor?`}
+        description="A regra continua disponível em Quality gates. Só o vínculo com este motor é removido."
+        confirmLabel="Remover"
         busy={operando}
         onCancel={() => setVinculoRemovendo(null)}
         onConfirm={handleRemover}
@@ -142,75 +135,44 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
   );
 };
 
-interface VinculoCardProps {
+interface VinculoRowProps {
   vinculo: VinculoRegraQualidade;
   operando: boolean;
   onToggle: (vinculo: VinculoRegraQualidade) => void;
   onRemove: (vinculo: VinculoRegraQualidade) => void;
 }
 
-const VinculoCard: React.FC<VinculoCardProps> = ({
-  vinculo,
-  operando,
-  onToggle,
-  onRemove,
-}) => {
+const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, operando, onToggle, onRemove }) => {
   const regra: RegraQualidade | null = vinculo.regra ?? null;
   if (!regra) {
     return (
-      <article className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
-        A API retornou um vínculo sem os dados da regra. Atualize a página ou tente
-        novamente.
-      </article>
+      <div className="px-5 py-4 text-sm text-hot">
+        A API retornou um vínculo sem os dados da regra. Atualize a página.
+      </div>
     );
   }
   const executando = regra.ativo && vinculo.ativo;
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-bold text-slate-800">{regra.nome}</h3>
-            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-              executando
-                ? 'bg-emerald-100 text-emerald-800'
-                : 'bg-amber-100 text-amber-800'
-            }`}>
-              {executando ? 'Executando' : 'Não executada'}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-slate-500">
-            Aviso: {regra.parametros.aviso} °C · Crítico: {regra.parametros.critico} °C
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Vínculo: {vinculo.ativo ? 'ativo' : 'inativo'} · Regra global:{' '}
-            {regra.ativo ? 'ativa' : 'inativa'}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            className="px-3 py-2 text-xs"
-            busy={operando}
-            onClick={() => onToggle(vinculo)}
-          >
-            <Power className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-            {vinculo.ativo ? 'Desativar vínculo' : 'Ativar vínculo'}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="px-3 py-2 text-xs text-rose-700 hover:bg-rose-50"
-            disabled={operando}
-            onClick={() => onRemove(vinculo)}
-          >
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-            Remover
-          </Button>
-        </div>
+    <div className="flex items-center gap-4 px-5 py-4">
+      <div className={`min-w-0 flex-1 ${executando ? '' : 'opacity-60'}`}>
+        <h3 className="truncate text-[15px] text-ink">{regra.nome}</h3>
+        <p className="num mt-0.5 text-[13px] text-ink-2">
+          Aviso em {regra.parametros.aviso} °C, crítico em {regra.parametros.critico} °C
+        </p>
+        {vinculo.ativo && !regra.ativo && (
+          <p className="mt-1 text-[13px] text-warn">Desativada em Quality gates, não está sendo avaliada.</p>
+        )}
       </div>
-    </article>
+      <Switch
+        checked={vinculo.ativo}
+        disabled={operando}
+        label={vinculo.ativo ? 'Pausar neste motor' : 'Avaliar neste motor'}
+        onChange={() => onToggle(vinculo)}
+      />
+      <IconButton label="Remover do motor" disabled={operando} onClick={() => onRemove(vinculo)}>
+        <Trash2 className="h-4 w-4" aria-hidden="true" />
+      </IconButton>
+    </div>
   );
 };

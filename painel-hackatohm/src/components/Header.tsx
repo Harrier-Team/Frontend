@@ -1,80 +1,78 @@
 import React from 'react';
-import { Gauge, Settings2 } from 'lucide-react';
-import { Link, NavLink } from 'react-router-dom';
-import harrierLogo from '../assets/HarrierTeamLogo.jpeg';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import harrierMark from '../assets/harrier-mark.png';
+import { useMonitoramento } from '../hooks/useMonitoramento';
+
+const linkBase =
+  'relative flex h-14 items-center px-1 text-sm transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-px after:transition-colors';
+
+const ConexaoAoVivo: React.FC = () => {
+  const { statusConexaoHub } = useMonitoramento();
+  const ao_vivo = statusConexaoHub === 'conectado';
+  const texto = {
+    conectado: 'Ao vivo',
+    conectando: 'Conectando',
+    reconectando: 'Reconectando',
+    desconectado: 'Sem conexão',
+  }[statusConexaoHub];
+
+  return (
+    <div className="flex items-center gap-2 text-[13px] text-ink-2" role="status">
+      <span
+        aria-hidden="true"
+        className="h-1.5 w-1.5 rounded-full"
+        style={{
+          background: ao_vivo ? 'var(--color-flare)' : 'var(--color-warn)',
+          boxShadow: ao_vivo ? '0 0 10px rgb(241 237 228 / 0.7)' : undefined,
+          animation: ao_vivo ? undefined : 'flare-breathe 1.6s ease-in-out infinite',
+        }}
+      />
+      <span className={ao_vivo ? '' : 'text-warn'}>{texto}</span>
+    </div>
+  );
+};
 
 export const Header: React.FC = () => {
-  return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="flex min-h-[76px] flex-wrap items-center justify-between gap-4 py-3">
-          {/* Logotipo e Identificação */}
-          <Link to="/" className="flex items-center gap-3">
-            <div className="h-10 w-10 overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-sm">
-              <img
-                src={harrierLogo}
-                alt="Harrier Team"
-                className="h-full w-full object-cover object-center"
-              />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-base font-extrabold tracking-[0.12em] text-slate-900">
-                  HACKATOHM
-                </span>
-                <span className="hidden rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:inline">
-                  Operações
-                </span>
-              </div>
-              <p className="text-[11px] font-medium text-slate-500">
-                Supervisão de motores e telemetria
-              </p>
-            </div>
-          </Link>
+  const { pathname } = useLocation();
+  const emMotores = pathname === '/' || pathname.startsWith('/motores');
 
-          <div className="order-3 flex w-full items-center justify-end gap-3 border-t border-slate-100 pt-2 sm:order-none sm:w-auto sm:border-0 sm:pt-0">
-          <nav className="flex items-center gap-1 overflow-x-auto" aria-label="Navegação principal">
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) =>
-                `inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                }`
-              }
-            >
-              <Gauge className="h-4 w-4" aria-hidden="true" />
-              Visão geral
-            </NavLink>
-            <NavLink
-              to="/motores"
-              className={({ isActive }) =>
-                `whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                }`
-              }
-            >
-              Motores
-            </NavLink>
-            <NavLink
-              to="/regras-qualidade"
-              className={({ isActive }) =>
-                `inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                }`
-              }
-            >
-              <Settings2 className="h-4 w-4" aria-hidden="true" />
-              Quality Gates
-            </NavLink>
-          </nav>
-          </div>
+  return (
+    <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-md">
+      <div className="mx-auto flex h-14 w-full max-w-[1120px] items-center gap-8 px-5 sm:px-8">
+        <Link to="/" className="flex items-center gap-3" aria-label="Harrier, início">
+          <img src={harrierMark} alt="" className="h-8 w-auto" />
+          <span
+            className="hidden text-[13px] font-medium uppercase text-ink sm:inline"
+            style={{ fontStretch: '125%', letterSpacing: '0.34em' }}
+          >
+            Harrier
+          </span>
+        </Link>
+
+        <nav aria-label="Principal" className="flex items-center gap-5">
+          <Link
+            to="/"
+            aria-current={emMotores ? 'page' : undefined}
+            className={`${linkBase} ${
+              emMotores ? 'text-ink after:bg-flare' : 'text-ink-2 after:bg-transparent hover:text-ink'
+            }`}
+          >
+            Motores
+          </Link>
+          <NavLink
+            to="/regras-qualidade"
+            className={({ isActive }) =>
+              `${linkBase} ${
+                isActive ? 'text-ink after:bg-flare' : 'text-ink-2 after:bg-transparent hover:text-ink'
+              }`
+            }
+          >
+            Quality gates
+          </NavLink>
+        </nav>
+
+        <div className="ml-auto">
+          <ConexaoAoVivo />
         </div>
       </div>
     </header>

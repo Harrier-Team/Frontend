@@ -2,14 +2,11 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import { SensorInput } from '../types/motor';
 import { SensorFormRow } from './SensorFormRow';
+import { Button } from '../../../components/ui/Button';
 
 interface SensorFormListProps {
   sensores: SensorInput[];
-  onChange: <K extends keyof SensorInput>(
-    index: number,
-    campo: K,
-    valor: SensorInput[K]
-  ) => void;
+  onChange: <K extends keyof SensorInput>(index: number, campo: K, valor: SensorInput[K]) => void;
   onAdd: () => void;
   onRemove: (index: number) => void;
 }
@@ -20,29 +17,20 @@ export const SensorFormList: React.FC<SensorFormListProps> = ({
   onAdd,
   onRemove,
 }) => (
-  <section className="border-t border-slate-100 pt-4">
+  <fieldset className="min-w-0 border-0 p-0">
     <div className="mb-3 flex items-center justify-between">
-      <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-          Sensores ESP32 das Escovas ({sensores.length})
-        </label>
-        <p className="text-[11px] text-slate-500">
-          Informe o MAC Address do ESP32 de cada escova monitorada
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={onAdd}
-        className="flex items-center space-x-1 text-xs font-bold text-indigo-600 hover:text-indigo-700"
-      >
+      <legend className="float-left text-sm text-ink">
+        Escovas<span className="num ml-2 text-ink-3">{sensores.length}</span>
+      </legend>
+      <Button size="sm" variant="ghost" onClick={onAdd} className="-mr-2">
         <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-        <span>Adicionar Escova</span>
-      </button>
+        Adicionar escova
+      </Button>
     </div>
-    <div className="max-h-56 space-y-3 overflow-y-auto pr-1">
+    <div className="clear-both max-h-64 divide-y divide-line overflow-y-auto rounded-xl border border-line">
       {sensores.map((sensor, index) => (
         <SensorFormRow
-          key={`${sensor.numeroEscova}-${index}`}
+          key={index}
           sensor={sensor}
           index={index}
           podeRemover={sensores.length > 1}
@@ -51,5 +39,5 @@ export const SensorFormList: React.FC<SensorFormListProps> = ({
         />
       ))}
     </div>
-  </section>
+  </fieldset>
 );

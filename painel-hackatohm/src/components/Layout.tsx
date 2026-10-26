@@ -2,15 +2,11 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 
-export const Layout: React.FC = () => {
-  return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
-      <Header />
-
-      {/* Conteúdo Dinâmico das Páginas */}
-      <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        <Outlet />
-      </main>
-    </div>
-  );
-};
+export const Layout: React.FC = () => (
+  <div className="flex min-h-screen flex-col">
+    <Header />
+    <main className="mx-auto w-full max-w-[1120px] flex-1 px-5 pb-24 pt-10 sm:px-8 sm:pt-14">
+      <Outlet />
+    </main>
+  </div>
+);

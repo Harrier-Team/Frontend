@@ -1,13 +1,32 @@
-:root {
-  --color-brand-500: #4f46e5;
-  --color-brand-600: #4338ca;
-  --color-success-500: #10b981;
-  --color-warning-500: #f59e0b;
-  --color-danger-500: #f43f5e;
-  --color-neutral-500: #64748b;
-  --color-surface: #ffffff;
-  --color-background: #f8fafc;
-  --color-border: #e2e8f0;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #64748b;
+/*
+  Sistema visual Harrier
+  Grafite frio + aço escovado, como a logo. Cor só significa atenção:
+  o estado normal fica em tons neutros e o ponto de luz (flare) marca o que está vivo.
+*/
+@theme {
+  /* Superfícies */
+  --color-canvas: #0b0d10;
+  --color-panel: #101317;
+  --color-raised: #161a1f;
+  --color-line: #1d2228;
+  --color-line-strong: #2a313a;
+
+  /* Texto (aço) */
+  --color-ink: #e4e8ec;
+  --color-ink-2: #9aa4af;
+  --color-ink-3: #828c98;
+
+  /* Flare: o único acento da marca */
+  --color-flare: #f1ede4;
+
+  /* Estados, dessaturados para conviver com o grafite */
+  --color-ok: #7fb3a0;
+  --color-warn: #d2a553;
+  --color-hot: #e0735f;
+  --color-off: #5f6975;
+
+  --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --radius-panel: 14px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
