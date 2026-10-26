@@ -1,5 +1,6 @@
-import { api } from '../../../services/api';
+import { api } from '@/services/api';
 import { VinculoRegraQualidade } from '@/features/quality-gates/types/regraQualidade';
+import { qualityGateRoutes } from '@/features/quality-gates/services/qualityGateRoutes';
 
 function validarVinculo(
   vinculo: VinculoRegraQualidade,
@@ -21,7 +22,7 @@ function validarVinculo(
 export const vinculoRegraQualidadeService = {
   async listarPorMotor(motorId: number): Promise<VinculoRegraQualidade[]> {
     const response = await api.get<VinculoRegraQualidade[]>(
-      `/motores/${motorId}/regras-qualidade`
+      qualityGateRoutes.motorCollection(motorId)
     );
     return response.data.map((vinculo) =>
       validarVinculo(vinculo, 'listar regras do motor')
@@ -33,7 +34,7 @@ export const vinculoRegraQualidadeService = {
     regraId: string
   ): Promise<VinculoRegraQualidade> {
     const response = await api.get<VinculoRegraQualidade>(
-      `/motores/${motorId}/regras-qualidade/${regraId}`
+      qualityGateRoutes.motorByRule(motorId, regraId)
     );
     return validarVinculo(response.data, 'obter vínculo');
   },
@@ -44,7 +45,7 @@ export const vinculoRegraQualidadeService = {
     ativo = true
   ): Promise<VinculoRegraQualidade> {
     const response = await api.post<VinculoRegraQualidade>(
-      `/motores/${motorId}/regras-qualidade/${regraId}`,
+      qualityGateRoutes.motorByRule(motorId, regraId),
       { ativo }
     );
     return validarVinculo(response.data, 'associar regra');
@@ -56,13 +57,13 @@ export const vinculoRegraQualidadeService = {
     ativo: boolean
   ): Promise<VinculoRegraQualidade> {
     const response = await api.put<VinculoRegraQualidade>(
-      `/motores/${motorId}/regras-qualidade/${regraId}`,
+      qualityGateRoutes.motorByRule(motorId, regraId),
       { ativo }
     );
     return validarVinculo(response.data, 'atualizar vínculo');
   },
 
   async remover(motorId: number, regraId: string): Promise<void> {
-    await api.delete(`/motores/${motorId}/regras-qualidade/${regraId}`);
+    await api.delete(qualityGateRoutes.motorByRule(motorId, regraId));
   },
 };

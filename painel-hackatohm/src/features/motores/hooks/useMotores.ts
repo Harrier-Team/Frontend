@@ -38,6 +38,10 @@ export function useMotores() {
     setMotores((anteriores) => anteriores.filter((m) => m.id !== id));
   };
 
+  const pingarSensor = async (sensorId: string): Promise<void> => {
+    await motorService.pingarSensor(sensorId);
+  };
+
   return {
     motores,
     carregando,
@@ -45,5 +49,6 @@ export function useMotores() {
     recarregar: carregarMotores,
     cadastrarMotor,
     deletarMotor,
+    pingarSensor,
   };
 }

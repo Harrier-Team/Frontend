@@ -1,6 +1,7 @@
 import { api } from '@/services/api';
 import { LeituraMaisRecente } from '@/features/telemetria/types/telemetria';
 import { ApiRequestError } from '@/types/api';
+import { telemetryRoutes } from './telemetryRoutes';
 
 interface UltimaLeituraApiResponse {
   sensorId: string;
@@ -15,12 +16,15 @@ export const leituraService = {
     numeroEscova: number
   ): Promise<LeituraMaisRecente | null> {
     try {
-      const response = await api.get<UltimaLeituraApiResponse>('/leituras', {
+      const response = await api.get<UltimaLeituraApiResponse>(
+        telemetryRoutes.latestReading,
+        {
         params: {
           espMacAddress: espMacAddress.trim().toUpperCase(),
           numeroEscova,
         },
-      });
+        }
+      );
       return {
         ...response.data,
         resultadosQualityGates: [],

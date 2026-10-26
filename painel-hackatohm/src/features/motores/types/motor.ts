@@ -18,6 +18,10 @@ export interface SensorResponse {
   ultimaConexao?: string;
 }
 
+export interface SensorInputWithMotor extends SensorInput {
+  motorId: number;
+}
+
 export interface MotorResponse {
   id: number;
   nome: string;
