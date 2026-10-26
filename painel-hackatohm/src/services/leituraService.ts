@@ -1,5 +1,6 @@
 import { api } from './api';
 import { LeituraMaisRecente } from '../types/telemetria';
+import { ApiRequestError } from '../types/api';
 
 export const leituraService = {
   async obterUltimaLeitura(
@@ -14,12 +15,16 @@ export const leituraService = {
         },
       });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 404 significa que o sensor ainda não enviou telemetria
-      if (error.response?.status === 404 || error.message?.includes('404')) {
+      if (error instanceof ApiRequestError && error.status === 404) {
         return null;
       }
-      console.warn(`[Telemetria] Falha ao ler sensor ${espMacAddress} #${numeroEscova}:`, error.message);
+      const message = error instanceof Error ? error.message : 'erro desconhecido';
+      console.warn(
+        `[Telemetria] Falha ao ler sensor ${espMacAddress} #${numeroEscova}:`,
+        message
+      );
       return null;
     }
   },
@@ -30,4 +35,3 @@ export const leituraService = {
     return parts[0].trim().toUpperCase();
   },
 };
-

@@ -8,19 +8,22 @@ import { DetalhesMotor } from './pages/DetalhesMotor'
 import { Home } from './pages/Home'
 import { ListaMotores } from './pages/ListaMotores'
 import { RegrasQualidade } from './pages/RegrasQualidade'
+import { MonitoramentoProvider } from './hooks/MonitoramentoContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route element={<Layout />}>
-          <Route path="/inicio" element={<Home />} />
-          <Route path="/motores" element={<ListaMotores />} />
-          <Route path="/motores/:id" element={<DetalhesMotor />} />
-          <Route path="/regras-qualidade" element={<RegrasQualidade />} />
-        </Route>
-      </Routes>
+      <MonitoramentoProvider>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route element={<Layout />}>
+            <Route path="/inicio" element={<Home />} />
+            <Route path="/motores" element={<ListaMotores />} />
+            <Route path="/motores/:id" element={<DetalhesMotor />} />
+            <Route path="/regras-qualidade" element={<RegrasQualidade />} />
+          </Route>
+        </Routes>
+      </MonitoramentoProvider>
     </BrowserRouter>
   </StrictMode>,
 )

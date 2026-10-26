@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useMotores } from './hooks/useMotores';
-import { useTelemetria } from './hooks/useTelemetria';
+import { useMonitoramento } from './hooks/MonitoramentoContext';
 import { Header } from './components/Header';
 import { KpiStatsBar } from './components/KpiStatsBar';
 import { MotorCard } from './components/MotorCard';
@@ -16,13 +15,10 @@ export default function App() {
     recarregar: recarregarMotores,
     cadastrarMotor,
     deletarMotor,
-  } = useMotores();
-
-  const {
     motoresComStatus,
     kpis,
     statusConexaoHub,
-  } = useTelemetria(motores);
+  } = useMonitoramento();
 
   const [modalCadastroAberto, setModalCadastroAberto] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState('todos');

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MotorResponse } from '../types/motor';
 import {
   MotorComStatus,
@@ -11,6 +11,7 @@ import {
   classificarSensor,
   calcularStatusGeralDoMotor,
 } from '../utils/statusHelper';
+import { leituraService } from '../services/leituraService';
 
 // Função utilitária para normalizar MAC addresses (remove : - e espaços)
 function normalizarMac(mac?: string | null): string {
@@ -46,6 +47,7 @@ export function useTelemetria(motores: MotorResponse[]) {
   const [motoresComStatus, setMotoresComStatus] = useState<MotorComStatus[]>([]);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date | null>(null);
   const [statusConexaoHub, setStatusConexaoHub] = useState<StatusConexaoHub>('desconectado');
+  const leiturasIniciaisSolicitadas = useRef(new Set<string>());
 
   // 1. Inicializa o estado dos motores imediatamente na tela (sem disparar loop de GETs lentos)
   useEffect(() => {
@@ -101,6 +103,71 @@ export function useTelemetria(motores: MotorResponse[]) {
         };
       });
     });
+  }, [motores]);
+
+  useEffect(() => {
+    const sensores = motores.flatMap((motor) => motor.sensores || []);
+    const sensoresPendentes = sensores.filter((sensor) => {
+      if (leiturasIniciaisSolicitadas.current.has(sensor.id)) return false;
+      leiturasIniciaisSolicitadas.current.add(sensor.id);
+      return true;
+    });
+
+    if (sensoresPendentes.length === 0) return;
+
+    let cancelado = false;
+    void Promise.all(
+      sensoresPendentes.map(async (sensor) => {
+        const macAddress = leituraService.extrairMacAddress(sensor.id);
+        const leitura = await leituraService.obterUltimaLeitura(
+          macAddress,
+          sensor.numeroEscova
+        );
+        if (cancelado || !leitura) return;
+
+        setMotoresComStatus((anteriores) =>
+          anteriores.map((motor) => {
+            const sensorAtual = motor.sensores.find((item) => item.id === sensor.id);
+            if (!sensorAtual || sensorAtual.ultimaLeitura) return motor;
+
+            const sensoresAtualizados = motor.sensores.map((item) =>
+              item.id === sensor.id
+                ? {
+                    ...item,
+                    ultimaLeitura: {
+                      ...leitura,
+                      resultadosQualityGates: leitura.resultadosQualityGates ?? [],
+                    },
+                    status: classificarSensor(
+                      leitura.valorCelsius,
+                      leitura.alertaDesgaste,
+                      true
+                    ),
+                  }
+                : item
+            );
+            const temperaturas = sensoresAtualizados
+              .map((item) => item.ultimaLeitura?.valorCelsius)
+              .filter((value): value is number => typeof value === 'number');
+
+            return {
+              ...motor,
+              sensores: sensoresAtualizados,
+              statusGeral: calcularStatusGeralDoMotor(sensoresAtualizados),
+              temperaturaMaxima:
+                temperaturas.length > 0 ? Math.max(...temperaturas) : null,
+              totalAlertas: sensoresAtualizados.filter(
+                (item) => item.status === 'perigo'
+              ).length,
+            };
+          })
+        );
+      })
+    );
+
+    return () => {
+      cancelado = true;
+    };
   }, [motores]);
 
   // 2. Conexão WebSocket via SignalR e aplicação direta dos pushes em tempo real
