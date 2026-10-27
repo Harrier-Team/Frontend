@@ -1,3 +1,4 @@
+import { TIPO_ASSIMETRIA } from '@/features/quality-gates/helpers/tiposRegra';
 import { NivelSeveridade } from '@/features/quality-gates/types/qualityGate';
 import { MotivoStatus, SituacaoMotor } from '@/features/telemetria/types/telemetria';
 import { MotorTelemetria, SerieEscova } from '@/features/telemetria/store/tipos';
@@ -29,9 +30,13 @@ export interface ResumoEscova {
   avaliacao: EstadoAvaliacao;
 }
 
+/**
+ * Severidade e avaliação da escova. A assimetria pertence ao motor (o backend a
+ * repete em cada escova), então não entra na severidade de uma escova isolada.
+ */
 export function resumirEscova(serie: SerieEscova | undefined): ResumoEscova {
   const ultima = serie?.ultima ?? null;
-  const gates = ultima?.resultadosQualityGates ?? [];
+  const gates = (ultima?.resultadosQualityGates ?? []).filter((g) => g.tipoRegra !== TIPO_ASSIMETRIA);
   const avaliacao = estadoAvaliacao(gates, ultima !== null);
   return {
     severidade: avaliacao === 'avaliada' ? consolidarSeveridade(gates) : null,

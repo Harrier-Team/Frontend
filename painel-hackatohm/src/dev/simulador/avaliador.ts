@@ -165,9 +165,18 @@ export function consolidarStatus(
     else contagem.normal += 1;
 
     for (const resultado of validos) {
-      if (RANK[resultado.severidade] > RANK[severidadeGeral]) {
+      const assimetria = resultado.tipoRegra === 'temperatura.assimetria_escovas';
+      const maior = RANK[resultado.severidade] > RANK[severidadeGeral];
+      // Em empate, o motivo prefere uma regra de escova à assimetria do motor.
+      const desempate =
+        RANK[resultado.severidade] === RANK[severidadeGeral] &&
+        pior?.resultado.tipoRegra === 'temperatura.assimetria_escovas' &&
+        !assimetria &&
+        resultado.severidade !== 'Normal';
+      if (maior || desempate) {
         severidadeGeral = resultado.severidade;
-        pior = { numeroEscova, resultado };
+        const escovaMaxima = resultado.metadados?.escovaMaxima;
+        pior = { numeroEscova: assimetria && typeof escovaMaxima === 'number' ? escovaMaxima : numeroEscova, resultado };
       }
     }
   }

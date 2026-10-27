@@ -24,6 +24,7 @@ export const FreshnessIndicator: React.FC<FreshnessIndicatorProps> = ({
   agora,
   compacto = false,
 }) => {
+  if (compacto && dado === 'sem-leitura') return null;
   const idade = ultimoLoteEm ? formatarRelativo(ultimoLoteEm, agora) : null;
   const desatualizado = dado === 'atrasado' || dado === 'offline';
 

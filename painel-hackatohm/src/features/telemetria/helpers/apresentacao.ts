@@ -1,5 +1,6 @@
 import { SEVERIDADE_THEME } from '@/features/quality-gates/helpers/qualityGateHelper';
 import { EstadoDado, EstadoPrincipal } from './estadoHelper';
+import { formatarGrau } from './statusHelper';
 import { ParametrosRegra } from '@/features/quality-gates/types/regraQualidade';
 
 export interface TemaEstado {
@@ -63,4 +64,12 @@ export function escalaDoGauge(
     max = Math.max(max, Math.ceil(v / 10) * 10);
   }
   return { min, max };
+}
+
+/** Texto para leitores de tela: "72,4 graus, abaixo do aviso de 80". */
+export function textoDoMedidor(valor: number, limites: ParametrosRegra): string {
+  const v = formatarGrau(valor);
+  if (valor >= limites.critico) return `${v} graus, no limite crítico de ${limites.critico} ou acima`;
+  if (valor >= limites.aviso) return `${v} graus, acima do aviso de ${limites.aviso}`;
+  return `${v} graus, abaixo do aviso de ${limites.aviso}`;
 }

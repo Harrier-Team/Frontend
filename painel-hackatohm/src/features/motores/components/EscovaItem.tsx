@@ -57,7 +57,6 @@ export const EscovaItem: React.FC<EscovaItemProps> = ({ sensor, serie, dado, ago
         <div className="pb-1">
           <ThermalGauge
             valor={temperatura}
-            severidade={severidade}
             limites={limites}
             label={`Temperatura da escova ${sensor.numeroEscova}`}
           />

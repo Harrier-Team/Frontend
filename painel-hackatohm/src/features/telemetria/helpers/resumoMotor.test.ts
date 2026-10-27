@@ -167,3 +167,18 @@ describe('escalaDoGauge', () => {
     expect(escala.max).toBeGreaterThan(0);
   });
 });
+
+describe('resumirEscova e assimetria', () => {
+  it('a assimetria repetida pelo backend não torna a escova crítica', () => {
+    const serie = mesclarLeitura(
+      SERIE_VAZIA,
+      leitura({
+        resultadosQualityGates: [
+          gate(),
+          gateAlerta('Critico', { tipoRegra: 'temperatura.assimetria_escovas', regraQualidadeId: 'assim' }),
+        ],
+      })
+    ).serie;
+    expect(resumirEscova(serie).severidade).toBe('Normal');
+  });
+});
