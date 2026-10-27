@@ -23,6 +23,7 @@ import { useMonitoramento } from '../../../hooks/useMonitoramento';
 import { ehNaoEncontrado, obterMensagemErro } from '../../../utils/errorHelper';
 import { useMotorTelemetria } from '../../telemetria/hooks/useTelemetriaStore';
 import { useLimitesTermicos } from '../hooks/useLimitesTermicos';
+import { useRegrasQualidadeMotor } from '../hooks/useRegrasQualidadeMotor';
 import { useAssinarMotor } from '../../telemetria/hooks/useAssinarMotor';
 import { useAgora } from '../../telemetria/hooks/useAgora';
 import { resumirMotor } from '../../telemetria/helpers/resumoMotor';
@@ -33,7 +34,7 @@ import { FreshnessIndicator } from '../../telemetria/components/FreshnessIndicat
 import { TrendChart } from '../../telemetria/components/TrendChart';
 
 type AbaMotor = 'monitoramento' | 'regras' | 'dispositivo';
-const ABAS: Array<{ id: AbaMotor; rotulo: string }> = [
+const ABAS: Array<{ id: AbaMotor; rotulo: string; contagem?: number }> = [
   { id: 'monitoramento', rotulo: 'Monitoramento' },
   { id: 'regras', rotulo: 'Regras' },
   { id: 'dispositivo', rotulo: 'Dispositivo' },
@@ -62,6 +63,7 @@ export const DetalhesMotor: React.FC = () => {
   const resumo = resumirMotor(telemetria, agora);
   useAssinarMotor(motorId);
   const limites = useLimitesTermicos(motorId ?? -1);
+  const regrasMotor = useRegrasQualidadeMotor(motorId ?? -1);
   const aba = abaDaRota(segmentoAba);
 
   const carregar = useCallback(() => {
@@ -154,6 +156,13 @@ export const DetalhesMotor: React.FC = () => {
   const desatualizado = resumo.dado === 'atrasado' || resumo.dado === 'offline';
   const grupoAssimetria = grupos.find((g) => g.tipoRegra === TIPO_ASSIMETRIA);
 
+  // A contagem só aparece com os vínculos carregados: zero falso seria pior que nenhum número.
+  const abas = ABAS.map((a) =>
+    a.id === 'regras' && !regrasMotor.carregando && !regrasMotor.erro
+      ? { ...a, contagem: regrasMotor.vinculos.length }
+      : a
+  );
+
   const irParaAba = (proxima: string) =>
     navigate(proxima === 'monitoramento' ? `/motores/${motor.id}` : `/motores/${motor.id}/${proxima}`);
 
@@ -232,7 +241,7 @@ export const DetalhesMotor: React.FC = () => {
         prefixo="motor"
         valor={abaAtiva}
         onChange={irParaAba}
-        itens={ABAS}
+        itens={abas}
       />
 
       <div
@@ -284,7 +293,7 @@ export const DetalhesMotor: React.FC = () => {
           </>
         )}
 
-        {abaAtiva === 'regras' && <MotorQualityRulesSection motorId={motor.id} escovas={escovas} />}
+        {abaAtiva === 'regras' && <MotorQualityRulesSection motorId={motor.id} controle={regrasMotor} escovas={escovas} />}
 
         {abaAtiva === 'dispositivo' && <DispositivoMotor motor={motor} telemetria={telemetria} mac={mac} />}
       </div>

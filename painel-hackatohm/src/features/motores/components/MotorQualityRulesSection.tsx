@@ -18,12 +18,15 @@ import { LoadingState } from '../../../components/ui/LoadingState';
 
 interface MotorQualityRulesSectionProps {
   motorId: number;
+  /** Vínculos do motor; o estado vive na página para a aba mostrar a contagem. */
+  controle: ReturnType<typeof useRegrasQualidadeMotor>;
   /** Últimas leituras do motor, para posicionar o valor atual na escala de cada regra. */
   escovas?: Record<number, SerieEscova>;
 }
 
 export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> = ({
   motorId,
+  controle,
   escovas,
 }) => {
   const {
@@ -34,7 +37,7 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
     associar,
     alternar,
     remover,
-  } = useRegrasQualidadeMotor(motorId);
+  } = controle;
   const { regras } = useRegrasQualidade();
   const [regraSelecionada, setRegraSelecionada] = useState('');
   const [vinculoRemovendo, setVinculoRemovendo] =
