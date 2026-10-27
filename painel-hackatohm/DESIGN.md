@@ -165,8 +165,8 @@ pontos (≥ 3:1).
 | `canvas` | `#0b0d10` | Fundo da página |
 | `panel` | `#111418` | Superfícies (painéis, cartões) |
 | `raised` | `#171b21` | Hover, item selecionado, tooltip |
-| `line` | `#1f252c` | Divisores |
-| `line-strong` | `#2c343e` | Bordas de campos, eixos do gráfico |
+| `line` | `#282f36` | Divisores |
+| `line-strong` | `#3b4651` | Bordas de campos, eixos do gráfico |
 | `ink` | `#e6e9ed` | Texto primário, valores |
 | `ink-2` | `#a0a9b4` | Texto secundário |
 | `ink-3` | `#7f8995` | Rótulos, metadados, dado atrasado |

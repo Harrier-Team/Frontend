@@ -68,8 +68,11 @@ SignalR necessária no ambiente de produção.
 
 ## Funcionalidades
 
-- Visão geral dos motores ordenada por urgência, com filtros por estado (setas
-  do teclado), título que responde "algum motor precisa de ação?", o motivo do
+- Visão geral com a faixa "Estado do sistema" (render ilustrativo do anel
+  coletor, só em telas largas), indicadores de estado clicáveis como filtro
+  (inclusive com zero), busca por nome e tipo sem acentos, "Limpar filtros",
+  contagem de resultados, botão de atualizar e passos do primeiro acesso. Lista
+  ordenada por urgência, com mini anel por motor, título que responde "algum motor precisa de ação?", o motivo do
   motor mais grave, temperaturas por escova, sparkline da sessão, ΔT e idade do
   último lote.
 - Severidade sempre vinda do backend (`severidade` dos gates e
@@ -83,9 +86,13 @@ SignalR necessária no ambiente de produção.
 - Detalhe do motor com abas Monitoramento, Regras e Dispositivo
   (`/motores/:id`, `/motores/:id/regras`, `/motores/:id/dispositivo`): cartões
   por escova, cartão do motor com a assimetria (mostrada uma vez, no escopo do
-  motor), gráfico de tendência da sessão (5 min, 15 min e sessão, limites
-  tracejados da regra do motor, marcadores de alerta, lacunas, crosshair e
-  tabela acessível) e diagnósticos agrupados por regra.
+  motor), anel coletor esquemático (posições não medidas) com seleção
+  compartilhada entre anel, cartões e gráfico (hover, foco e setas), gráfico de
+  tendência da sessão (5 min, 15 min e sessão, limites tracejados da regra do
+  motor, marcador só na transição de severidade, trecho em alerta na cor da
+  severidade, lacunas, crosshair e tabela acessível) e diagnósticos agrupados
+  por regra, com metadados (temperatura anterior e intervalo no gradiente;
+  mínima e máxima na assimetria). A aba Regras mostra a contagem de vínculos.
 - Cadastro, detalhamento e exclusão protegida de motores e suas escovas. Cada
   motor tem um único MAC de ESP (`AA:BB:CC:DD:EE:FF`) e escovas com números
   positivos e únicos.
@@ -97,9 +104,14 @@ SignalR necessária no ambiente de produção.
   leituras repetidas e sem deixar uma resposta HTTP antiga sobrescrever o
   dado mais recente do hub.
 - Reconexão automática do cliente SignalR.
-- Catálogo de regras de Quality Gates com os três tipos do backend: limiar
-  estático (°C), gradiente térmico (°C/min) e assimetria entre escovas (°C de
-  diferença). A edição envia o objeto completo, incluindo `tipoRegra`.
+- Catálogo de regras de Quality Gates com os três tipos do backend, com nome
+  amigável e o técnico como subtítulo: Limite de temperatura (limiar estático,
+  °C), Velocidade de aquecimento (gradiente térmico, °C/min) e Diferença entre
+  escovas (assimetria, °C de diferença). Tipo desconhecido aparece pelo
+  identificador, sem unidade e somente leitura. Regras novas começam sem
+  limites sugeridos; erros de campo do Problem Details aparecem no campo e o
+  modal permanece aberto. A edição envia o objeto completo, incluindo `tipoRegra`.
+- Severidade desconhecida vira "Sem classificação" (neutra), nunca Normal.
 - Cadastro de motor com máscara de MAC, mensagens do Problem Details em
   linguagem de usuário e, ao salvar, abertura do motor com "Aguardando primeiro
   lote" e o MAC copiável.
@@ -133,7 +145,8 @@ O simulador troca o transporte HTTP do axios e a fonte de eventos do store, sem
 tocar nos componentes. Ele cria seis motores fictícios (aquecimento com subida
 de gradiente e assimetria, crítico estável, normal, um que silencia 90 s depois
 de abrir o painel, um que nunca envia lote e um sem regras), três regras e
-lotes a cada ~3 s, com um histórico recente para o gráfico ter curva. Motores
+lotes a cada ~3 s (ruído suave: só a escova que aquece dispara gradiente;
+`VITE_SIMULADOR_CADENCIA_S` muda o intervalo), com um histórico recente para o gráfico ter curva. Motores
 cadastrados na tela começam a enviar lotes após ~9 s. Enquanto ativo, o
 cabeçalho mostra o selo "Simulação".
 
