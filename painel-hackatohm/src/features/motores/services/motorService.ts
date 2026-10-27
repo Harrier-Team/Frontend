@@ -1,4 +1,6 @@
 import { api } from '@/services/api';
+import { MotorStatusDto } from '@/features/telemetria/types/telemetria';
+import { normalizarStatus } from '@/features/telemetria/helpers/normalizacao';
 import { MotorResponse, MotorInput } from '../types/motor';
 import { motorRoutes } from './motorRoutes';
 
@@ -11,6 +13,12 @@ export const motorService = {
   async obterPorId(id: number): Promise<MotorResponse> {
     const response = await api.get<MotorResponse>(motorRoutes.byId(id));
     return response.data;
+  },
+
+  /** Status agregado do motor, com a última leitura e os gates de cada escova. */
+  async obterStatus(id: number): Promise<MotorStatusDto> {
+    const response = await api.get<MotorStatusDto>(motorRoutes.status(id));
+    return normalizarStatus(response.data);
   },
 
   async criar(payload: MotorInput): Promise<MotorResponse> {

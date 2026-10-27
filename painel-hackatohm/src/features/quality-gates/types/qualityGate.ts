@@ -11,7 +11,7 @@ export interface ResultadoGateRealtime {
   severidade: NivelSeveridade;
   tipoRegra: string;
   codigoRegra: string;
-  mensagemDiagnostico: string;
+  mensagemDiagnostico: string | null;
   valorObservado: number | null;
   valorLimite: number | null;
   metadados: Record<string, unknown> | null;

@@ -1,51 +1,37 @@
 import { api } from '@/services/api';
-import { LeituraMaisRecente } from '@/features/telemetria/types/telemetria';
+import { LeituraEscova, TelemetriaRealtimeDto } from '@/features/telemetria/types/telemetria';
+import { normalizarLeituraRealtime } from '@/features/telemetria/helpers/normalizacao';
 import { ApiRequestError } from '@/types/api';
 import { telemetryRoutes } from './telemetryRoutes';
 
-interface UltimaLeituraApiResponse {
-  sensorId: string;
-  valorCelsius: number;
-  dataHora: string;
-  alertaDesgaste: boolean;
-}
-
 export const leituraService = {
+  /**
+   * Última leitura persistida de uma escova, com os gates reavaliados.
+   * Retorna null quando o sensor ainda não enviou telemetria (404); outras
+   * falhas são propagadas para que a tela não as confunda com "sem dados".
+   */
   async obterUltimaLeitura(
     espMacAddress: string,
     numeroEscova: number
-  ): Promise<LeituraMaisRecente | null> {
+  ): Promise<LeituraEscova | null> {
     try {
-      const response = await api.get<UltimaLeituraApiResponse>(
-        telemetryRoutes.latestReading,
-        {
+      const response = await api.get<TelemetriaRealtimeDto>(telemetryRoutes.latestReading, {
         params: {
           espMacAddress: espMacAddress.trim().toUpperCase(),
           numeroEscova,
         },
-        }
-      );
-      return {
-        ...response.data,
-        resultadosQualityGates: [],
-      };
+      });
+      return normalizarLeituraRealtime({ ...response.data, espMacAddress });
     } catch (error: unknown) {
-      // 404 significa que o sensor ainda não enviou telemetria
       if (error instanceof ApiRequestError && error.status === 404) {
         return null;
       }
-      const message = error instanceof Error ? error.message : 'erro desconhecido';
-      console.warn(
-        `[Telemetria] Falha ao ler sensor ${espMacAddress} #${numeroEscova}:`,
-        message
-      );
-      return null;
+      throw error;
     }
   },
 
   extrairMacAddress(sensorId: string): string {
     if (!sensorId) return '';
-    const parts = sensorId.split('_Escova');
-    return parts[0].trim().toUpperCase();
+    return sensorId.split('_Escova')[0].trim().toUpperCase();
   },
 };

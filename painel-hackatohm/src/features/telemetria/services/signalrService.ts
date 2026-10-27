@@ -1,5 +1,7 @@
 import * as signalR from '@microsoft/signalr';
-import { TelemetriaRealtimeDto } from '@/features/telemetria/types/telemetria';
+import { MotorStatusDto, TelemetriaRealtimeDto } from '@/features/telemetria/types/telemetria';
+import { normalizarStatus } from '@/features/telemetria/helpers/normalizacao';
+import { logDev } from '@/utils/devLog';
 
 export type StatusConexaoHub =
   | 'conectado'
@@ -9,6 +11,7 @@ export type StatusConexaoHub =
 
 type CallbackLote = (leituras: TelemetriaRealtimeDto[]) => void;
 type CallbackIndividual = (leitura: TelemetriaRealtimeDto) => void;
+type CallbackStatusMotor = (status: MotorStatusDto) => void;
 type CallbackStatus = (status: StatusConexaoHub) => void;
 
 function normalizarTelemetria(
@@ -25,12 +28,13 @@ class SignalRService {
   private connection: signalR.HubConnection | null = null;
   private callbacksLote: Set<CallbackLote> = new Set();
   private callbacksIndividual: Set<CallbackIndividual> = new Set();
+  private callbacksStatusMotor: Set<CallbackStatusMotor> = new Set();
   private callbacksStatus: Set<CallbackStatus> = new Set();
   private statusAtual: StatusConexaoHub = 'desconectado';
 
   private notificarStatus(novoStatus: StatusConexaoHub) {
     this.statusAtual = novoStatus;
-    console.info(`[SignalR Status]: ${novoStatus.toUpperCase()}`);
+    logDev(`[SignalR Status]: ${novoStatus.toUpperCase()}`);
     this.callbacksStatus.forEach((cb) => cb(novoStatus));
   }
 
@@ -57,14 +61,13 @@ class SignalRService {
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl('/api/telemetriaHub')
       .withAutomaticReconnect([0, 1000, 3000, 5000, 10000])
-      .configureLogging(signalR.LogLevel.Information)
+      .configureLogging(import.meta.env.DEV ? signalR.LogLevel.Information : signalR.LogLevel.Warning)
       .build();
 
     // Eventos enviados pelo backend via ITelemetriaClient
     this.connection.on(
       'ReceberLoteTelemetria',
       (leituras: TelemetriaRealtimeDto[]) => {
-        console.info('[SignalR Live Push] Lote de leituras recebido:', leituras);
         this.callbacksLote.forEach((cb) => cb(leituras.map(normalizarTelemetria)));
       }
     );
@@ -72,10 +75,14 @@ class SignalRService {
     this.connection.on(
       'ReceberTelemetria',
       (leitura: TelemetriaRealtimeDto) => {
-        console.info('[SignalR Live Push] Leitura individual recebida:', leitura);
         this.callbacksIndividual.forEach((cb) => cb(normalizarTelemetria(leitura)));
       }
     );
+
+    this.connection.on('ReceberStatusMotor', (status: MotorStatusDto) => {
+      const normalizado = normalizarStatus(status);
+      this.callbacksStatusMotor.forEach((cb) => cb(normalizado));
+    });
 
     // Ciclo de vida da conexão
     this.connection.onreconnecting((error) => {
@@ -84,7 +91,7 @@ class SignalRService {
     });
 
     this.connection.onreconnected((connectionId) => {
-      console.info('[SignalR] Conexão restabelecida! ID:', connectionId);
+      logDev('[SignalR] Conexão restabelecida! ID:', connectionId);
       this.notificarStatus('conectado');
     });
 
@@ -96,7 +103,7 @@ class SignalRService {
     this.connection
       .start()
       .then(() => {
-        console.info('[SignalR] Conexão com TelemetriaHub estabelecida com sucesso!');
+        logDev('[SignalR] Conexão com TelemetriaHub estabelecida com sucesso!');
         this.notificarStatus('conectado');
       })
       .catch((err) => {
@@ -121,6 +128,11 @@ class SignalRService {
   public onTelemetria(callback: CallbackIndividual): () => void {
     this.callbacksIndividual.add(callback);
     return () => this.callbacksIndividual.delete(callback);
+  }
+
+  public onStatusMotor(callback: CallbackStatusMotor): () => void {
+    this.callbacksStatusMotor.add(callback);
+    return () => this.callbacksStatusMotor.delete(callback);
   }
 
   public onStatusMudou(callback: CallbackStatus): () => void {
