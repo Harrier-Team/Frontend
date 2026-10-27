@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { MotorResponse } from '@/features/motores/types/motor';
 import {
   MotorComStatus,
@@ -10,6 +10,7 @@ import { signalRService, StatusConexaoHub } from '@/features/telemetria/services
 import {
   classificarSensor,
   calcularStatusGeralDoMotor,
+  reclassificarMotor,
 } from '@/features/telemetria/helpers/statusHelper';
 import { leituraService } from '@/features/telemetria/services/leituraService';
 
@@ -76,7 +77,7 @@ export function useTelemetria(motores: MotorResponse[]) {
               };
             }
 
-            const statusInicial: NivelStatus = sensor.ipAtual ? 'normal' : 'offline';
+            const statusInicial: NivelStatus = sensor.ipAtual ? 'sem_avaliacao' : 'offline';
             return {
               id: sensor.id,
               numeroEscova: sensor.numeroEscova,
@@ -141,8 +142,8 @@ export function useTelemetria(motores: MotorResponse[]) {
                     },
                     status: classificarSensor(
                       leitura.valorCelsius,
-                      leitura.alertaDesgaste,
-                      true
+                      true,
+                      leitura.resultadosQualityGates
                     ),
                   }
                 : item
@@ -203,8 +204,8 @@ export function useTelemetria(motores: MotorResponse[]) {
             houveAlteracao = true;
             const status = classificarSensor(
               leituraMatch.valorCelsius,
-              leituraMatch.alertaDesgaste,
-              true
+              true,
+              leituraMatch.resultadosQualityGates
             );
 
             return {
@@ -253,21 +254,28 @@ export function useTelemetria(motores: MotorResponse[]) {
     };
   }, []);
 
+  // O estado guardado pode preceder uma atualizacao do normalizador. Deriva
+  // novamente as severidades para manter escovas, motores, filtros e KPIs iguais.
+  const motoresClassificados = useMemo(
+    () => motoresComStatus.map(reclassificarMotor), [motoresComStatus]
+  );
+
   // Métricas globais consolidadas para os KPIs da tela
   const kpis = {
-    totalMotores: motoresComStatus.length,
-    normais: motoresComStatus.filter((m) => m.statusGeral === 'normal').length,
-    atencao: motoresComStatus.filter((m) => m.statusGeral === 'warning').length,
-    perigo: motoresComStatus.filter((m) => m.statusGeral === 'perigo').length,
-    offline: motoresComStatus.filter((m) => m.statusGeral === 'offline').length,
-    totalSensores: motoresComStatus.reduce(
+    totalMotores: motoresClassificados.length,
+    normais: motoresClassificados.filter((m) => m.statusGeral === 'normal').length,
+    atencao: motoresClassificados.filter((m) => m.statusGeral === 'warning').length,
+    perigo: motoresClassificados.filter((m) => m.statusGeral === 'perigo').length,
+    semAvaliacao: motoresClassificados.filter((m) => m.statusGeral === 'sem_avaliacao').length,
+    offline: motoresClassificados.filter((m) => m.statusGeral === 'offline').length,
+    totalSensores: motoresClassificados.reduce(
       (acc, m) => acc + (m.sensores?.length || 0),
       0
     ),
   };
 
   return {
-    motoresComStatus,
+    motoresComStatus: motoresClassificados,
     kpis,
     ultimaAtualizacao,
     statusConexaoHub,

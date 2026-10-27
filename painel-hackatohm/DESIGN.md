@@ -10,7 +10,7 @@ A logo usa o arquivo de maior resolução do Drive, com enquadramento em CSS do 
 
 ## Tipografia e hierarquia
 
-Archivo Variable, hospedada localmente por `@fontsource-variable/archivo`. Títulos usam largura 118% (`.display`); números são tabulares (`.num`). O painel separa o resumo do sistema, cinco indicadores por estado e a lista de motores. A maior leitura é identificada como registrada, sem prometer atualização ao vivo quando a telemetria está desconectada.
+Archivo Variable, hospedada localmente por `@fontsource-variable/archivo`. Títulos usam largura 118% (`.display`); números são tabulares (`.num`). O painel separa o resumo do sistema, os indicadores por estado e a lista de motores. Há um indicador próprio para motores sem avaliação dos Quality Gates. A maior leitura é identificada como registrada, sem prometer atualização ao vivo quando a telemetria está desconectada.
 
 ## Interação
 
@@ -23,7 +23,11 @@ Archivo Variable, hospedada localmente por `@fontsource-variable/archivo`. Títu
 
 ## Classificação térmica
 
-Os limiares existentes do painel foram preservados: atenção a partir de 60 °C, crítico a partir de 80 °C ou alerta de desgaste. A legenda lê as constantes de `statusHelper.ts`. A explicação distingue essas faixas visuais dos limites operacionais, que exigem validação por equipamento, e das regras de qualidade vinculadas a cada motor. O índice de contexto no Drive não valida os relatos de 75–90 °C como limites de alarme.
+O estado térmico segue somente os resultados dos Quality Gates: atenção/alerta preditivo em amarelo e crítico em vermelho. Sem resultados válidos, aparece “Sem avaliação” em tom neutro, com indicador e filtro próprios. Ter uma leitura ou um IP não basta para classificar um motor como estável. O booleano de alerta de desgaste não determina a severidade.
+
+As referências de 60/80 °C eram constantes visuais do frontend, sem justificativa técnica registrada para a máquina do projeto. Foram removidas do classificador junto com a legenda e a barra térmica. A interface preserva a temperatura numérica, o horário, o IP e os resultados das regras. Limites operacionais devem vir das regras configuradas para o equipamento.
+
+Os gates que sinalizam uma ocorrência aparecem sob “Gates em alerta”, com críticos antes de avisos, borda/fundo discretos e rótulo colorido. A lista completa inclui os normais em verde. Cada estado tem texto além da cor; resultados desconhecidos aparecem como “Sem classificação” em tom neutro. Valores numéricos ou textuais de severidade são normalizados antes de classificar ou exibir uma leitura, incluindo dados que já estavam na memória da página.
 
 ## Estrutura
 

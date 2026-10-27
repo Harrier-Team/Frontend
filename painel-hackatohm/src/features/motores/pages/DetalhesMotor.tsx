@@ -5,7 +5,6 @@ import { MotorResponse } from '../types/motor';
 import { motorService } from '../services/motorService';
 import { MotorQualityRulesSection } from '../components/MotorQualityRulesSection';
 import { EscovaItem } from '../components/EscovaItem';
-import { ThermalLegend } from '@/features/telemetria/components/ThermalLegend';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
@@ -125,7 +124,6 @@ export const DetalhesMotor: React.FC = () => {
             ))}
           </Panel>
         )}
-        <ThermalLegend />
       </section>
 
       <MotorQualityRulesSection motorId={motor.id} />

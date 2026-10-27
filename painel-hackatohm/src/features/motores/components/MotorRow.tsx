@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { MotorComStatus } from '@/features/telemetria/types/telemetria';
 import { STATUS_THEME, formatarGrau } from '@/features/telemetria/helpers/statusHelper';
 import { StatusDot } from '@/features/telemetria/components/StatusDot';
-import { ThermalGauge } from '@/features/telemetria/components/ThermalGauge';
 
 const marcador: Record<string, string> = {
   perigo: 'var(--color-hot)',
@@ -18,7 +17,7 @@ export const MotorRow: React.FC<{ motor: MotorComStatus }> = ({ motor }) => {
   return (
     <Link
       to={`/motores/${motor.id}`}
-      className="group relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-4 px-5 py-5 transition-colors hover:bg-raised/70 sm:gap-x-6 md:grid-cols-[minmax(200px,0.9fr)_minmax(0,2fr)_104px]"
+      className="group relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-4 px-5 py-5 transition-colors hover:bg-raised/70 sm:gap-x-6 md:grid-cols-[minmax(200px,0.9fr)_minmax(0,2fr)_128px]"
       aria-label={`${motor.nome}, ${tema.label}`}
     >
       {marcador[motor.statusGeral] && (
@@ -62,11 +61,6 @@ export const MotorRow: React.FC<{ motor: MotorComStatus }> = ({ motor }) => {
                       <span className="ml-0.5 text-[10px] text-ink-3">°C</span>
                     </span>
                   </div>
-                  <ThermalGauge
-                    valor={valor}
-                    status={sensor.status}
-                    label={`Escova ${sensor.numeroEscova} de ${motor.nome}`}
-                  />
                 </li>
               );
             })}

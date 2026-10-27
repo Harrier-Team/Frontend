@@ -1,4 +1,4 @@
-import { ResultadoGateRealtime } from '@/features/quality-gates/types/qualityGate';
+import { ResultadoGateRealtime, ResultadoGateRecebido } from '@/features/quality-gates/types/qualityGate';
 
 export interface TelemetriaRealtimeDto {
   sensorId: string;
@@ -11,6 +11,10 @@ export interface TelemetriaRealtimeDto {
   resultadosQualityGates?: ResultadoGateRealtime[];
 }
 
+export interface TelemetriaRecebidaDto extends Omit<TelemetriaRealtimeDto, 'resultadosQualityGates'> {
+  resultadosQualityGates?: ResultadoGateRecebido[] | null;
+}
+
 export interface LeituraMaisRecente {
   sensorId: string;
   valorCelsius: number;
@@ -19,7 +23,7 @@ export interface LeituraMaisRecente {
   resultadosQualityGates: ResultadoGateRealtime[];
 }
 
-export type NivelStatus = 'normal' | 'warning' | 'perigo' | 'offline';
+export type NivelStatus = 'normal' | 'warning' | 'perigo' | 'sem_avaliacao' | 'offline';
 
 export interface SensorComTelemetria {
   id: string;

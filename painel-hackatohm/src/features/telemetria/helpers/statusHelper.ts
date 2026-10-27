@@ -1,8 +1,6 @@
-import { NivelStatus, SensorComTelemetria } from '@/features/telemetria/types/telemetria';
-
-export const LIMITE_ATENCAO = 60;
-export const LIMITE_PERIGO = 80;
-export const ESCALA_MAXIMA = 200;
+import { MotorComStatus, NivelStatus, SensorComTelemetria } from '@/features/telemetria/types/telemetria';
+import type { ResultadoGateRealtime } from '@/features/quality-gates/types/qualityGate';
+import { obterSeveridadeGate } from '@/features/quality-gates/helpers/qualityGateHelper';
 
 export interface StatusConfig {
   label: string;
@@ -16,8 +14,9 @@ export interface StatusConfig {
 
 export const STATUS_THEME: Record<NivelStatus, StatusConfig> = {
   normal: { label: 'Estável', color: 'var(--color-ok)', textClass: 'text-ink-2', prioridade: 0 },
-  warning: { label: 'Atenção', color: 'var(--color-warn)', textClass: 'text-warn', prioridade: 2 },
-  perigo: { label: 'Crítico', color: 'var(--color-hot)', textClass: 'text-hot', prioridade: 3 },
+  warning: { label: 'Atenção', color: 'var(--color-warn)', textClass: 'text-warn', prioridade: 3 },
+  perigo: { label: 'Crítico', color: 'var(--color-hot)', textClass: 'text-hot', prioridade: 4 },
+  sem_avaliacao: { label: 'Sem avaliação', color: 'var(--color-ink-3)', textClass: 'text-ink-3', prioridade: 2 },
   offline: { label: 'Sem sinal', color: 'var(--color-off)', textClass: 'text-ink-2', prioridade: 1 },
 };
 
@@ -26,22 +25,31 @@ export const STATUS_THEME: Record<NivelStatus, StatusConfig> = {
  */
 export function classificarSensor(
   valorCelsius?: number | null,
-  alertaDesgaste?: boolean,
-  temConexao?: boolean
+  temConexao?: boolean,
+  resultadosQualityGates?: ResultadoGateRealtime[] | null
 ): NivelStatus {
-  if (valorCelsius === null || valorCelsius === undefined) {
-    return temConexao ? 'normal' : 'offline';
+  if (valorCelsius === null || valorCelsius === undefined || !Number.isFinite(valorCelsius)) {
+    return temConexao ? 'sem_avaliacao' : 'offline';
   }
 
-  if (alertaDesgaste || valorCelsius >= LIMITE_PERIGO) {
-    return 'perigo';
+  // Somente os resultados dos gates definem a saude termica. Temperatura e
+  // conectividade, sozinhas, nao permitem afirmar que a operacao esta normal.
+  if (Array.isArray(resultadosQualityGates) && resultadosQualityGates.length > 0) {
+    const severidades = resultadosQualityGates.map(obterSeveridadeGate);
+    if (severidades.includes('Critico')) {
+      return 'perigo';
+    }
+    if (severidades.some((severidade) =>
+      severidade === 'Atencao' || severidade === 'AlertaPreditivo'
+    )) {
+      return 'warning';
+    }
+    if (severidades.every((severidade) => severidade === 'Normal')) {
+      return 'normal';
+    }
   }
 
-  if (valorCelsius >= LIMITE_ATENCAO) {
-    return 'warning';
-  }
-
-  return 'normal';
+  return 'sem_avaliacao';
 }
 
 /**
@@ -57,11 +65,30 @@ export function calcularStatusGeralDoMotor(sensores: SensorComTelemetria[]): Niv
   if (sensores.some((s) => s.status === 'warning')) {
     return 'warning';
   }
+  if (sensores.some((s) => s.status === 'sem_avaliacao')) {
+    return 'sem_avaliacao';
+  }
   if (sensores.some((s) => s.status === 'normal')) {
     return 'normal';
   }
 
   return 'offline';
+}
+
+/** Deriva o estado exibido das leituras, inclusive das ja guardadas na pagina. */
+export function reclassificarMotor(motor: MotorComStatus): MotorComStatus {
+  const sensores = motor.sensores.map((sensor) => {
+    const leitura = sensor.ultimaLeitura;
+    if (!leitura) return sensor;
+    const status = classificarSensor(leitura.valorCelsius, true, leitura.resultadosQualityGates);
+    return status === sensor.status ? sensor : { ...sensor, status };
+  });
+  return {
+    ...motor,
+    sensores,
+    statusGeral: calcularStatusGeralDoMotor(sensores),
+    totalAlertas: sensores.filter((sensor) => sensor.status === 'perigo').length,
+  };
 }
 
 /**

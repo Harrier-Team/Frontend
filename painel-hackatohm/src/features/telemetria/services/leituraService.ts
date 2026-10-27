@@ -2,12 +2,11 @@ import { api } from '@/services/api';
 import { LeituraMaisRecente } from '@/features/telemetria/types/telemetria';
 import { ApiRequestError } from '@/types/api';
 import { telemetryRoutes } from './telemetryRoutes';
+import type { ResultadoGateRecebido } from '@/features/quality-gates/types/qualityGate';
+import { normalizarResultadosQualityGates } from '@/features/quality-gates/helpers/qualityGateHelper';
 
-interface UltimaLeituraApiResponse {
-  sensorId: string;
-  valorCelsius: number;
-  dataHora: string;
-  alertaDesgaste: boolean;
+interface UltimaLeituraApiResponse extends Omit<LeituraMaisRecente, 'resultadosQualityGates'> {
+  resultadosQualityGates?: ResultadoGateRecebido[] | null;
 }
 
 export const leituraService = {
@@ -27,7 +26,7 @@ export const leituraService = {
       );
       return {
         ...response.data,
-        resultadosQualityGates: [],
+        resultadosQualityGates: normalizarResultadosQualityGates(response.data.resultadosQualityGates),
       };
     } catch (error: unknown) {
       // 404 significa que o sensor ainda não enviou telemetria

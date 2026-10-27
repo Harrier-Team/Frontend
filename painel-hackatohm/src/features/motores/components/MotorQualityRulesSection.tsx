@@ -10,6 +10,7 @@ import { Switch } from '../../../components/ui/Switch';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { LoadingState } from '../../../components/ui/LoadingState';
+import { formatarLimitesRegra, obterTipoRegra } from '@/features/quality-gates/helpers/tipoRegraHelper';
 
 interface MotorQualityRulesSectionProps {
   motorId: number;
@@ -88,7 +89,7 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
             </option>
             {disponiveis.map((regra) => (
               <option key={regra.id} value={regra.id}>
-                {regra.nome}
+                {regra.nome} · {obterTipoRegra(regra.tipoRegra)?.nome ?? regra.tipoRegra}
               </option>
             ))}
           </select>
@@ -157,8 +158,9 @@ const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, operando, onToggle, on
     <div className="flex items-center gap-4 px-5 py-4">
       <div className={`min-w-0 flex-1 ${executando ? '' : 'opacity-60'}`}>
         <h3 className="truncate text-[15px] text-ink">{regra.nome}</h3>
+        <p className="mt-1 text-xs text-ink-3">{obterTipoRegra(regra.tipoRegra)?.nome ?? regra.tipoRegra}</p>
         <p className="num mt-0.5 text-[13px] text-ink-2">
-          Aviso em {regra.parametros.aviso} °C, crítico em {regra.parametros.critico} °C
+          {formatarLimitesRegra(regra)}
         </p>
         {vinculo.ativo && !regra.ativo && (
           <p className="mt-1 text-[13px] text-warn">Desativada em Regras de qualidade, não está sendo avaliada.</p>

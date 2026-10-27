@@ -1,5 +1,6 @@
 import * as signalR from '@microsoft/signalr';
-import { TelemetriaRealtimeDto } from '@/features/telemetria/types/telemetria';
+import { TelemetriaRealtimeDto, TelemetriaRecebidaDto } from '@/features/telemetria/types/telemetria';
+import { normalizarResultadosQualityGates } from '@/features/quality-gates/helpers/qualityGateHelper';
 
 export type StatusConexaoHub =
   | 'conectado'
@@ -12,12 +13,12 @@ type CallbackIndividual = (leitura: TelemetriaRealtimeDto) => void;
 type CallbackStatus = (status: StatusConexaoHub) => void;
 
 function normalizarTelemetria(
-  leitura: TelemetriaRealtimeDto
+  leitura: TelemetriaRecebidaDto
 ): TelemetriaRealtimeDto {
   return {
     ...leitura,
     motorId: leitura.motorId ?? null,
-    resultadosQualityGates: leitura.resultadosQualityGates ?? [],
+    resultadosQualityGates: normalizarResultadosQualityGates(leitura.resultadosQualityGates),
   };
 }
 
@@ -63,7 +64,7 @@ class SignalRService {
     // Eventos enviados pelo backend via ITelemetriaClient
     this.connection.on(
       'ReceberLoteTelemetria',
-      (leituras: TelemetriaRealtimeDto[]) => {
+      (leituras: TelemetriaRecebidaDto[]) => {
         console.info('[SignalR Live Push] Lote de leituras recebido:', leituras);
         this.callbacksLote.forEach((cb) => cb(leituras.map(normalizarTelemetria)));
       }
@@ -71,7 +72,7 @@ class SignalRService {
 
     this.connection.on(
       'ReceberTelemetria',
-      (leitura: TelemetriaRealtimeDto) => {
+      (leitura: TelemetriaRecebidaDto) => {
         console.info('[SignalR Live Push] Leitura individual recebida:', leitura);
         this.callbacksIndividual.forEach((cb) => cb(normalizarTelemetria(leitura)));
       }

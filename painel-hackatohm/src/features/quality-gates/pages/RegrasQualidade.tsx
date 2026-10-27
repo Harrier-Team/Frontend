@@ -51,18 +51,14 @@ export const RegrasQualidade: React.FC = () => {
   };
 
   const salvar = async (payload: RegraQualidadeRequest) => {
-    try {
-      if (regraEditando) {
-        await atualizar(regraEditando.id, payload);
-      } else {
-        await criar(payload);
-      }
-      setFormAberto(false);
-      setRegraEditando(null);
-      setOperacaoErro(null);
-    } catch (error) {
-      setOperacaoErro(obterMensagemErro(error, 'Não foi possível salvar a regra.'));
+    if (regraEditando) {
+      await atualizar(regraEditando.id, payload);
+    } else {
+      await criar(payload);
     }
+    setFormAberto(false);
+    setRegraEditando(null);
+    setOperacaoErro(null);
   };
 
   const alternar = async (regra: RegraQualidade) => {
@@ -92,7 +88,7 @@ export const RegrasQualidade: React.FC = () => {
           <p className="eyebrow mb-2">Critérios de acompanhamento</p>
           <h1 className="display text-[28px] leading-tight sm:text-[32px]">Regras de qualidade</h1>
           <p className="mt-2 text-[15px] text-ink-2">
-            Defina os alertas de temperatura e vincule as regras a cada motor.
+            Configure limites, velocidade de aquecimento e diferença entre escovas para cada motor.
           </p>
         </div>
         {regras.length > 0 && (
@@ -114,7 +110,7 @@ export const RegrasQualidade: React.FC = () => {
         !erro && (
           <EmptyState
             title="Nenhuma regra ainda"
-            description="Defina em que temperatura uma escova passa a exigir atenção ou fica crítica."
+            description="Escolha o que acompanhar e defina os limites de aviso e crítico."
             action={
               <Button onClick={abrirCriacao}>
                 <Plus className="h-4 w-4" aria-hidden="true" />

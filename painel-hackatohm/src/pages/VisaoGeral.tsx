@@ -11,7 +11,6 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { Panel } from '@/components/ui/Panel';
 import { ModalCadastro } from '@/features/motores/components/ModalCadastro';
 import { MotorRow } from '@/features/motores/components/MotorRow';
-import { ThermalLegend } from '@/features/telemetria/components/ThermalLegend';
 import { NivelStatus } from '@/features/telemetria/types/telemetria';
 import { compararPorUrgencia, formatarGrau, STATUS_THEME } from '@/features/telemetria/helpers/statusHelper';
 
@@ -55,7 +54,9 @@ export const VisaoGeral: React.FC = () => {
               ? 'Aguardando as primeiras leituras'
               : kpis.offline > 0
                 ? `${kpis.offline} ${kpis.offline === 1 ? 'motor aguardando sinal' : 'motores aguardando sinal'}`
-                : 'Leituras dentro da faixa do painel';
+                : kpis.semAvaliacao > 0
+                  ? `${kpis.semAvaliacao} ${kpis.semAvaliacao === 1 ? 'motor sem avaliação dos Quality Gates' : 'motores sem avaliação dos Quality Gates'}`
+                  : 'Quality Gates sem alertas';
   const corResumo = indisponivel ? 'text-ink-2' : kpis.perigo > 0 ? 'text-hot' : kpis.atencao > 0 ? 'text-warn' : 'text-ink';
   const abrirCadastro = () => setParams({ novo: 'true' });
   const fecharCadastro = () => setParams({}, { replace: true });
@@ -134,11 +135,10 @@ export const VisaoGeral: React.FC = () => {
           </div>
         ) : visiveis.length === 0 ? <EmptyState title="Nenhum motor neste filtro" description="Busque outro nome ou altere o estado selecionado." action={<Button variant="secondary" onClick={limparFiltros}>Limpar filtros</Button>} /> : (
           <Panel>
-            <div className="hidden grid-cols-[minmax(200px,0.9fr)_minmax(0,2fr)_104px] gap-x-6 bg-raised/30 px-5 py-3 text-[10px] uppercase tracking-[0.12em] text-ink-3 md:grid"><span>Equipamento</span><span>Temperatura por escova</span><span className="text-right">Estado</span></div>
+            <div className="hidden grid-cols-[minmax(200px,0.9fr)_minmax(0,2fr)_128px] gap-x-6 bg-raised/30 px-5 py-3 text-[10px] uppercase tracking-[0.12em] text-ink-3 md:grid"><span>Equipamento</span><span>Temperatura por escova</span><span className="text-right">Estado</span></div>
             {visiveis.map((motor) => <MotorRow key={motor.id} motor={motor} />)}
           </Panel>
         )}
-        <ThermalLegend />
       </section>
       <ModalCadastro aberto={cadastroAberto} onFechar={fecharCadastro} onCadastrar={cadastrarMotor} />
     </div>

@@ -1,5 +1,8 @@
 import { NivelSeveridade } from './qualityGate';
 
+export type TipoRegra = 'temperatura.limiar_estatico'
+  | 'temperatura.gradiente_termico' | 'temperatura.assimetria_escovas';
+
 export interface ParametrosLimiarTemperatura {
   aviso: number;
   critico: number;
@@ -17,6 +20,7 @@ export interface RegraQualidade {
 }
 
 export interface RegraQualidadeRequest {
+  tipoRegra: TipoRegra;
   nome: string;
   descricao?: string | null;
   parametros: ParametrosLimiarTemperatura;

@@ -6,6 +6,7 @@ import {
 } from '@/features/quality-gates/types/regraQualidade';
 import { regraQualidadeService } from '@/features/quality-gates/services/regraQualidadeService';
 import { obterMensagemErro } from '@/utils/errorHelper';
+import { criarPayloadAtualizacao } from '../helpers/regraPayloadHelper';
 
 export function useRegrasQualidade() {
   const [regras, setRegras] = useState<RegraQualidade[]>([]);
@@ -84,12 +85,7 @@ export function useRegrasQualidade() {
   };
 
   const alternarAtivo = async (regra: RegraQualidade) =>
-    atualizar(regra.id, {
-      nome: regra.nome,
-      descricao: regra.descricao,
-      parametros: regra.parametros,
-      ativo: !regra.ativo,
-    });
+    atualizar(regra.id, criarPayloadAtualizacao(regra, !regra.ativo));
 
   return {
     regras,

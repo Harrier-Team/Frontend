@@ -5,7 +5,6 @@ import {
   formatarGrau,
   formatarRelativo,
 } from '@/features/telemetria/helpers/statusHelper';
-import { ThermalGauge } from '@/features/telemetria/components/ThermalGauge';
 import { StatusDot } from '@/features/telemetria/components/StatusDot';
 import { QualityGateResultList } from '@/features/quality-gates/components/QualityGateResultList';
 
@@ -25,7 +24,7 @@ export const EscovaItem: React.FC<{ sensor: SensorComTelemetria }> = ({ sensor }
         <span className={`status-pill ${sensor.status === 'normal' ? 'text-ok' : tema.textClass}`}>{tema.label}</span>
       </div>
 
-      <div className="mt-5 grid items-end gap-x-10 gap-y-4 sm:grid-cols-[180px_minmax(0,1fr)]">
+      <div className="mt-5 flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
         <p
           className="display num text-[40px] leading-none"
           style={{ color: destaque ? tema.color : 'var(--color-ink)' }}
@@ -33,22 +32,23 @@ export const EscovaItem: React.FC<{ sensor: SensorComTelemetria }> = ({ sensor }
           {formatarGrau(temperatura)}
           <span className="ml-1 text-lg text-ink-3">°C</span>
         </p>
-        <div className="pb-1">
-          <ThermalGauge
-            valor={temperatura}
-            status={sensor.status}
-            label={`Temperatura da escova ${sensor.numeroEscova}`}
-          />
-          <div className="mt-1 flex justify-between text-xs text-ink-3">
+        <div className="flex flex-col gap-1 text-xs text-ink-3 sm:items-end">
             <span className="num">
               {sensor.ultimaLeitura
                 ? `Atualizado ${formatarRelativo(sensor.ultimaLeitura.dataHora)}`
                 : 'Sem leitura'}
             </span>
             <span className="num">{sensor.ipAtual ?? 'Sem IP'}</span>
-          </div>
         </div>
       </div>
+
+      {sensor.status === 'sem_avaliacao' && (
+        <p className="mt-3 text-xs text-ink-3">
+          {sensor.ultimaLeitura
+            ? 'Nenhum resultado de Quality Gate disponível para classificar esta leitura.'
+            : 'Aguardando leitura e avaliação dos Quality Gates.'}
+        </p>
+      )}
 
       {sensor.ultimaLeitura && (
         <QualityGateResultList resultados={sensor.ultimaLeitura.resultadosQualityGates} />

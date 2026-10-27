@@ -145,6 +145,26 @@ import { api } from '@/services/api';
 
 ## Testes
 
+O [registro de execução do plano dos Quality Gates](docs/PLANO_QUALITY_GATES.md) descreve
+o suporte implementado aos três tipos de regra e a validação das dependências do backend. A classificação
+do painel já respeita a severidade dos gates tanto no GET quanto no SignalR;
+avisos preditivos não são promovidos automaticamente a críticos.
+As severidades numéricas do SignalR (`0` a `3`) são normalizadas para os mesmos
+nomes usados pelo HTTP, incluindo `3` como `Critico`.
+Os gates em alerta aparecem primeiro, com rótulos e cores de estado; a lista
+completa também identifica os normais em verde. Resultados desconhecidos não
+são apresentados como normais.
+O estado térmico depende somente dos Quality Gates, sem limites fixos de
+temperatura no frontend. A barra e a legenda térmica foram removidas. Leituras
+sem avaliação válida aparecem como “Sem avaliação”, com indicador e filtro
+próprios, mantendo a temperatura numérica disponível.
+O catálogo permite criar e editar limite de temperatura (°C), velocidade de
+aquecimento (°C/min) e diferença entre escovas (°C de diferença). O tipo é
+preservado ao pausar ou reativar; trocar o tipo limpa os limites do formulário.
+Os diagnósticos mostram os metadados de cada grandeza e distinguem dados
+insuficientes de uma avaliação normal. Assimetria exige duas ou mais escovas
+do mesmo motor no mesmo lote; gradiente exige uma amostra anterior.
+
 Os testes unitários atuais cobrem:
 
 - validação de regras de Quality Gates;
