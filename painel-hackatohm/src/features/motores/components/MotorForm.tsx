@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MotorInput } from '../types/motor';
 import { SensorFormList } from './SensorFormList';
 import { useMotorForm } from '../hooks/useMotorForm';
+import { ErrosCadastro, normalizarMac, validarMac } from '../helpers/cadastroHelper';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
 
@@ -14,15 +15,27 @@ interface MotorFormProps {
 
 export const MotorForm: React.FC<MotorFormProps> = ({ salvando, erro, onSubmit, onCancel }) => {
   const form = useMotorForm();
+  const [erros, setErros] = useState<ErrosCadastro>({});
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    const encontrados = form.validar();
+    setErros(encontrados);
+    if (form.temErros(encontrados)) return;
     await onSubmit(form.criarPayload());
   };
 
+  const normalizarMacAoSair = () => {
+    if (!form.mac.trim()) return;
+    const normalizado = normalizarMac(form.mac);
+    form.setMac(normalizado);
+    setErros((atuais) => ({ ...atuais, mac: validarMac(normalizado) ?? undefined }));
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 px-6 pb-6 pt-5">
+    <form onSubmit={handleSubmit} className="space-y-6 px-6 pb-6 pt-5" noValidate>
       {erro && <Alert tone="error" title={erro} />}
+      {erros.escovas && <Alert tone="error" title={erros.escovas} />}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
@@ -35,10 +48,12 @@ export const MotorForm: React.FC<MotorFormProps> = ({ salvando, erro, onSubmit, 
             required
             autoFocus
             placeholder="Motor trastejador 01"
+            aria-invalid={Boolean(erros.nome)}
             value={form.nome}
             onChange={(event) => form.setNome(event.target.value)}
             className="field"
           />
+          {erros.nome && <p className="field-error">{erros.nome}</p>}
         </div>
         <div>
           <label htmlFor="motor-tipo" className="field-label">
@@ -49,18 +64,47 @@ export const MotorForm: React.FC<MotorFormProps> = ({ salvando, erro, onSubmit, 
             type="text"
             required
             placeholder="Trifásico 220 V"
+            aria-invalid={Boolean(erros.tipo)}
             value={form.tipo}
             onChange={(event) => form.setTipo(event.target.value)}
             className="field"
           />
+          {erros.tipo && <p className="field-error">{erros.tipo}</p>}
         </div>
       </div>
 
+      <div>
+        <label htmlFor="motor-mac" className="field-label">
+          MAC do ESP
+        </label>
+        <input
+          id="motor-mac"
+          type="text"
+          required
+          autoComplete="off"
+          spellCheck={false}
+          placeholder="AA:BB:CC:DD:EE:FF"
+          aria-invalid={Boolean(erros.mac)}
+          aria-describedby="motor-mac-ajuda"
+          value={form.mac}
+          onChange={(event) => form.setMac(event.target.value)}
+          onBlur={normalizarMacAoSair}
+          className="field num uppercase"
+        />
+        {erros.mac ? (
+          <p className="field-error">{erros.mac}</p>
+        ) : (
+          <p id="motor-mac-ajuda" className="mt-1.5 text-[13px] text-ink-3">
+            Um único ESP envia as leituras de todas as escovas do motor.
+          </p>
+        )}
+      </div>
+
       <SensorFormList
-        sensores={form.sensores}
-        onChange={form.atualizarSensor}
-        onAdd={form.adicionarSensor}
-        onRemove={form.removerSensor}
+        escovas={form.escovas}
+        onChange={form.atualizarEscova}
+        onAdd={form.adicionarEscova}
+        onRemove={form.removerEscova}
       />
 
       <div className="flex justify-end gap-2">

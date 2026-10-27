@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Dialog } from '../../../components/ui/Dialog';
 import { MotorInput, MotorResponse } from '../types/motor';
 import { MotorForm } from './MotorForm';
-import { validarMotorForm } from '../hooks/useMotorForm';
 import { obterMensagemErro } from '../../../utils/errorHelper';
 
 interface ModalCadastroProps {
@@ -20,16 +19,6 @@ export const ModalCadastro: React.FC<ModalCadastroProps> = ({
   const [erro, setErro] = useState<string | null>(null);
 
   const handleSubmit = async (dados: MotorInput) => {
-    const erroValidacao = validarMotorForm(
-      dados.nome,
-      dados.tipo,
-      dados.sensoresIniciais
-    );
-    if (erroValidacao) {
-      setErro(erroValidacao);
-      return;
-    }
-
     setErro(null);
     setSalvando(true);
     try {

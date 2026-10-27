@@ -1,86 +1,84 @@
 import { useState } from 'react';
-import { MotorInput, SensorInput } from '../types/motor';
+import { EscovaForm, MotorInput } from '../types/motor';
+import {
+  DadosCadastro,
+  ErrosCadastro,
+  normalizarMac,
+  proximoNumeroEscova,
+  temErros,
+  validarCadastroMotor,
+} from '../helpers/cadastroHelper';
 
-const sensorInicial: SensorInput = {
-  macAddress: '',
-  numeroEscova: 1,
-  modelo: 'ESP32-DS18B20',
-};
+const MODELO_PADRAO = 'ESP32-DS18B20';
 
-export function validarMotorForm(nome: string, tipo: string, sensores: SensorInput[]) {
-  if (!nome.trim() || !tipo.trim()) {
-    return 'Informe o nome e o tipo do motor.';
-  }
-
-  if (
-    sensores.some(
-      (sensor) =>
-        !sensor.macAddress.trim() ||
-        !sensor.modelo.trim() ||
-        sensor.numeroEscova <= 0
-    )
-  ) {
-    return 'Todos os campos dos sensores (MAC, Escova e Modelo) são obrigatórios.';
-  }
-
-  return null;
-}
+const escovaInicial = (): EscovaForm => ({ numeroEscova: 1, modelo: MODELO_PADRAO });
 
 export function useMotorForm() {
   const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState('');
-  const [sensores, setSensores] = useState<SensorInput[]>([{ ...sensorInicial }]);
+  const [mac, setMac] = useState('');
+  const [escovas, setEscovas] = useState<EscovaForm[]>([escovaInicial()]);
 
-  const atualizarSensor = <K extends keyof SensorInput>(
+  const atualizarEscova = <K extends keyof EscovaForm>(
     index: number,
     campo: K,
-    valor: SensorInput[K]
+    valor: EscovaForm[K]
   ) => {
-    setSensores((atuais) =>
-      atuais.map((sensor, sensorIndex) =>
-        sensorIndex === index ? { ...sensor, [campo]: valor } : sensor
-      )
+    setEscovas((atuais) =>
+      atuais.map((escova, i) => (i === index ? { ...escova, [campo]: valor } : escova))
     );
   };
 
-  const adicionarSensor = () => {
-    setSensores((atuais) => [
+  const adicionarEscova = () => {
+    setEscovas((atuais) => [
       ...atuais,
-      { ...sensorInicial, numeroEscova: atuais.length + 1 },
+      { numeroEscova: proximoNumeroEscova(atuais), modelo: atuais.at(-1)?.modelo || MODELO_PADRAO },
     ]);
   };
 
-  const removerSensor = (index: number) => {
-    setSensores((atuais) =>
-      atuais.length > 1 ? atuais.filter((_, sensorIndex) => sensorIndex !== index) : atuais
-    );
+  const removerEscova = (index: number) => {
+    setEscovas((atuais) => (atuais.length > 1 ? atuais.filter((_, i) => i !== index) : atuais));
   };
 
-  const criarPayload = (): MotorInput => ({
-    nome: nome.trim(),
-    tipo: tipo.trim(),
-    sensoresIniciais: sensores.map((sensor) => ({
-      macAddress: sensor.macAddress.trim().toUpperCase(),
-      numeroEscova: Number(sensor.numeroEscova),
-      modelo: sensor.modelo.trim(),
-    })),
-  });
+  const dados = (): DadosCadastro => ({ nome, tipo, mac, escovas });
+
+  /** Erros do formulário atual; vazio quando pode enviar. */
+  const validar = (): ErrosCadastro => validarCadastroMotor(dados());
+
+  /** O backend ainda pede o MAC em cada sensor: repete o único MAC do ESP. */
+  const criarPayload = (): MotorInput => {
+    const macAddress = normalizarMac(mac);
+    return {
+      nome: nome.trim(),
+      tipo: tipo.trim(),
+      sensoresIniciais: escovas.map((escova) => ({
+        macAddress,
+        numeroEscova: Number(escova.numeroEscova),
+        modelo: escova.modelo.trim(),
+      })),
+    };
+  };
 
   const limpar = () => {
     setNome('');
     setTipo('');
-    setSensores([{ ...sensorInicial }]);
+    setMac('');
+    setEscovas([escovaInicial()]);
   };
 
   return {
     nome,
     tipo,
-    sensores,
+    mac,
+    escovas,
     setNome,
     setTipo,
-    atualizarSensor,
-    adicionarSensor,
-    removerSensor,
+    setMac,
+    atualizarEscova,
+    adicionarEscova,
+    removerEscova,
+    validar,
+    temErros,
     criarPayload,
     limpar,
   };
