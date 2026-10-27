@@ -12,7 +12,7 @@ const SUBIDA_S = 480;
 const PLATO_S = 120;
 
 function ruido(s: number, escova: number): number {
-  return 0.3 * Math.sin(s / 7 + escova * 1.7) + 0.18 * Math.sin(s / 2.9 + escova * 0.6);
+  return 0.25 * Math.sin(s / 17 + escova * 1.7) + 0.12 * Math.sin(s / 9 + escova * 0.6);
 }
 
 /** Fração (0 a 1) do aquecimento no instante `s`: sobe, mantém e esfria. */

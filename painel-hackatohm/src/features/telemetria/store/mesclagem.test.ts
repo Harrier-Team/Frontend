@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { adicionarPonto, MAX_PONTOS, mesclarLeitura, SERIE_VAZIA } from './mesclagem';
-import { gateAlerta, iso, leitura } from '../testing/fabricas';
+import { gate, gateAlerta, iso, leitura } from '../testing/fabricas';
 
 describe('adicionarPonto', () => {
   it('deduplica pelo instante e substitui o ponto existente', () => {
@@ -64,5 +64,28 @@ describe('mesclarLeitura', () => {
     expect(mesclarLeitura(SERIE_VAZIA, leitura({ valorCelsius: Number.NaN })).serie).toBe(
       SERIE_VAZIA
     );
+  });
+});
+
+describe('severidade do ponto da curva', () => {
+  it('ignora a assimetria, que pertence ao motor', () => {
+    const { serie } = mesclarLeitura(
+      SERIE_VAZIA,
+      leitura({
+        resultadosQualityGates: [
+          gate(),
+          gateAlerta('Critico', { tipoRegra: 'temperatura.assimetria_escovas', regraQualidadeId: 'assim' }),
+        ],
+      })
+    );
+    expect(serie.pontos[0].severidade).toBe('Normal');
+  });
+});
+
+describe('MAC do ESP', () => {
+  it('mantém o MAC do lote quando uma leitura posterior vem do status, sem MAC', () => {
+    const doHub = mesclarLeitura(SERIE_VAZIA, leitura({ espMacAddress: 'AA:BB:CC:DD:EE:FF', dataHora: iso(0) })).serie;
+    const doStatus = mesclarLeitura(doHub, leitura({ espMacAddress: undefined, dataHora: iso(10) })).serie;
+    expect(doStatus.ultima?.espMacAddress).toBe('AA:BB:CC:DD:EE:FF');
   });
 });

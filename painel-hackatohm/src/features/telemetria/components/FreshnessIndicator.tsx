@@ -24,7 +24,7 @@ export const FreshnessIndicator: React.FC<FreshnessIndicatorProps> = ({
   agora,
   compacto = false,
 }) => {
-  if (compacto && dado === 'sem-leitura') return null;
+  if (dado === 'sem-leitura') return null;
   const idade = ultimoLoteEm ? formatarRelativo(ultimoLoteEm, agora) : null;
   const desatualizado = dado === 'atrasado' || dado === 'offline';
 
@@ -45,13 +45,12 @@ export const FreshnessIndicator: React.FC<FreshnessIndicatorProps> = ({
           background: aoVivo ? 'var(--color-flare)' : 'var(--color-ink-3)',
           boxShadow: aoVivo ? '0 0 8px color-mix(in srgb, var(--color-flare) 70%, transparent)' : undefined,
           animation: aoVivo ? 'flare-breathe 2.4s ease-in-out infinite' : undefined,
-          opacity: dado === 'sem-leitura' ? 0.5 : 1,
         }}
       />
     );
   }
 
-  const textoIdade = idade && dado !== 'sem-leitura' ? idade : null;
+  const textoIdade = idade;
 
   return (
     <span className="inline-flex items-center gap-2 whitespace-nowrap text-[13px] text-ink-2">

@@ -21,7 +21,7 @@ export function AppRoutes() {
             <Route path="/" element={<VisaoGeral />} />
             <Route path="/motores" element={<ParaVisaoGeral />} />
             <Route path="/inicio" element={<ParaVisaoGeral />} />
-            <Route path="/motores/:id" element={<DetalhesMotor />} />
+            <Route path="/motores/:id/:aba?" element={<DetalhesMotor />} />
             <Route path="/regras-qualidade" element={<RegrasQualidade />} />
             <Route path="*" element={<ParaVisaoGeral />} />
           </Route>

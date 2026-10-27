@@ -98,7 +98,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora }
 
   const compacto = largura < 520;
   const altura = compacto ? ALTURA_MOBILE : ALTURA_DESKTOP;
-  const margem = { esq: 44, dir: compacto ? 60 : 84, topo: 14, base: 28 };
+  const margem = { esq: 44, dir: compacto ? 60 : 84, topo: 24, base: 28 };
   const areaL = Math.max(largura - margem.esq - margem.dir, 40);
   const areaA = altura - margem.topo - margem.base;
 
@@ -261,7 +261,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora }
                   </text>
                 </g>
               ))}
-              <text x={4} y={margem.topo - 4} fontSize={12} fill="var(--color-ink-3)">
+              <text x={4} y={12} fontSize={12} fill="var(--color-ink-3)">
                 °C
               </text>
               <line

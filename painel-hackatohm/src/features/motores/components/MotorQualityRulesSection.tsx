@@ -3,7 +3,10 @@ import { Trash2 } from 'lucide-react';
 import { useRegrasQualidade } from '@/features/quality-gates/hooks/useRegrasQualidade';
 import { useRegrasQualidadeMotor } from '../hooks/useRegrasQualidadeMotor';
 import { RegraQualidade, VinculoRegraQualidade } from '@/features/quality-gates/types/regraQualidade';
-import { descreverLimites, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
+import { descreverLimites, formatarValorGate, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
+import { EscalaLimites } from '@/features/quality-gates/components/EscalaLimites';
+import { SerieEscova } from '@/features/telemetria/store/tipos';
+import { valorAtualDaRegra } from '@/features/telemetria/helpers/valorRegra';
 import { obterMensagemErro } from '../../../utils/errorHelper';
 import { Alert } from '../../../components/ui/Alert';
 import { Button, IconButton } from '../../../components/ui/Button';
@@ -15,10 +18,13 @@ import { LoadingState } from '../../../components/ui/LoadingState';
 
 interface MotorQualityRulesSectionProps {
   motorId: number;
+  /** Últimas leituras do motor, para posicionar o valor atual na escala de cada regra. */
+  escovas?: Record<number, SerieEscova>;
 }
 
 export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> = ({
   motorId,
+  escovas,
 }) => {
   const {
     vinculos,
@@ -75,7 +81,7 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
     <section className="space-y-4" aria-labelledby="gates">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <h2 id="gates" className="display text-base">
-          Quality gates<span className="num ml-2 text-ink-3">{vinculos.length}</span>
+          Regras vinculadas<span className="num ml-2 text-ink-3">{vinculos.length}</span>
         </h2>
         <div className="flex gap-2">
           <select
@@ -117,6 +123,7 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
               key={vinculo.regraQualidadeId}
               vinculo={vinculo}
               operando={operando}
+              escovas={escovas}
               onToggle={handleAlternar}
               onRemove={setVinculoRemovendo}
             />
@@ -127,7 +134,7 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
       <ConfirmDialog
         open={Boolean(vinculoRemovendo)}
         title={`Remover ${vinculoRemovendo?.regra.nome ?? 'regra'} deste motor?`}
-        description="A regra continua disponível em Quality gates. Só o vínculo com este motor é removido."
+        description="A regra continua no catálogo de regras. Só o vínculo com este motor é removido."
         confirmLabel="Remover"
         busy={operando}
         onCancel={() => setVinculoRemovendo(null)}
@@ -139,12 +146,13 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
 
 interface VinculoRowProps {
   vinculo: VinculoRegraQualidade;
+  escovas?: Record<number, SerieEscova>;
   operando: boolean;
   onToggle: (vinculo: VinculoRegraQualidade) => void;
   onRemove: (vinculo: VinculoRegraQualidade) => void;
 }
 
-const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, operando, onToggle, onRemove }) => {
+const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, escovas, operando, onToggle, onRemove }) => {
   const regra: RegraQualidade | null = vinculo.regra ?? null;
   if (!regra) {
     return (
@@ -154,9 +162,10 @@ const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, operando, onToggle, on
     );
   }
   const executando = regra.ativo && vinculo.ativo;
+  const valorAtual = executando ? valorAtualDaRegra(regra.tipoRegra, escovas) : null;
 
   return (
-    <div className="flex items-center gap-4 px-5 py-4">
+    <div className="flex items-start gap-4 px-5 py-4">
       <div className={`min-w-0 flex-1 ${executando ? '' : 'opacity-60'}`}>
         <h3 className="truncate text-[15px] text-ink">{regra.nome}</h3>
         <p className="num mt-0.5 text-[13px] text-ink-2">
@@ -164,8 +173,18 @@ const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, operando, onToggle, on
           {' · '}
           {descreverLimites(regra.tipoRegra, regra.parametros)}
         </p>
+        <EscalaLimites
+          tipoRegra={regra.tipoRegra}
+          aviso={regra.parametros.aviso}
+          critico={regra.parametros.critico}
+          valor={valorAtual}
+          className="mt-3 max-w-md"
+        />
+        {valorAtual !== null && (
+          <p className="num mt-1 text-xs text-ink-3">Agora: {formatarValorGate(regra.tipoRegra, valorAtual)}</p>
+        )}
         {vinculo.ativo && !regra.ativo && (
-          <p className="mt-1 text-[13px] text-sev-atencao">Desativada em Quality gates, não está sendo avaliada.</p>
+          <p className="mt-1 text-[13px] text-sev-atencao">Desativada no catálogo de regras, não está sendo avaliada.</p>
         )}
       </div>
       <Switch

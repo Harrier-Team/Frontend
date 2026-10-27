@@ -173,7 +173,7 @@ export function criarServidorSimulado(agora: () => number = Date.now) {
       .sort((a, b) => a - b)
       .map((numeroEscova) => ({
         numeroEscova,
-        valor: Math.round(temperaturaSimulada(sim.perfil, numeroEscova, segundos(t)) * 10) / 10,
+        valor: Math.round(temperaturaSimulada(sim.perfil, numeroEscova, segundos(t)) * 100) / 100,
         t,
       }));
     return montar(sim, amostras, anterior);

@@ -1,4 +1,5 @@
 import { LeituraEscova } from '@/features/telemetria/types/telemetria';
+import { TIPO_ASSIMETRIA } from '@/features/quality-gates/helpers/tiposRegra';
 import { consolidarSeveridade } from '@/features/telemetria/helpers/estadoHelper';
 import { PontoEscova, SerieEscova } from './tipos';
 
@@ -65,12 +66,18 @@ export function mesclarLeitura(serie: SerieEscova, leitura: LeituraEscova): Resu
   const { pontos, duplicado } = adicionarPonto(serie.pontos, {
     t,
     v: leitura.valorCelsius,
-    severidade: consolidarSeveridade(leitura.resultadosQualityGates),
+    // A assimetria é do motor (repetida em cada escova): não marca a curva de uma escova.
+    severidade: consolidarSeveridade(
+      leitura.resultadosQualityGates.filter((g) => g.tipoRegra !== TIPO_ASSIMETRIA)
+    ),
   });
 
   return {
     serie: {
-      ultima: substituiuUltima ? leitura : serie.ultima,
+      // O status por HTTP não traz o MAC do ESP: mantém o que o lote do hub já informou.
+      ultima: substituiuUltima
+        ? { ...leitura, espMacAddress: leitura.espMacAddress ?? serie.ultima?.espMacAddress }
+        : serie.ultima,
       pontos,
     },
     novaAmostra: !duplicado,
