@@ -29,9 +29,4 @@ export const leituraService = {
       throw error;
     }
   },
-
-  extrairMacAddress(sensorId: string): string {
-    if (!sensorId) return '';
-    return sensorId.split('_Escova')[0].trim().toUpperCase();
-  },
 };

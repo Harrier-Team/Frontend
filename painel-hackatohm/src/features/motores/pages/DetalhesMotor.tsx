@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { MotorResponse } from '../types/motor';
@@ -12,33 +12,58 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 import { LoadingState } from '../../../components/ui/LoadingState';
 import { Menu } from '../../../components/ui/Menu';
 import { Panel } from '../../../components/ui/Panel';
+import { ApiErrorState } from '../../../components/ui/ApiErrorState';
 import { useMonitoramento } from '../../../hooks/useMonitoramento';
-import { obterMensagemErro } from '../../../utils/errorHelper';
+import { ehNaoEncontrado, obterMensagemErro } from '../../../utils/errorHelper';
+import { useMotorTelemetria } from '../../telemetria/hooks/useTelemetriaStore';
+import { useAssinarMotor } from '../../telemetria/hooks/useAssinarMotor';
+import { useAgora } from '../../telemetria/hooks/useAgora';
+import { resumirMotor } from '../../telemetria/helpers/resumoMotor';
+import { TEMA_ESTADO } from '../../telemetria/helpers/apresentacao';
+import { FrescorIndicador } from '../../telemetria/components/FrescorIndicador';
+import { StatusDot } from '../../telemetria/components/StatusDot';
+import { formatarValorGate } from '../../quality-gates/helpers/tiposRegra';
 
 export const DetalhesMotor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { deletarMotor, motoresComStatus } = useMonitoramento();
+  const { deletarMotor } = useMonitoramento();
   const [motor, setMotor] = useState<MotorResponse | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [erroCarga, setErroCarga] = useState<{ mensagem: string; naoEncontrado: boolean } | null>(
+    null
+  );
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
   const [erroOperacao, setErroOperacao] = useState<string | null>(null);
-  const motorMonitorado = motor ? motoresComStatus.find((item) => item.id === motor.id) : undefined;
+  const motorId = id ? Number(id) : null;
+  const telemetria = useMotorTelemetria(motorId ?? -1);
+  const agora = useAgora();
+  const resumo = resumirMotor(telemetria, agora);
+  useAssinarMotor(motorId);
 
-  useEffect(() => {
-    if (!id) return;
-    // oxlint-disable-next-line react/set-state-in-effect
+  const carregar = useCallback(() => {
+    if (motorId === null) return;
     setCarregando(true);
+    setErroCarga(null);
     motorService
-      .obterPorId(Number(id))
+      .obterPorId(motorId)
       .then((data) => setMotor(data))
-      .catch((err) => {
-        console.error(err);
+      .catch((err: unknown) => {
         setMotor(null);
+        setErroCarga({
+          mensagem: obterMensagemErro(err, 'Não foi possível carregar o motor.'),
+          naoEncontrado: ehNaoEncontrado(err),
+        });
       })
       .finally(() => setCarregando(false));
-  }, [id]);
+  }, [motorId]);
+
+  useEffect(() => {
+    // A troca de motor exige sincronização com a API.
+    // oxlint-disable-next-line react/set-state-in-effect
+    carregar();
+  }, [carregar]);
 
   const handleExcluir = async () => {
     if (!motor) return;
@@ -55,6 +80,20 @@ export const DetalhesMotor: React.FC = () => {
   };
 
   if (carregando) return <LoadingState label="Carregando motor" rows={2} />;
+  if (erroCarga && !erroCarga.naoEncontrado) {
+    return (
+      <ApiErrorState
+        title="Não foi possível carregar o motor"
+        message={erroCarga.mensagem}
+        onRetry={carregar}
+        action={
+          <Link to="/">
+            <Button variant="ghost">Voltar aos motores</Button>
+          </Link>
+        }
+      />
+    );
+  }
   if (!motor)
     return (
       <EmptyState
@@ -85,6 +124,28 @@ export const DetalhesMotor: React.FC = () => {
           <div className="min-w-0">
             <h1 className="display text-[28px] leading-tight sm:text-[34px]">{motor.nome}</h1>
             <p className="mt-1 text-[15px] text-ink-2">{motor.tipo}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1">
+              <span className="inline-flex items-center gap-2 text-[13px]">
+                <StatusDot estado={resumo.principal} />
+                <span className={TEMA_ESTADO[resumo.principal].textClass}>
+                  {TEMA_ESTADO[resumo.principal].label}
+                </span>
+              </span>
+              <FrescorIndicador dado={resumo.dado} ultimoLoteEm={resumo.ultimoLoteEm} agora={agora} />
+            </div>
+            {resumo.motivo && resumo.severidade && resumo.severidade !== 'Normal' && (
+              <p className="mt-2 text-[13px] text-ink-2">
+                {resumo.motivo.mensagemDiagnostico ??
+                  `Escova ${resumo.motivo.numeroEscova}: ${resumo.motivo.nomeRegra}`}
+                {resumo.motivo.valorObservado !== null && resumo.motivo.valorLimite !== null && (
+                  <span className="num text-ink-3">
+                    {' '}
+                    ({formatarValorGate(resumo.motivo.tipoRegra, resumo.motivo.valorObservado)} ≥{' '}
+                    {formatarValorGate(resumo.motivo.tipoRegra, resumo.motivo.valorLimite)})
+                  </span>
+                )}
+              </p>
+            )}
           </div>
           <Menu
             label="Mais ações"
@@ -113,12 +174,10 @@ export const DetalhesMotor: React.FC = () => {
             {sensores.map((sensor) => (
               <EscovaItem
                 key={sensor.id}
-                sensor={
-                  motorMonitorado?.sensores.find((item) => item.id === sensor.id) ?? {
-                    ...sensor,
-                    status: 'offline',
-                  }
-                }
+                sensor={sensor}
+                serie={telemetria?.escovas[sensor.numeroEscova]}
+                dado={resumo.dado}
+                agora={agora}
               />
             ))}
           </Panel>

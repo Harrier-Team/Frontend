@@ -1,10 +1,21 @@
 import React from 'react';
-import { NivelStatus } from '../types/telemetria';
-import { STATUS_THEME } from '../helpers/statusHelper';
+import { EstadoPrincipal } from '../helpers/estadoHelper';
+import { TEMA_ESTADO } from '../helpers/apresentacao';
 
-/** Ponto de estado. Offline é vazado; perigo pulsa de leve. Nunca depende só da cor: sempre acompanhado de texto ou aria-label. */
-export const StatusDot: React.FC<{ status: NivelStatus; size?: number }> = ({ status, size = 8 }) => {
-  const cor = STATUS_THEME[status].color;
+const SEVERIDADES = new Set<EstadoPrincipal>(['Normal', 'Atencao', 'AlertaPreditivo', 'Critico']);
+
+/**
+ * Ponto de estado. Severidades são pontos cheios (crítico pulsa de leve);
+ * estados de avaliação e de dado (offline, aguardando…) são vazados.
+ * Nunca depende só da cor: sempre acompanhado de texto ou aria-label.
+ */
+export const StatusDot: React.FC<{ estado: EstadoPrincipal; size?: number }> = ({
+  estado,
+  size = 8,
+}) => {
+  const cor = TEMA_ESTADO[estado].color;
+  const cheio = SEVERIDADES.has(estado);
+  const critico = estado === 'Critico';
   return (
     <span
       aria-hidden="true"
@@ -12,10 +23,10 @@ export const StatusDot: React.FC<{ status: NivelStatus; size?: number }> = ({ st
       style={{
         width: size,
         height: size,
-        background: status === 'offline' ? 'transparent' : cor,
-        border: status === 'offline' ? `1.5px solid ${cor}` : undefined,
-        boxShadow: status === 'perigo' ? `0 0 10px ${cor}` : undefined,
-        animation: status === 'perigo' ? 'flare-breathe 2.4s ease-in-out infinite' : undefined,
+        background: cheio ? cor : 'transparent',
+        border: cheio ? undefined : `1.5px solid ${cor}`,
+        boxShadow: critico ? `0 0 10px ${cor}` : undefined,
+        animation: critico ? 'flare-breathe 2.4s ease-in-out infinite' : undefined,
       }}
     />
   );

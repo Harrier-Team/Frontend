@@ -1,6 +1,13 @@
 import * as signalR from '@microsoft/signalr';
-import { MotorStatusDto, TelemetriaRealtimeDto } from '@/features/telemetria/types/telemetria';
-import { normalizarStatus } from '@/features/telemetria/helpers/normalizacao';
+import {
+  LeituraEscova,
+  MotorStatusDto,
+  TelemetriaRealtimeDto,
+} from '@/features/telemetria/types/telemetria';
+import {
+  normalizarLeituraRealtime,
+  normalizarStatus,
+} from '@/features/telemetria/helpers/normalizacao';
 import { logDev } from '@/utils/devLog';
 
 export type StatusConexaoHub =
@@ -9,25 +16,13 @@ export type StatusConexaoHub =
   | 'reconectando'
   | 'desconectado';
 
-type CallbackLote = (leituras: TelemetriaRealtimeDto[]) => void;
-type CallbackIndividual = (leitura: TelemetriaRealtimeDto) => void;
+type CallbackLote = (leituras: LeituraEscova[]) => void;
 type CallbackStatusMotor = (status: MotorStatusDto) => void;
 type CallbackStatus = (status: StatusConexaoHub) => void;
-
-function normalizarTelemetria(
-  leitura: TelemetriaRealtimeDto
-): TelemetriaRealtimeDto {
-  return {
-    ...leitura,
-    motorId: leitura.motorId ?? null,
-    resultadosQualityGates: leitura.resultadosQualityGates ?? [],
-  };
-}
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
   private callbacksLote: Set<CallbackLote> = new Set();
-  private callbacksIndividual: Set<CallbackIndividual> = new Set();
   private callbacksStatusMotor: Set<CallbackStatusMotor> = new Set();
   private callbacksStatus: Set<CallbackStatus> = new Set();
   private statusAtual: StatusConexaoHub = 'desconectado';
@@ -64,20 +59,17 @@ class SignalRService {
       .configureLogging(import.meta.env.DEV ? signalR.LogLevel.Information : signalR.LogLevel.Warning)
       .build();
 
-    // Eventos enviados pelo backend via ITelemetriaClient
+    // Única fonte de amostras: um lote por motor, com todas as escovas.
     this.connection.on(
       'ReceberLoteTelemetria',
       (leituras: TelemetriaRealtimeDto[]) => {
-        this.callbacksLote.forEach((cb) => cb(leituras.map(normalizarTelemetria)));
+        const normalizadas = (leituras ?? []).map(normalizarLeituraRealtime);
+        this.callbacksLote.forEach((cb) => cb(normalizadas));
       }
     );
 
-    this.connection.on(
-      'ReceberTelemetria',
-      (leitura: TelemetriaRealtimeDto) => {
-        this.callbacksIndividual.forEach((cb) => cb(normalizarTelemetria(leitura)));
-      }
-    );
+    // Mantido só por compatibilidade com o contrato: não conta como amostra.
+    this.connection.on('ReceberTelemetria', () => undefined);
 
     this.connection.on('ReceberStatusMotor', (status: MotorStatusDto) => {
       const normalizado = normalizarStatus(status);
@@ -123,11 +115,6 @@ class SignalRService {
   public onLoteTelemetria(callback: CallbackLote): () => void {
     this.callbacksLote.add(callback);
     return () => this.callbacksLote.delete(callback);
-  }
-
-  public onTelemetria(callback: CallbackIndividual): () => void {
-    this.callbacksIndividual.add(callback);
-    return () => this.callbacksIndividual.delete(callback);
   }
 
   public onStatusMotor(callback: CallbackStatusMotor): () => void {

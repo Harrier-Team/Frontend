@@ -1,68 +1,7 @@
-import { NivelStatus, SensorComTelemetria } from '@/features/telemetria/types/telemetria';
-
-export const LIMITE_ATENCAO = 60;
-export const LIMITE_PERIGO = 80;
-export const ESCALA_MAXIMA = 100;
-
-export interface StatusConfig {
-  label: string;
-  /** Cor semântica (token CSS) usada em pontos, marcadores e valores. */
-  color: string;
-  /** Classe de texto para rótulos de estado. */
-  textClass: string;
-  /** Peso de ordenação: maior = mais urgente. */
-  prioridade: number;
-}
-
-export const STATUS_THEME: Record<NivelStatus, StatusConfig> = {
-  normal: { label: 'Estável', color: 'var(--color-ok)', textClass: 'text-ink-2', prioridade: 0 },
-  warning: { label: 'Atenção', color: 'var(--color-warn)', textClass: 'text-warn', prioridade: 2 },
-  perigo: { label: 'Crítico', color: 'var(--color-hot)', textClass: 'text-hot', prioridade: 3 },
-  offline: { label: 'Sem sinal', color: 'var(--color-off)', textClass: 'text-ink-2', prioridade: 1 },
-};
-
 /**
- * Classifica a saúde térmica de uma escova individual
+ * Formatação de valores e horários. Não classifica nada: a severidade vem
+ * sempre do backend (ver estadoHelper).
  */
-export function classificarSensor(
-  valorCelsius?: number | null,
-  alertaDesgaste?: boolean,
-  temConexao?: boolean
-): NivelStatus {
-  if (valorCelsius === null || valorCelsius === undefined) {
-    return temConexao ? 'normal' : 'offline';
-  }
-
-  if (alertaDesgaste || valorCelsius >= LIMITE_PERIGO) {
-    return 'perigo';
-  }
-
-  if (valorCelsius >= LIMITE_ATENCAO) {
-    return 'warning';
-  }
-
-  return 'normal';
-}
-
-/**
- * Determina o status geral consolidado do motor
- * Regra: O motor assume o pior estado entre todas as suas escovas.
- */
-export function calcularStatusGeralDoMotor(sensores: SensorComTelemetria[]): NivelStatus {
-  if (!sensores || sensores.length === 0) return 'offline';
-
-  if (sensores.some((s) => s.status === 'perigo')) {
-    return 'perigo';
-  }
-  if (sensores.some((s) => s.status === 'warning')) {
-    return 'warning';
-  }
-  if (sensores.some((s) => s.status === 'normal')) {
-    return 'normal';
-  }
-
-  return 'offline';
-}
 
 /**
  * Formata um valor numérico em graus Celsius
@@ -110,9 +49,4 @@ export function formatarRelativo(dataIso?: string | null, agora: number = Date.n
   if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
   if (diff < 86400) return `há ${Math.floor(diff / 3600)} h`;
   return `há ${Math.floor(diff / 86400)} d`;
-}
-
-/** Ordena do mais urgente para o mais estável. */
-export function compararPorUrgencia(a: NivelStatus, b: NivelStatus): number {
-  return STATUS_THEME[b].prioridade - STATUS_THEME[a].prioridade;
 }

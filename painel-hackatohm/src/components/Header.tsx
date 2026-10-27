@@ -1,16 +1,16 @@
 import React from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import harrierMark from '../assets/harrier-mark.png';
-import { useMonitoramento } from '../hooks/useMonitoramento';
+import { useConexaoHub } from '@/features/telemetria/hooks/useTelemetriaStore';
 
 const linkBase =
   'relative flex h-14 items-center px-1 text-sm transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-px after:transition-colors';
 
 const ConexaoAoVivo: React.FC = () => {
-  const { statusConexaoHub } = useMonitoramento();
+  const statusConexaoHub = useConexaoHub();
   const ao_vivo = statusConexaoHub === 'conectado';
   const texto = {
-    conectado: 'Ao vivo',
+    conectado: 'Hub conectado',
     conectando: 'Conectando',
     reconectando: 'Reconectando',
     desconectado: 'Sem conexão',
