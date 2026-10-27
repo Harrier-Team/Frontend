@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { VinculoRegraQualidade } from '@/features/quality-gates/types/regraQualidade';
 import { vinculoRegraQualidadeService } from '../services/vinculoRegraQualidadeService';
 import { obterMensagemErro } from '../../../utils/errorHelper';
+import { aposAlterarRegras } from '@/features/quality-gates/helpers/aposAlterarRegras';
 
 export function useRegrasQualidadeMotor(motorId: number) {
   const [vinculos, setVinculos] = useState<VinculoRegraQualidade[]>([]);
@@ -33,6 +34,7 @@ export function useRegrasQualidadeMotor(motorId: number) {
     try {
       const vinculo = await vinculoRegraQualidadeService.associar(motorId, regraId);
       setVinculos((anteriores) => [...anteriores, vinculo]);
+      aposAlterarRegras([motorId]);
       return vinculo;
     } catch (error) {
       setErro(obterMensagemErro(error, 'Não foi possível associar a regra.'));
@@ -56,6 +58,7 @@ export function useRegrasQualidadeMotor(motorId: number) {
           item.regraQualidadeId === atualizado.regraQualidadeId ? atualizado : item
         )
       );
+      aposAlterarRegras([motorId]);
       return atualizado;
     } catch (error) {
       setErro(obterMensagemErro(error, 'Não foi possível alterar o vínculo.'));
@@ -78,6 +81,7 @@ export function useRegrasQualidadeMotor(motorId: number) {
           (item) => item.regraQualidadeId !== vinculo.regraQualidadeId
         )
       );
+      aposAlterarRegras([motorId]);
     } catch (error) {
       setErro(obterMensagemErro(error, 'Não foi possível remover o vínculo.'));
       throw error;

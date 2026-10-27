@@ -6,6 +6,7 @@ import {
 } from '@/features/quality-gates/types/regraQualidade';
 import { regraQualidadeService } from '@/features/quality-gates/services/regraQualidadeService';
 import { obterMensagemErro } from '@/utils/errorHelper';
+import { aposAlterarRegras } from '@/features/quality-gates/helpers/aposAlterarRegras';
 
 export function useRegrasQualidade() {
   const [regras, setRegras] = useState<RegraQualidade[]>([]);
@@ -60,6 +61,7 @@ export function useRegrasQualidade() {
           .map((regra) => (regra.id === id ? atualizada : regra))
           .sort((a, b) => a.nome.localeCompare(b.nome))
       );
+      aposAlterarRegras();
       return atualizada;
     } catch (error) {
       setErro(obterMensagemErro(error, 'Não foi possível atualizar a regra.'));
@@ -75,6 +77,7 @@ export function useRegrasQualidade() {
     try {
       await regraQualidadeService.excluir(id);
       setRegras((anteriores) => anteriores.filter((regra) => regra.id !== id));
+      aposAlterarRegras();
     } catch (error) {
       setErro(obterMensagemErro(error, 'Não foi possível excluir a regra.'));
       throw error;
