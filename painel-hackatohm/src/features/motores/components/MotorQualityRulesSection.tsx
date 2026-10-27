@@ -4,6 +4,7 @@ import { useRegrasQualidade } from '@/features/quality-gates/hooks/useRegrasQual
 import { useRegrasQualidadeMotor } from '../hooks/useRegrasQualidadeMotor';
 import { RegraQualidade, VinculoRegraQualidade } from '@/features/quality-gates/types/regraQualidade';
 import { descreverLimites, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
+import { obterMensagemErro } from '../../../utils/errorHelper';
 import { Alert } from '../../../components/ui/Alert';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { Panel } from '../../../components/ui/Panel';
@@ -45,8 +46,8 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
       await associar(regraSelecionada);
       setRegraSelecionada('');
       setOperacaoErro(null);
-    } catch {
-      setOperacaoErro('Não foi possível associar. A regra pode já estar vinculada a este motor.');
+    } catch (error) {
+      setOperacaoErro(obterMensagemErro(error, 'Não foi possível associar a regra a este motor.'));
     }
   };
 
@@ -54,8 +55,8 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
     try {
       await alternar(vinculo);
       setOperacaoErro(null);
-    } catch {
-      setOperacaoErro('Não foi possível alterar a regra neste motor.');
+    } catch (error) {
+      setOperacaoErro(obterMensagemErro(error, 'Não foi possível alterar a regra neste motor.'));
     }
   };
 
@@ -65,8 +66,8 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
       await remover(vinculoRemovendo);
       setVinculoRemovendo(null);
       setOperacaoErro(null);
-    } catch {
-      setOperacaoErro('Não foi possível remover a regra deste motor.');
+    } catch (error) {
+      setOperacaoErro(obterMensagemErro(error, 'Não foi possível remover a regra deste motor.'));
     }
   };
 
@@ -104,7 +105,7 @@ export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> =
 
       {carregando ? (
         <LoadingState label="Carregando regras" rows={2} />
-      ) : vinculos.length === 0 ? (
+      ) : erro && vinculos.length === 0 ? null : vinculos.length === 0 ? (
         <EmptyState
           title="Nenhuma regra neste motor"
           description="Associe uma regra para avaliar cada leitura contra os limites."

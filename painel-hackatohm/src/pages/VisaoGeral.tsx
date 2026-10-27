@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import harrierMark from '../assets/harrier-mark.png';
 import { useMonitoramento } from '../hooks/useMonitoramento';
 import { Alert } from '../components/ui/Alert';
+import { ApiErrorState } from '../components/ui/ApiErrorState';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingState } from '../components/ui/LoadingState';
@@ -135,10 +136,10 @@ export const VisaoGeral: React.FC = () => {
         )}
       </header>
 
-      {erro && (
+      {erro && motores.length > 0 && (
         <Alert
           tone="error"
-          title="Não foi possível carregar os motores"
+          title="Não foi possível atualizar os motores"
           message={erro}
           action={
             <Button size="sm" variant="secondary" onClick={() => void recarregar()}>
@@ -150,22 +151,26 @@ export const VisaoGeral: React.FC = () => {
 
       {carregandoInicial ? (
         <LoadingState label="Carregando motores" />
+      ) : motores.length === 0 && erro ? (
+        <ApiErrorState
+          title="Não foi possível carregar os motores"
+          message={erro}
+          onRetry={() => void recarregar()}
+        />
       ) : motores.length === 0 ? (
-        !erro && (
-          <EmptyState
-            title="Cadastre o primeiro motor"
-            description="Informe o motor, o endereço MAC do ESP e as escovas para começar a ver as temperaturas."
-            action={
-              <div className="flex flex-col items-center gap-6">
-                <img src={harrierMark} alt="" className="h-16 w-auto opacity-40" />
-                <Button onClick={abrirCadastro}>
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  Novo motor
-                </Button>
-              </div>
-            }
-          />
-        )
+        <EmptyState
+          title="Cadastre o primeiro motor"
+          description="Informe o motor, o endereço MAC do ESP e as escovas para começar a ver as temperaturas."
+          action={
+            <div className="flex flex-col items-center gap-6">
+              <img src={harrierMark} alt="" className="h-16 w-auto opacity-40" />
+              <Button onClick={abrirCadastro}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Novo motor
+              </Button>
+            </div>
+          }
+        />
       ) : (
         <section className="space-y-4">
           {mostrarFiltros && (

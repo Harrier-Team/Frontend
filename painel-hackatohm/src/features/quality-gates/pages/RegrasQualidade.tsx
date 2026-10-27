@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
+import { ApiErrorState } from '@/components/ui/ApiErrorState';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -22,6 +23,7 @@ export const RegrasQualidade: React.FC = () => {
     salvando,
     excluindoId,
     erro,
+    recarregar,
     criar,
     atualizar,
     excluir,
@@ -91,7 +93,7 @@ export const RegrasQualidade: React.FC = () => {
         <div>
           <h1 className="display text-[28px] leading-tight sm:text-[34px]">Quality gates</h1>
           <p className="mt-2 text-[15px] text-ink-2">
-            Limites de temperatura avaliados a cada leitura.
+            Regras de temperatura avaliadas a cada lote: limiar estático, gradiente térmico e assimetria entre escovas.
           </p>
         </div>
         {regras.length > 0 && (
@@ -102,26 +104,32 @@ export const RegrasQualidade: React.FC = () => {
         )}
       </header>
 
-      {erro && <Alert tone="error" title="Não foi possível carregar as regras" message={erro} />}
+      {erro && regras.length > 0 && (
+        <Alert tone="error" title="Não foi possível atualizar as regras" message={erro} />
+      )}
       {operacaoErro && !formAberto && (
         <Alert tone="error" title="Operação não concluída" message={operacaoErro} />
       )}
 
       {carregando ? (
         <LoadingState label="Carregando regras" />
+      ) : regras.length === 0 && erro ? (
+        <ApiErrorState
+          title="Não foi possível carregar as regras"
+          message={erro}
+          onRetry={() => void recarregar()}
+        />
       ) : regras.length === 0 ? (
-        !erro && (
-          <EmptyState
-            title="Nenhuma regra ainda"
-            description="Defina em que temperatura uma escova passa a exigir atenção ou fica crítica."
-            action={
-              <Button onClick={abrirCriacao}>
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Criar regra
-              </Button>
-            }
-          />
-        )
+        <EmptyState
+          title="Nenhuma regra ainda"
+          description="Defina limites de temperatura, de subida por minuto ou de diferença entre escovas."
+          action={
+            <Button onClick={abrirCriacao}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Criar regra
+            </Button>
+          }
+        />
       ) : (
         <QualityRuleList
           regras={regras}
