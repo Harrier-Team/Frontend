@@ -9,8 +9,8 @@ interface AlertProps {
 
 const dot = {
   info: 'var(--color-ink-2)',
-  warning: 'var(--color-warn)',
-  error: 'var(--color-hot)',
+  warning: 'var(--color-sev-atencao)',
+  error: 'var(--color-sev-critico)',
 };
 
 export const Alert: React.FC<AlertProps> = ({ title, message, tone = 'info', action }) => (

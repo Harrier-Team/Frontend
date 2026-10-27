@@ -72,7 +72,7 @@ export const QualityGateResultList: React.FC<QualityGateResultListProps> = ({ re
                     className="h-1.5 w-1.5 rounded-full"
                     style={
                       espera
-                        ? { border: '1.5px solid var(--color-off)' }
+                        ? { border: '1.5px solid var(--color-data-off)' }
                         : { background: tema.color }
                     }
                   />

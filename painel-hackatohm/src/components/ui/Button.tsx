@@ -8,8 +8,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses = {
   primary: 'bg-flare text-canvas hover:bg-white',
-  secondary: 'border border-line-strong text-ink hover:bg-raised hover:border-[#38414c]',
-  danger: 'bg-hot text-canvas hover:brightness-110',
+  secondary: 'border border-line-strong text-ink hover:bg-raised hover:border-ink-3',
+  danger: 'bg-sev-critico text-canvas hover:brightness-110',
   ghost: 'text-ink-2 hover:bg-raised hover:text-ink',
 };
 
@@ -33,7 +33,7 @@ export const Button: React.FC<ButtonProps> = ({
     type={type}
     disabled={disabled || busy}
     aria-busy={busy || undefined}
-    className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-colors disabled:opacity-45 ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
+    className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-control)] font-medium transition-colors disabled:opacity-45 ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
   >
     {children}
   </button>

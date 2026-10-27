@@ -1,4 +1,5 @@
 @import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource-variable/jetbrains-mono/wght.css';
 @import 'tailwindcss';
 @import './styles/tokens.css';
 
@@ -19,7 +20,7 @@
     background: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -92,7 +93,7 @@
     border: 1px solid var(--color-line-strong);
     background: var(--color-canvas);
     color: var(--color-ink);
-    border-radius: 8px;
+    border-radius: var(--radius-control);
     padding: 9px 12px;
     font: inherit;
     transition: border-color 0.15s;
@@ -101,7 +102,7 @@
     color: var(--color-ink-3);
   }
   .field:hover {
-    border-color: #38414c;
+    border-color: var(--color-ink-3);
   }
   .field:focus-visible {
     outline: none;
@@ -109,7 +110,7 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-flare) 16%, transparent);
   }
   .field[aria-invalid='true'] {
-    border-color: var(--color-hot);
+    border-color: var(--color-sev-critico);
   }
 
   .field-label {
@@ -121,7 +122,7 @@
 
   .field-error {
     margin-top: 6px;
-    color: var(--color-hot);
+    color: var(--color-sev-critico);
     font-size: 13px;
   }
 }

@@ -14,9 +14,9 @@ import { useLimitesTermicos } from '../hooks/useLimitesTermicos';
 import { SEVERIDADE_THEME } from '@/features/quality-gates/helpers/qualityGateHelper';
 
 const marcador: Record<string, string> = {
-  Critico: 'var(--color-hot)',
-  AlertaPreditivo: 'var(--color-warn)',
-  Atencao: 'var(--color-warn)',
+  Critico: 'var(--color-sev-critico)',
+  AlertaPreditivo: 'var(--color-sev-alerta)',
+  Atencao: 'var(--color-sev-atencao)',
 };
 
 interface MotorRowProps {

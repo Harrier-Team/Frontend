@@ -22,12 +22,12 @@ const ConexaoAoVivo: React.FC = () => {
         aria-hidden="true"
         className="h-1.5 w-1.5 rounded-full"
         style={{
-          background: ao_vivo ? 'var(--color-flare)' : 'var(--color-warn)',
+          background: ao_vivo ? 'var(--color-flare)' : 'var(--color-sev-atencao)',
           boxShadow: ao_vivo ? '0 0 10px rgb(241 237 228 / 0.7)' : undefined,
           animation: ao_vivo ? undefined : 'flare-breathe 1.6s ease-in-out infinite',
         }}
       />
-      <span className={ao_vivo ? '' : 'text-warn'}>{texto}</span>
+      <span className={ao_vivo ? '' : 'text-sev-atencao'}>{texto}</span>
     </div>
   );
 };
@@ -38,7 +38,7 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-md">
-      <div className="mx-auto flex h-14 w-full max-w-[1120px] items-center gap-8 px-5 sm:px-8">
+      <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center gap-8 px-5 sm:px-8">
         <Link to="/" className="flex items-center gap-3" aria-label="Harrier, início">
           <img src={harrierMark} alt="" className="h-8 w-auto" />
           <span

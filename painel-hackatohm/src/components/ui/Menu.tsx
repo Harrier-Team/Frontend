@@ -49,7 +49,7 @@ export const Menu: React.FC<{ label: string; items: MenuItem[] }> = ({ label, it
                 item.onSelect();
               }}
               className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-line ${
-                item.tone === 'danger' ? 'text-hot' : 'text-ink'
+                item.tone === 'danger' ? 'text-sev-critico' : 'text-ink'
               }`}
             >
               {item.icon}

@@ -45,7 +45,7 @@ export const ThermalGauge: React.FC<ThermalGaugeProps> = ({ valor, severidade, l
             style={{
               left: pct(limites.aviso),
               width: `calc(${pct(limites.critico)} - ${pct(limites.aviso)})`,
-              background: 'color-mix(in srgb, var(--color-warn) 28%, transparent)',
+              background: 'color-mix(in srgb, var(--color-sev-atencao) 28%, transparent)',
             }}
           />
           <div
@@ -53,7 +53,7 @@ export const ThermalGauge: React.FC<ThermalGaugeProps> = ({ valor, severidade, l
             style={{
               left: pct(limites.critico),
               right: 0,
-              background: 'color-mix(in srgb, var(--color-hot) 32%, transparent)',
+              background: 'color-mix(in srgb, var(--color-sev-critico) 32%, transparent)',
             }}
           />
         </>

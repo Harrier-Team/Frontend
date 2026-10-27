@@ -1,32 +1,69 @@
 /*
-  Sistema visual Harrier
+  Sistema visual Harrier (ver DESIGN.md)
   Grafite frio + aço escovado, como a logo. Cor só significa atenção:
   o estado normal fica em tons neutros e o ponto de luz (flare) marca o que está vivo.
+  Componentes usam apenas estes tokens; o tema claro só redefine os valores.
 */
 @theme {
   /* Superfícies */
   --color-canvas: #0b0d10;
-  --color-panel: #101317;
-  --color-raised: #161a1f;
-  --color-line: #1d2228;
-  --color-line-strong: #2a313a;
+  --color-panel: #111418;
+  --color-raised: #171b21;
+  --color-line: #1f252c;
+  --color-line-strong: #2c343e;
 
   /* Texto (aço) */
-  --color-ink: #e4e8ec;
-  --color-ink-2: #9aa4af;
-  --color-ink-3: #828c98;
+  --color-ink: #e6e9ed;
+  --color-ink-2: #a0a9b4;
+  --color-ink-3: #7f8995;
 
   /* Flare: o único acento da marca */
   --color-flare: #f1ede4;
 
-  /* Estados, dessaturados para conviver com o grafite */
-  --color-ok: #7fb3a0;
-  --color-warn: #d2a553;
-  --color-hot: #e0735f;
-  --color-off: #5f6975;
+  /* Severidade (backend), dessaturada para conviver com o grafite */
+  --color-sev-normal: #7fb3a0;
+  --color-sev-atencao: #d9c36a;
+  --color-sev-alerta: #e8964a;
+  --color-sev-critico: #f0644f;
+
+  /* Dado: offline e degradado (só ícones e pontos) */
+  --color-data-off: #6b7581;
+
+  /* Linhas das escovas no gráfico: tons frios, distintos das severidades */
+  --color-series-1: #7aa7e0;
+  --color-series-2: #a996e6;
+  --color-series-3: #5fbfc9;
+  --color-series-4: #c3c9d1;
+  --color-series-5: #8c8ff0;
 
   --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
   --radius-panel: 14px;
+  --radius-control: 8px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Tema claro (projetor). Ativado por data-theme="light" no <html>. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --color-canvas: #f3f4f6;
+  --color-panel: #ffffff;
+  --color-raised: #e9ecf0;
+  --color-line: #e1e5ea;
+  --color-line-strong: #c5ccd4;
+  --color-ink: #14181d;
+  --color-ink-2: #47505c;
+  --color-ink-3: #5f6874;
+  --color-flare: #14181d;
+  --color-sev-normal: #2b7259;
+  --color-sev-atencao: #806500;
+  --color-sev-alerta: #b04a00;
+  --color-sev-critico: #c0301c;
+  --color-data-off: #6b7581;
+  --color-series-1: #2f6db8;
+  --color-series-2: #6d55c4;
+  --color-series-3: #167f8a;
+  --color-series-4: #4b5563;
+  --color-series-5: #4549c9;
 }

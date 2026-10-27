@@ -20,7 +20,7 @@ export const FrescorIndicador: React.FC<{
         className="inline-block h-1.5 w-1.5 rounded-full"
         style={{
           background: aoVivo ? 'var(--color-flare)' : 'transparent',
-          border: aoVivo ? undefined : `1.5px solid ${apagado ? 'var(--color-off)' : 'var(--color-ink-3)'}`,
+          border: aoVivo ? undefined : `1.5px solid ${apagado ? 'var(--color-data-off)' : 'var(--color-ink-3)'}`,
           animation: aoVivo ? 'flare-breathe 2.4s ease-in-out infinite' : undefined,
         }}
       />

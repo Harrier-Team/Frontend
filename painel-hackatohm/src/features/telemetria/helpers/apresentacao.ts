@@ -11,7 +11,7 @@ export interface TemaEstado {
 
 const neutro = (label: string): TemaEstado => ({
   label,
-  color: 'var(--color-off)',
+  color: 'var(--color-data-off)',
   textClass: 'text-ink-2',
 });
 

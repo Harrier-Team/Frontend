@@ -148,7 +148,7 @@ const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, operando, onToggle, on
   const regra: RegraQualidade | null = vinculo.regra ?? null;
   if (!regra) {
     return (
-      <div className="px-5 py-4 text-sm text-hot">
+      <div className="px-5 py-4 text-sm text-sev-critico">
         A API retornou um vínculo sem os dados da regra. Atualize a página.
       </div>
     );
@@ -165,7 +165,7 @@ const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, operando, onToggle, on
           {descreverLimites(regra.tipoRegra, regra.parametros)}
         </p>
         {vinculo.ativo && !regra.ativo && (
-          <p className="mt-1 text-[13px] text-warn">Desativada em Quality gates, não está sendo avaliada.</p>
+          <p className="mt-1 text-[13px] text-sev-atencao">Desativada em Quality gates, não está sendo avaliada.</p>
         )}
       </div>
       <Switch
