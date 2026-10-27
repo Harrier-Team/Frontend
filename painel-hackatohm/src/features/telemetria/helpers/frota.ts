@@ -1,5 +1,5 @@
 import { ehSeveridadeAnormal } from './estadoHelper';
-import { contarPorFiltro, descreverMotivo, motivoDoMotor } from './linhaMotor';
+import { contarPorFiltro, descreverMotivo, motivoDoMotor, previsaoDoMotivo } from './linhaMotor';
 import { ResumoMotor } from './resumoMotor';
 import { formatarGrau, formatarRelativo } from './statusHelper';
 import { MotorTelemetria } from '../store/tipos';
@@ -42,7 +42,7 @@ export function subtituloDaFrota(linhas: LinhaFrota[], agora: number): string | 
   if (ehSeveridadeAnormal(mais.resumo.severidade)) {
     const motivo = motivoDoMotor(mais.telemetria, mais.resumo.motivo);
     if (motivo) {
-      return `${descreverMotivo(motivo, mais.motor.nome)} · ${formatarRelativo(mais.resumo.ultimoLoteEm, agora)}`;
+      return `${descreverMotivo(motivo, mais.motor.nome, previsaoDoMotivo(mais.telemetria, motivo))} · ${formatarRelativo(mais.resumo.ultimoLoteEm, agora)}`;
     }
   }
   let quente: { motor: string; escova: number; valor: number; dataHora: string } | null = null;

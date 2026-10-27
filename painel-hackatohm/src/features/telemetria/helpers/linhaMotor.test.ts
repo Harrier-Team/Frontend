@@ -8,6 +8,7 @@ import {
   descreverMotivo,
   filtroDoEstado,
   motivoDoMotor,
+  previsaoDoMotivo,
   serieDaMaiorTemperatura,
 } from './linhaMotor';
 
@@ -104,5 +105,47 @@ describe('motivoDoMotor e descreverMotivo', () => {
         'Motor A'
       )
     ).toBe('Motor A: diferença entre escovas, 25,2 °C ≥ 15 °C');
+  });
+});
+
+describe('motivo da previsão por tendência', () => {
+  const gatePrevisao = gate({
+    tipoRegra: 'temperatura.previsao_tendencia',
+    nomeRegra: 'Tempo até o limite',
+    disparouAlerta: true,
+    severidade: 'AlertaPreditivo',
+    codigoRegra: 'PREVISAO_TENDENCIA_ALERTA',
+    valorObservado: 8.4,
+    valorLimite: 10,
+    metadados: { inclinacaoCelsiusPorMinuto: 2.1, temperaturaLimite: 95, amostras: 12 },
+  });
+  const motivo = {
+    numeroEscova: 2,
+    nomeRegra: 'Tempo até o limite',
+    tipoRegra: 'temperatura.previsao_tendencia',
+    codigoRegra: 'PREVISAO_TENDENCIA_ALERTA',
+    valorObservado: 8.4,
+    valorLimite: 10,
+    mensagemDiagnostico: 'A escova 2 tende a atingir 95.0 °C em ~8 min (+2.10 °C/min).',
+  };
+  const telemetria = {
+    escovas: { 2: { ultima: leitura({ numeroEscova: 2, resultadosQualityGates: [gatePrevisao] }), pontos: [] } },
+  } as unknown as MotorTelemetria;
+
+  it('com os metadados, a frase diz o alvo e o tempo', () => {
+    expect(descreverMotivo(motivo, 'Motor A', previsaoDoMotivo(telemetria, motivo))).toBe(
+      'Escova 2 de Motor A deve atingir 95 °C em ~8 min'
+    );
+  });
+
+  it('sem os metadados, a frase usa só o tempo em minutos, sem comparar com o horizonte', () => {
+    expect(descreverMotivo(motivo, 'Motor A')).toBe('Escova 2 de Motor A: tempo até o limite, ~8 min');
+  });
+
+  it('só acha a previsão quando o motivo é de tendência e a escova tem estimativa', () => {
+    expect(previsaoDoMotivo(telemetria, { ...motivo, tipoRegra: 'temperatura.limiar_estatico' })).toBeNull();
+    expect(previsaoDoMotivo(telemetria, { ...motivo, numeroEscova: 3 })).toBeNull();
+    expect(previsaoDoMotivo(undefined, motivo)).toBeNull();
+    expect(previsaoDoMotivo(telemetria, null)).toBeNull();
   });
 });

@@ -1,8 +1,10 @@
-import { formatarValorGate, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
+import { ehPrevisao, formatarValorGate, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
+import { formatarMinutos } from '@/utils/tempo';
 import { MotivoStatus } from '@/features/telemetria/types/telemetria';
 import { MotorTelemetria, SerieEscova } from '@/features/telemetria/store/tipos';
 import { EstadoPrincipal, ehSeveridadeAnormal, estadoResultado, RANK_SEVERIDADE } from './estadoHelper';
 import { montarLotes } from './grafico';
+import { formatarLimitePrevisto, Previsao, previsoesDoMotor } from './previsao';
 
 /** Filtros da visão geral: severidade e, à parte, os estados sem severidade. */
 export type FiltroMotor =
@@ -129,12 +131,21 @@ export function motivoDoMotor(
  * "Escova 2 de Motor A: Limite de temperatura, 96,1 °C ≥ 95 °C" (o quê, onde, quanto).
  * A assimetria é do motor: não aponta uma escova.
  */
-export function descreverMotivo(motivo: MotivoStatus, nomeMotor: string): string {
+export function descreverMotivo(motivo: MotivoStatus, nomeMotor: string, previsao?: Previsao | null): string {
   const tipo = obterTipoRegra(motivo.tipoRegra);
   const onde =
     motivo.tipoRegra === 'temperatura.assimetria_escovas'
       ? nomeMotor
       : `escova ${motivo.numeroEscova} de ${nomeMotor}`;
+  if (ehPrevisao(motivo.tipoRegra)) {
+    // A estimativa vem do backend. Com os metadados do gate a frase diz o alvo; sem eles, só o tempo.
+    const frase = previsao
+      ? `${onde} deve atingir ${formatarLimitePrevisto(previsao.limiteC)} ${
+          previsao.minutos === 0 ? 'agora' : `em ${formatarMinutos(previsao.minutos)}`
+        }`
+      : `${onde}: ${tipo.rotulo.toLowerCase()}, ${formatarMinutos(motivo.valorObservado)}`;
+    return frase.charAt(0).toUpperCase() + frase.slice(1);
+  }
   const valores =
     motivo.valorObservado !== null && motivo.valorLimite !== null
       ? `, ${formatarValorGate(motivo.tipoRegra, motivo.valorObservado)} ≥ ${formatarValorGate(motivo.tipoRegra, motivo.valorLimite, 'limite')}`
@@ -149,4 +160,15 @@ export function rotuloCurtoDoMotivo(motivo: MotivoStatus): string {
   return motivo.tipoRegra === 'temperatura.assimetria_escovas'
     ? tipo
     : `${tipo} na escova ${motivo.numeroEscova}`;
+}
+
+/** Previsão ativa da escova citada pelo motivo, quando o motivo é de tendência. */
+export function previsaoDoMotivo(
+  telemetria: MotorTelemetria | undefined,
+  motivo: MotivoStatus | null
+): Previsao | null {
+  if (!motivo || !ehPrevisao(motivo.tipoRegra)) return null;
+  return (
+    previsoesDoMotor(telemetria?.escovas).find((item) => item.numeroEscova === motivo.numeroEscova)?.previsao ?? null
+  );
 }

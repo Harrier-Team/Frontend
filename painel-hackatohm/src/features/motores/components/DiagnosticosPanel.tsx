@@ -104,6 +104,7 @@ export const DiagnosticosPanel: React.FC<DiagnosticosPanelProps> = ({ motorId, g
                       key={`${grupo.chave}-${item.numeroEscova ?? 'motor'}`}
                       resultado={item.resultado}
                       escopo={escopoDoItem(item)}
+                      dataHora={item.dataHora}
                       esmaecido={desatualizado}
                     />
                   ))}
@@ -129,6 +130,7 @@ export const DiagnosticosPanel: React.FC<DiagnosticosPanelProps> = ({ motorId, g
                   key={`r-${grupo.chave}-${item.numeroEscova ?? 'motor'}`}
                   resultado={item.resultado}
                   escopo={escopoDoItem(item)}
+                  dataHora={item.dataHora}
                   comTipo
                 />
               ))

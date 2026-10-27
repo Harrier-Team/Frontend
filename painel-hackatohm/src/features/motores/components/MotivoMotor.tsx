@@ -13,11 +13,11 @@ import {
   GrupoDiagnostico,
   resumirDiagnosticos,
 } from '@/features/telemetria/helpers/diagnosticos';
-import { descreverMotivo, motivoDoMotor } from '@/features/telemetria/helpers/linhaMotor';
+import { descreverMotivo, motivoDoMotor, previsaoDoMotivo } from '@/features/telemetria/helpers/linhaMotor';
 import { formatarRelativo } from '@/features/telemetria/helpers/statusHelper';
 import { SeveritySymbol } from '@/features/telemetria/components/SeveritySymbol';
 import { CopyableCode } from '@/components/ui/CopyableCode';
-import { obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
+import { ehPrevisao, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
 
 interface MotivoMotorProps {
   motorId: number;
@@ -76,6 +76,11 @@ export const MotivoMotor: React.FC<MotivoMotorProps> = ({
     const motivo = motivoDoMotor(telemetria, resumo.motivo);
     const regra = motivo ? obterTipoRegra(motivo.tipoRegra).rotulo : null;
     const alertasPreditivos = diag.alertas - diag.criticos;
+    // Na tendência o painel monta a frase com a estimativa do backend (a mensagem dele vem com ponto decimal).
+    const texto =
+      motivo && ehPrevisao(motivo.tipoRegra)
+        ? descreverMotivo(motivo, nome, previsaoDoMotivo(telemetria, motivo))
+        : (motivo?.mensagemDiagnostico ?? (motivo ? descreverMotivo(motivo, nome) : tema.label));
     return (
       <Caixa rotulo="Motivo" cor={tema.color} tingido={principal === 'Critico'}>
         <div className="flex items-start gap-3">
@@ -84,7 +89,7 @@ export const MotivoMotor: React.FC<MotivoMotorProps> = ({
           </span>
           <div className="min-w-0">
             <p className="text-[15px] text-ink">
-              {motivo?.mensagemDiagnostico ?? (motivo ? descreverMotivo(motivo, nome) : tema.label)}
+              {texto}
             </p>
             <p className="num mt-1 text-[13px] text-ink-2">
               {regra && <>Regra: {regra} · </>}

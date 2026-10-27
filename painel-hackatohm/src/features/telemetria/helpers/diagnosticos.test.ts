@@ -130,3 +130,38 @@ describe('metadadosDoGate', () => {
     expect(formatarIntervalo(125)).toBe('2 min 5 s');
   });
 });
+
+describe('previsão por tendência nos diagnósticos', () => {
+  const previsao = (sobrescrever = {}) =>
+    gate({
+      regraQualidadeId: 'regra-prev',
+      nomeRegra: 'Tempo até o limite',
+      tipoRegra: 'temperatura.previsao_tendencia',
+      disparouAlerta: true,
+      severidade: 'AlertaPreditivo',
+      valorObservado: 8.4,
+      valorLimite: 10,
+      metadados: { inclinacaoCelsiusPorMinuto: 2.1, temperaturaLimite: 95, amostras: 12 },
+      ...sobrescrever,
+    });
+
+  it('explica o resultado com limite, inclinação e leituras', () => {
+    expect(metadadosDoGate(previsao())).toEqual([
+      { rotulo: 'Temperatura limite', valor: '95 °C' },
+      { rotulo: 'Subindo', valor: '2,1 °C/min' },
+      { rotulo: 'Leituras no ajuste', valor: '12' },
+    ]);
+  });
+
+  it('metadados inválidos não geram linhas inventadas', () => {
+    expect(metadadosDoGate(previsao({ metadados: { amostras: 12 } }))).toEqual([]);
+  });
+
+  it('o item guarda o horário do lote que ancora a estimativa', () => {
+    const [grupo] = agruparDiagnosticos([
+      { numeroEscova: 2, dataHora: '2026-10-27T14:30:00+00:00', resultadosQualityGates: [previsao()] },
+    ]);
+    expect(grupo.itens[0].dataHora).toBe('2026-10-27T14:30:00+00:00');
+    expect(grupo.severidade).toBe('AlertaPreditivo');
+  });
+});

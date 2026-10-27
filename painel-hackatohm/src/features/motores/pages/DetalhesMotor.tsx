@@ -9,6 +9,7 @@ import { MotorAsymmetryCard } from '../components/MotorAsymmetryCard';
 import { DiagnosticosPanel } from '../components/DiagnosticosPanel';
 import { DispositivoMotor } from '../components/DispositivoMotor';
 import { MotivoMotor } from '../components/MotivoMotor';
+import { PrevisaoMotor } from '../components/PrevisaoMotor';
 import { escolherMac, lerMacDoMotor } from '../helpers/macMotor';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Alert } from '../../../components/ui/Alert';
@@ -28,7 +29,9 @@ import { useAssinarMotor } from '../../telemetria/hooks/useAssinarMotor';
 import { useAgora } from '../../telemetria/hooks/useAgora';
 import { resumirMotor } from '../../telemetria/helpers/resumoMotor';
 import { agruparDiagnosticos } from '../../telemetria/helpers/diagnosticos';
-import { TIPO_ASSIMETRIA } from '../../quality-gates/helpers/tiposRegra';
+import { TIPO_ASSIMETRIA, TIPO_PREVISAO } from '../../quality-gates/helpers/tiposRegra';
+import { regrasDePrevisaoAtivas } from '../../quality-gates/helpers/limitesHelper';
+import { previsoesDoMotor } from '../../telemetria/helpers/previsao';
 import { dadosDoAnel } from '../../telemetria/helpers/dadosDoAnel';
 import { CollectorRing } from '../../telemetria/components/CollectorRing';
 import { SeverityBadge } from '../../telemetria/components/SeverityBadge';
@@ -111,6 +114,9 @@ export const DetalhesMotor: React.FC = () => {
     [escovas]
   );
 
+  const previsoes = useMemo(() => previsoesDoMotor(escovas), [escovas]);
+  const regrasPrevisao = useMemo(() => regrasDePrevisaoAtivas(regrasMotor.vinculos), [regrasMotor.vinculos]);
+
   const handleExcluir = async () => {
     if (!motor) return;
     setExcluindo(true);
@@ -159,6 +165,7 @@ export const DetalhesMotor: React.FC = () => {
   const abaAtiva: AbaMotor = aba ?? 'monitoramento';
   const desatualizado = resumo.dado === 'atrasado' || resumo.dado === 'offline';
   const grupoAssimetria = grupos.find((g) => g.tipoRegra === TIPO_ASSIMETRIA);
+  const grupoPrevisao = grupos.find((g) => g.tipoRegra === TIPO_PREVISAO);
 
   const anel = dadosDoAnel(sensores.map((sensor) => sensor.numeroEscova), telemetria);
 
@@ -239,6 +246,13 @@ export const DetalhesMotor: React.FC = () => {
           escovasCadastradas={sensores.map((s) => s.numeroEscova)}
           mac={mac}
           agora={agora}
+        />
+
+        <PrevisaoMotor
+          previsoes={previsoes}
+          regras={regrasMotor.carregando || regrasMotor.erro ? [] : regrasPrevisao}
+          aguardando={Boolean(grupoPrevisao?.aguardando)}
+          desatualizado={desatualizado}
         />
       </div>
 

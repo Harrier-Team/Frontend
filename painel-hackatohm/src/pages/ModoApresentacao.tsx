@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { Clock, X } from 'lucide-react';
 import harrierEmblem from '../assets/harrier-emblem.jpg';
 import { useMonitoramento } from '../hooks/useMonitoramento';
 import { LoadingState } from '../components/ui/LoadingState';
@@ -14,6 +14,7 @@ import { dadosDoAnel } from '../features/telemetria/helpers/dadosDoAnel';
 import { compararPorUrgencia, ehSeveridadeAnormal, estaDesatualizado } from '../features/telemetria/helpers/estadoHelper';
 import { LinhaFrota, subtituloDaFrota, tituloDaFrota } from '../features/telemetria/helpers/frota';
 import { resumirEscova, resumirMotor } from '../features/telemetria/helpers/resumoMotor';
+import { fraseCurtaPrevisao, previsoesDoMotor } from '../features/telemetria/helpers/previsao';
 import { formatarGrau, formatarRelativo } from '../features/telemetria/helpers/statusHelper';
 import { useAgora } from '../features/telemetria/hooks/useAgora';
 import { useConexaoHub, useTelemetriaMotores } from '../features/telemetria/hooks/useTelemetriaStore';
@@ -88,6 +89,27 @@ const EstadoGrande: React.FC<{ linha: LinhaFrota; agora: number }> = ({ linha, a
   );
 };
 
+/**
+ * Com previsão ativa, a frase grande é a mensagem central: "Escova 2 → 95 °C
+ * em ~8 min". A estimativa é a do backend, ancorada no último lote.
+ */
+const PrevisaoGrande: React.FC<{ telemetria: MotorTelemetria | undefined; desatualizado: boolean }> = ({
+  telemetria,
+  desatualizado,
+}) => {
+  const item = previsoesDoMotor(telemetria?.escovas)[0];
+  if (!item) return null;
+  return (
+    <p
+      className="num display flex items-center gap-3 text-[clamp(26px,3vw,40px)] leading-tight"
+      style={{ color: SEVERIDADE_THEME[item.severidade].color, opacity: desatualizado ? 0.6 : 1 }}
+    >
+      <Clock className="h-[0.9em] w-[0.9em] shrink-0" aria-hidden="true" />
+      {fraseCurtaPrevisao(item.numeroEscova, item.previsao)}
+    </p>
+  );
+};
+
 const CartaoMotor: React.FC<{ linha: LinhaFrota & { motor: MotorResponse }; agora: number }> = ({ linha, agora }) => {
   const { principal } = linha.resumo;
   const desatualizado = estaDesatualizado(linha.resumo.dado);
@@ -114,6 +136,7 @@ const CartaoMotor: React.FC<{ linha: LinhaFrota & { motor: MotorResponse }; agor
         <p className="text-[16px] text-ink-3">{linha.motor.tipo}</p>
       </div>
       <EstadoGrande linha={linha} agora={agora} />
+      <PrevisaoGrande telemetria={linha.telemetria} desatualizado={desatualizado} />
       <Temperaturas motor={linha.motor} telemetria={linha.telemetria} desatualizado={desatualizado} />
     </li>
   );
@@ -156,6 +179,7 @@ const MotorUnico: React.FC<{ linha: LinhaFrota & { motor: MotorResponse }; agora
             <p className="text-[18px] text-ink-3">{motor.tipo}</p>
           </div>
           <EstadoGrande linha={linha} agora={agora} />
+          <PrevisaoGrande telemetria={telemetria} desatualizado={desatualizado} />
           <Temperaturas motor={motor} telemetria={telemetria} desatualizado={desatualizado} />
         </div>
       </section>

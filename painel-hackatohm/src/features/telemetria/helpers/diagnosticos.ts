@@ -1,8 +1,9 @@
 import { NivelSeveridade, ResultadoGateRealtime } from '@/features/quality-gates/types/qualityGate';
-import { TIPO_ASSIMETRIA, TIPO_GRADIENTE } from '@/features/quality-gates/helpers/tiposRegra';
+import { TIPO_ASSIMETRIA, TIPO_GRADIENTE, TIPO_PREVISAO } from '@/features/quality-gates/helpers/tiposRegra';
 import { formatarGrau } from './statusHelper';
 import { LeituraEscova } from '@/features/telemetria/types/telemetria';
 import { ehSeveridadeAnormal, estadoResultado, RANK_SEVERIDADE } from './estadoHelper';
+import { formatarInclinacao, formatarLimitePrevisto, lerPrevisao } from './previsao';
 
 export type EscopoDiagnostico = 'escova' | 'motor';
 
@@ -10,6 +11,8 @@ export interface ItemDiagnostico {
   /** null quando o resultado pertence ao motor (assimetria). */
   numeroEscova: number | null;
   resultado: ResultadoGateRealtime;
+  /** `dataHora` do lote do resultado: âncora do horário previsto na regra de tendência. */
+  dataHora?: string;
 }
 
 export interface GrupoDiagnostico {
@@ -39,7 +42,7 @@ function pesoResultado(resultado: ResultadoGateRealtime): number {
  * uma vez, com o resultado de maior severidade entre as repetições.
  */
 export function agruparDiagnosticos(
-  leituras: Array<Pick<LeituraEscova, 'numeroEscova' | 'resultadosQualityGates'>>
+  leituras: Array<Pick<LeituraEscova, 'numeroEscova' | 'resultadosQualityGates'> & Partial<Pick<LeituraEscova, 'dataHora'>>>
 ): GrupoDiagnostico[] {
   const grupos = new Map<string, GrupoDiagnostico>();
   const ordenadas = [...leituras].sort((a, b) => a.numeroEscova - b.numeroEscova);
@@ -65,12 +68,12 @@ export function agruparDiagnosticos(
       if (escopo === 'motor') {
         const atual = grupo.itens[0];
         if (!atual) {
-          grupo.itens.push({ numeroEscova: null, resultado });
+          grupo.itens.push({ numeroEscova: null, resultado, dataHora: leitura.dataHora });
         } else if (pesoResultado(resultado) > pesoResultado(atual.resultado)) {
-          grupo.itens[0] = { numeroEscova: null, resultado };
+          grupo.itens[0] = { numeroEscova: null, resultado, dataHora: leitura.dataHora };
         }
       } else {
-        grupo.itens.push({ numeroEscova: leitura.numeroEscova, resultado });
+        grupo.itens.push({ numeroEscova: leitura.numeroEscova, resultado, dataHora: leitura.dataHora });
       }
     }
   }
@@ -166,6 +169,14 @@ export function metadadosDoGate(resultado: ResultadoGateRealtime): MetadadoGate[
     const maxima = numeroDe(meta.temperaturaMaxima);
     if (minima !== null) itens.push({ rotulo: 'Mínima do lote', valor: `${formatarGrau(minima)} °C` });
     if (maxima !== null) itens.push({ rotulo: 'Máxima do lote', valor: `${formatarGrau(maxima)} °C` });
+  } else if (resultado.tipoRegra === TIPO_PREVISAO) {
+    // Só com estimativa: `lerPrevisao` recusa metadados incompletos.
+    const previsao = lerPrevisao(resultado);
+    if (previsao) {
+      itens.push({ rotulo: 'Temperatura limite', valor: formatarLimitePrevisto(previsao.limiteC) });
+      itens.push({ rotulo: 'Subindo', valor: `${formatarInclinacao(previsao.inclinacao)} °C/min` });
+      if (previsao.amostras !== null) itens.push({ rotulo: 'Leituras no ajuste', valor: String(previsao.amostras) });
+    }
   }
   return itens;
 }

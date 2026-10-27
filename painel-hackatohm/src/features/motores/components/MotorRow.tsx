@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { MotorResponse } from '../types/motor';
 import { MotorTelemetria } from '@/features/telemetria/store/tipos';
@@ -17,6 +17,7 @@ import {
   serieDaMaiorTemperatura,
 } from '@/features/telemetria/helpers/linhaMotor';
 import { formatarGrau } from '@/features/telemetria/helpers/statusHelper';
+import { fraseCurtaPrevisao, previsoesDoMotor } from '@/features/telemetria/helpers/previsao';
 import { SeveritySymbol } from '@/features/telemetria/components/SeveritySymbol';
 import { MiniAnel } from '@/features/telemetria/components/MiniAnel';
 import { SeverityBadge } from '@/features/telemetria/components/SeverityBadge';
@@ -43,6 +44,8 @@ export const MotorRow: React.FC<MotorRowProps> = ({ motor, telemetria, resumo, a
   const principal = resumo.principal;
   const tema = TEMA_ESTADO[principal];
   const motivo = ehSeveridadeAnormal(resumo.severidade) ? motivoDoMotor(telemetria, resumo.motivo) : null;
+  // Estimativa do backend da escova que chega primeiro ao limite; a ordenação da lista segue só a severidade.
+  const previsao = previsoesDoMotor(telemetria?.escovas)[0] ?? null;
   const sparkline = serieDaMaiorTemperatura(telemetria?.escovas);
   const deltaT = deltaTDasUltimas(telemetria?.escovas);
 
@@ -107,6 +110,20 @@ export const MotorRow: React.FC<MotorRowProps> = ({ motor, telemetria, resumo, a
               <>
                 <span aria-hidden="true"> · </span>
                 <span className="text-ink-2">{rotuloCurtoDoMotivo(motivo)}</span>
+              </>
+            )}
+            {previsao && (
+              <>
+                <span aria-hidden="true"> · </span>
+                <span
+                  className="num inline-flex items-center gap-1 text-ink-2"
+                  title={fraseCurtaPrevisao(previsao.numeroEscova, previsao.previsao)}
+                  style={{ opacity: desatualizado ? 0.6 : 1 }}
+                >
+                  <Clock className="h-3 w-3" aria-hidden="true" />
+                  <span className="sr-only">Escova {previsao.numeroEscova}: </span>
+                  {fraseCurtaPrevisao(null, previsao.previsao)}
+                </span>
               </>
             )}
           </p>
