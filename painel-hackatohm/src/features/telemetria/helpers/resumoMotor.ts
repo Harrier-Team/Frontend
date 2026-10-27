@@ -101,3 +101,13 @@ export function resumirMotor(telemetria: MotorTelemetria | undefined, agora: num
     temperaturaMaxima: temperaturas.length > 0 ? Math.max(...temperaturas) : null,
   };
 }
+
+/**
+ * Estado a mostrar para uma escova (símbolo, cor e texto): severidade do
+ * backend quando avaliada; senão, o motivo pelo qual não há severidade. O
+ * frescor do dado é tratado à parte (`desatualizado`).
+ */
+export function estadoDaEscova(serie: SerieEscova | undefined): EstadoPrincipal {
+  const { severidade, avaliacao } = resumirEscova(serie);
+  return estadoPrincipal(severidade, avaliacao, 'ao-vivo');
+}

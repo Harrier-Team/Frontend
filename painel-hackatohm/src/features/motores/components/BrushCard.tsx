@@ -1,12 +1,11 @@
 import React from 'react';
 import { SerieEscova } from '@/features/telemetria/store/tipos';
-import { resumirEscova } from '@/features/telemetria/helpers/resumoMotor';
+import { estadoDaEscova, resumirEscova } from '@/features/telemetria/helpers/resumoMotor';
 import { TEMA_ESTADO } from '@/features/telemetria/helpers/apresentacao';
 import {
   EstadoDado,
   ehSeveridadeAnormal,
   estaDesatualizado,
-  estadoPrincipal,
 } from '@/features/telemetria/helpers/estadoHelper';
 import { gradienteDaEscova } from '@/features/telemetria/helpers/valorRegra';
 import { formatarGrau, formatarRelativo } from '@/features/telemetria/helpers/statusHelper';
@@ -26,6 +25,9 @@ interface BrushCardProps {
   dado: EstadoDado;
   agora: number;
   limites: ParametrosRegra | null;
+  /** Escova em foco na página (anel, cartão e gráfico compartilham a seleção). */
+  destacada?: boolean;
+  onDestacar?: (numeroEscova: number | null) => void;
 }
 
 function formatarGradiente(valor: number): string {
@@ -34,10 +36,19 @@ function formatarGradiente(valor: number): string {
 }
 
 /** Cartão da escova: temperatura, gradiente, sparkline da sessão e o medidor da regra do motor. */
-export const BrushCard: React.FC<BrushCardProps> = ({ numeroEscova, modelo, serie, dado, agora, limites }) => {
+export const BrushCard: React.FC<BrushCardProps> = ({
+  numeroEscova,
+  modelo,
+  serie,
+  dado,
+  agora,
+  limites,
+  destacada = false,
+  onDestacar,
+}) => {
   const ultima = serie?.ultima ?? null;
   const { severidade, avaliacao } = resumirEscova(serie);
-  const estado = estadoPrincipal(severidade, avaliacao, 'ao-vivo');
+  const estado = estadoDaEscova(serie);
   const anormal = ehSeveridadeAnormal(severidade);
   const desatualizado = estaDesatualizado(dado);
   const tema = TEMA_ESTADO[estado];
@@ -55,12 +66,18 @@ export const BrushCard: React.FC<BrushCardProps> = ({ numeroEscova, modelo, seri
   return (
     <article
       aria-label={`Escova ${numeroEscova}`}
-      className="relative flex flex-col gap-4 overflow-hidden rounded-[var(--radius-panel)] border border-line bg-panel p-4"
+      onPointerEnter={() => onDestacar?.(numeroEscova)}
+      onPointerLeave={() => onDestacar?.(null)}
+      className={`relative flex flex-col gap-4 overflow-hidden rounded-[var(--radius-panel)] border bg-panel p-4 transition-colors ${
+        destacada ? 'border-ink-3' : 'border-line'
+      }`}
       style={{
         background:
           estado === 'Critico'
             ? 'color-mix(in srgb, var(--color-sev-critico) 7%, var(--color-panel))'
-            : undefined,
+            : destacada
+              ? 'var(--color-raised)'
+              : undefined,
       }}
     >
       {barra && (

@@ -32,7 +32,7 @@ export type SeveridadeAnormal = 'Atencao' | 'AlertaPreditivo' | 'Critico';
 
 /** Atenção, Alerta ou Crítico. Normal e "Sem classificação" não são anormais (nem pintam de cor). */
 export function ehSeveridadeAnormal(
-  severidade: NivelSeveridade | null | undefined
+  severidade: string | null | undefined
 ): severidade is SeveridadeAnormal {
   return severidade === 'Atencao' || severidade === 'AlertaPreditivo' || severidade === 'Critico';
 }

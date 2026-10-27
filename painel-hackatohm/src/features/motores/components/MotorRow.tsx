@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { MotorResponse } from '../types/motor';
 import { MotorTelemetria } from '@/features/telemetria/store/tipos';
-import { ResumoMotor, resumirEscova } from '@/features/telemetria/helpers/resumoMotor';
+import { estadoDaEscova, ResumoMotor, resumirEscova } from '@/features/telemetria/helpers/resumoMotor';
 import { TEMA_ESTADO } from '@/features/telemetria/helpers/apresentacao';
 import {
   EstadoPrincipal,
@@ -18,6 +18,7 @@ import {
 } from '@/features/telemetria/helpers/linhaMotor';
 import { formatarGrau } from '@/features/telemetria/helpers/statusHelper';
 import { SeveritySymbol } from '@/features/telemetria/components/SeveritySymbol';
+import { MiniAnel } from '@/features/telemetria/components/MiniAnel';
 import { SeverityBadge } from '@/features/telemetria/components/SeverityBadge';
 import { FreshnessIndicator } from '@/features/telemetria/components/FreshnessIndicator';
 import { Sparkline } from '@/features/telemetria/components/Sparkline';
@@ -89,8 +90,14 @@ export const MotorRow: React.FC<MotorRowProps> = ({ motor, telemetria, resumo, a
 
       {/* Identidade */}
       <div className="flex min-w-0 items-start gap-3">
-        <span className="mt-0.5">
-          <SeveritySymbol estado={principal} size={18} esmaecido={desatualizado} />
+        <span className="mt-px">
+          <MiniAnel
+            escovas={sensores.map((s) => ({
+              numeroEscova: s.numeroEscova,
+              estado: estadoDaEscova(telemetria?.escovas[s.numeroEscova]),
+            }))}
+            esmaecido={desatualizado}
+          />
         </span>
         <div className="min-w-0">
           <h3 className="truncate text-[15px] text-ink">{motor.nome}</h3>

@@ -29,6 +29,9 @@ interface TrendChartProps {
   limites: ParametrosRegra | null;
   /** Relógio global (`useAgora`). */
   agora: number;
+  /** Escova em foco (compartilhada com o anel e os cartões): a linha ganha ênfase, as outras recuam. */
+  destacada?: number | null;
+  onDestacar?: (numeroEscova: number | null) => void;
 }
 
 const CORES_SERIE = [
@@ -90,7 +93,7 @@ function useLargura(ref: React.RefObject<HTMLDivElement | null>): number {
  * lacunas que quebram a linha, crosshair com todas as escovas e ΔT, e tabela
  * como alternativa acessível. O backend não guarda histórico: o dado é da sessão.
  */
-export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora }) => {
+export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora, destacada = null, onDestacar }) => {
   const [janela, setJanela] = useState<JanelaGrafico>('5min');
   const [tabela, setTabela] = useState(false);
   const [cursor, setCursor] = useState<number | null>(null);
@@ -337,7 +340,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora }
                           ? COR_SEVERIDADE[trecho.severidade as SeveridadeAnormal]
                           : traco.cor
                       }
-                      strokeWidth={1.5}
+                      strokeWidth={destacada === traco.numeroEscova ? 2.5 : 1.5}
+                      opacity={destacada !== null && destacada !== traco.numeroEscova ? 0.3 : 1}
                       strokeDasharray={traco.tracejado}
                       strokeLinejoin="round"
                       strokeLinecap="round"
@@ -381,6 +385,10 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora }
                       fontSize={12}
                       className="num"
                       fill={traco.cor}
+                      fontWeight={destacada === traco.numeroEscova ? 600 : 400}
+                      opacity={destacada !== null && destacada !== traco.numeroEscova ? 0.5 : 1}
+                      onPointerEnter={() => onDestacar?.(traco.numeroEscova)}
+                      onPointerLeave={() => onDestacar?.(null)}
                     >
                       E{traco.numeroEscova} {formatarGrau(traco.ultimo.v)}
                     </text>

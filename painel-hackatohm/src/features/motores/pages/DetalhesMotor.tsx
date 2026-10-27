@@ -26,9 +26,12 @@ import { useLimitesTermicos } from '../hooks/useLimitesTermicos';
 import { useRegrasQualidadeMotor } from '../hooks/useRegrasQualidadeMotor';
 import { useAssinarMotor } from '../../telemetria/hooks/useAssinarMotor';
 import { useAgora } from '../../telemetria/hooks/useAgora';
-import { resumirMotor } from '../../telemetria/helpers/resumoMotor';
+import { estadoDaEscova, resumirMotor } from '../../telemetria/helpers/resumoMotor';
 import { agruparDiagnosticos } from '../../telemetria/helpers/diagnosticos';
 import { TIPO_ASSIMETRIA } from '../../quality-gates/helpers/tiposRegra';
+import { estadoResultado } from '../../telemetria/helpers/estadoHelper';
+import { extremosDoLote } from '../../telemetria/helpers/valorRegra';
+import { CollectorRing } from '../../telemetria/components/CollectorRing';
 import { SeverityBadge } from '../../telemetria/components/SeverityBadge';
 import { FreshnessIndicator } from '../../telemetria/components/FreshnessIndicator';
 import { TrendChart } from '../../telemetria/components/TrendChart';
@@ -57,6 +60,8 @@ export const DetalhesMotor: React.FC = () => {
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
   const [erroOperacao, setErroOperacao] = useState<string | null>(null);
+  // Escova em foco: o anel, os cartões e o gráfico compartilham a seleção.
+  const [escovaAtiva, setEscovaAtiva] = useState<number | null>(null);
   const motorId = id ? Number(id) : null;
   const telemetria = useMotorTelemetria(motorId ?? -1);
   const agora = useAgora();
@@ -155,6 +160,27 @@ export const DetalhesMotor: React.FC = () => {
   const abaAtiva: AbaMotor = aba ?? 'monitoramento';
   const desatualizado = resumo.dado === 'atrasado' || resumo.dado === 'offline';
   const grupoAssimetria = grupos.find((g) => g.tipoRegra === TIPO_ASSIMETRIA);
+
+  const escovasDoAnel = sensores.map((sensor) => ({
+    numeroEscova: sensor.numeroEscova,
+    valor: escovas?.[sensor.numeroEscova]?.ultima?.valorCelsius ?? null,
+    estado: estadoDaEscova(escovas?.[sensor.numeroEscova]),
+  }));
+  const maiorTemperatura = escovasDoAnel.reduce<number | null>(
+    (maior, e) => (e.valor !== null && (maior === null || e.valor > maior) ? e.valor : maior),
+    null
+  );
+  const extremos = extremosDoLote(escovas);
+  const resultadoAssimetria = grupoAssimetria?.itens[0]?.resultado;
+  const assimetriaDoAnel =
+    extremos && resultadoAssimetria && estadoResultado(resultadoAssimetria) === 'avaliado'
+      ? {
+          maisQuente: extremos.maisQuente.numeroEscova,
+          maisFria: extremos.maisFria.numeroEscova,
+          diferenca: resultadoAssimetria.valorObservado ?? extremos.diferenca,
+          estado: resultadoAssimetria.severidade,
+        }
+      : null;
 
   // A contagem só aparece com os vínculos carregados: zero falso seria pior que nenhum número.
   const abas = ABAS.map((a) =>
@@ -259,11 +285,24 @@ export const DetalhesMotor: React.FC = () => {
                 description="Cadastre um sensor para ver as temperaturas."
               />
             ) : (
-              <section aria-labelledby="escovas" className="space-y-4">
+              <section
+                aria-labelledby="escovas"
+                className="grid gap-6 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:gap-8"
+              >
                 <h2 id="escovas" className="sr-only">
                   Escovas
                 </h2>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
+                <div className="flex flex-col justify-center rounded-[var(--radius-panel)] border border-line bg-panel px-4 py-5 sm:px-6">
+                  <CollectorRing
+                    escovas={escovasDoAnel}
+                    desatualizado={desatualizado}
+                    maiorTemperatura={maiorTemperatura}
+                    assimetria={assimetriaDoAnel}
+                    selecionada={escovaAtiva}
+                    onSelecionar={setEscovaAtiva}
+                  />
+                </div>
+                <div className="grid content-start gap-4 sm:grid-cols-2">
                   {sensores.map((sensor) => (
                     <BrushCard
                       key={sensor.id}
@@ -273,6 +312,8 @@ export const DetalhesMotor: React.FC = () => {
                       dado={resumo.dado}
                       agora={agora}
                       limites={limites}
+                      destacada={escovaAtiva === sensor.numeroEscova}
+                      onDestacar={setEscovaAtiva}
                     />
                   ))}
                   {sensores.length > 1 && (
@@ -282,7 +323,13 @@ export const DetalhesMotor: React.FC = () => {
               </section>
             )}
 
-            <TrendChart series={series} limites={limites} agora={agora} />
+            <TrendChart
+              series={series}
+              limites={limites}
+              agora={agora}
+              destacada={escovaAtiva}
+              onDestacar={setEscovaAtiva}
+            />
 
             <DiagnosticosPanel
               motorId={motor.id}
