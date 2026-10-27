@@ -62,6 +62,9 @@ npm run preview
 gerar arquivos, `npm test` executa os testes unitários com Vitest e
 `npm run build` gera a versão de produção.
 
+As rotas são `/` (visão geral), `/motores/:id`, `/eventos`,
+`/regras-qualidade` e `/sistema`.
+
 `npm run preview` serve o build localmente. O proxy configurado para
 desenvolvimento não substitui a configuração de encaminhamento de `/api` e
 SignalR necessária no ambiente de produção.
@@ -126,6 +129,26 @@ SignalR necessária no ambiente de produção.
   motor tem uma regra de limiar estático ativa.
 - Falhas de rede ou de servidor aparecem como erro com opção de tentar de novo,
   nunca como lista vazia ou "motor não encontrado".
+- Eventos da sessão (`/eventos`): registro em memória (até 500) só das
+  transições de severidade do motor ou da escova e da situação Online,
+  Degradado e Offline, com hora, motor, escova, regra, valor e limite. Vale
+  apenas para esta sessão do navegador. "Marcar como visto" zera o contador de
+  críticos do menu.
+- Transição para Crítico gera um aviso (toast) por motor e o título da aba
+  passa a `(N) …` enquanto houver críticos não vistos. A mudança de severidade é
+  anunciada a leitores de tela uma vez por transição (Crítico em `assertive`).
+- Sistema (`/sistema`): `/health/live` e `/health/ready` (texto ou JSON),
+  estado do hub, idade do último lote, lotes da sessão, cadência medida
+  (mediana) e o caminho ESP, API, Fila, Banco, Hub e Painel com o estado de cada
+  etapa (símbolo e texto, não só cor). Etapa que o painel não enxerga aparece
+  como "Não verificado".
+- Modo apresentação (`?modo=tv`, por exemplo `/?modo=tv`): só a visão geral,
+  fonte grande, sem navegação e com as idades atualizadas sozinhas. Com um único
+  motor, mostra o anel coletor grande e o gráfico abaixo. Esc ou o botão "Sair"
+  voltam ao painel normal.
+- Tema claro opcional (botão sol/lua no cabeçalho), pensado para projetor. O
+  padrão é o escuro; a escolha fica em `localStorage`.
+- Telas carregadas sob demanda (`React.lazy`); layout verificado em 375 px.
 
 ## Simulador de telemetria (somente desenvolvimento)
 
@@ -147,7 +170,9 @@ de gradiente e assimetria, crítico estável, normal, um que silencia 90 s depoi
 de abrir o painel, um que nunca envia lote e um sem regras), três regras e
 lotes a cada ~3 s (ruído suave: só a escova que aquece dispara gradiente;
 `VITE_SIMULADOR_CADENCIA_S` muda o intervalo), com um histórico recente para o gráfico ter curva. Motores
-cadastrados na tela começam a enviar lotes após ~9 s. Enquanto ativo, o
+cadastrados na tela começam a enviar lotes após ~9 s. `VITE_SIMULADOR_MOTORES=1`
+mantém só o Motor A (útil para o modo apresentação com um único motor). O
+simulador também responde a `/health/live` e `/health/ready`. Enquanto ativo, o
 cabeçalho mostra o selo "Simulação".
 
 A condição é `import.meta.env.DEV && VITE_SIMULADOR === "true"`: o código do
@@ -210,8 +235,11 @@ painel-hackatohm/
 │   ├── app/                  Rotas e composição da aplicação
 │   ├── components/           Componentes compartilhados e UI
 │   ├── features/
+│   │   ├── eventos/          Registro de eventos da sessão
 │   │   ├── motores/          Motores, sensores e vínculos por motor
 │   │   ├── quality-gates/    Regras, resultados e contratos de qualidade
+│   │   ├── sistema/          Saúde da API e pipeline
+│   │   ├── tema/             Tema claro e escuro
 │   │   └── telemetria/       SignalR, store por motor e estados de dados
 │   ├── hooks/                Provider e hooks de estado global
 │   ├── services/             Cliente HTTP compartilhado
@@ -240,7 +268,10 @@ Os testes unitários atuais cobrem:
   reconectar, vigia de silêncio e tratamento de erros;
 - limites do medidor a partir da regra vinculada;
 - validação do MAC do ESP e do cadastro de motor;
-- formatação de severidades e temperaturas.
+- formatação de severidades e temperaturas, valores de gate (uma casa);
+- detecção de transições, registro e contador de eventos, título da aba;
+- mapeamento de saúde, cadência, pipeline do sistema e persistência do tema;
+- contraste WCAG AA dos tokens nos dois temas.
 
 Execute a suíte com:
 
@@ -255,5 +286,7 @@ O endereço de desenvolvimento do proxy está definido em
 corresponde ao perfil HTTP configurado no backend. Se o backend usar outro
 endereço, atualize o destino do proxy antes de iniciar o Vite.
 
+O proxy também encaminha `/health` (usado pela página Sistema).
+
 Em produção, configure o servidor web ou gateway para encaminhar as rotas `/api`
-ao backend, incluindo a negociação e o transporte WebSocket do SignalR.
+e `/health` ao backend, incluindo a negociação e o transporte WebSocket do SignalR.

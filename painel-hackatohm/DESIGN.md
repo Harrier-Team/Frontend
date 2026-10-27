@@ -188,9 +188,9 @@ Fundos tingidos são derivados, não novos tokens:
 | `canvas` / `panel` / `raised` | `#f3f4f6` / `#ffffff` / `#e9ecf0` |
 | `ink` / `ink-2` / `ink-3` | `#14181d` / `#47505c` / `#5f6874` |
 | `sev-normal` / `sev-atencao` / `sev-alerta` / `sev-critico` | `#2b7259` / `#806500` / `#b04a00` / `#c0301c` |
-| `series-1` … `series-5` | `#2f6db8` `#6d55c4` `#167f8a` `#4b5563` `#4549c9` |
+| `series-1` … `series-5` | `#2a66b0` `#6d55c4` `#0f737d` `#4b5563` `#4549c9` |
 
-Ativado por `data-theme="light"` no `<html>`; os componentes só usam tokens.
+Ativado por `data-theme="light"` no `<html>`; os componentes só usam tokens. O padrão é o tema escuro; a escolha do botão do cabeçalho fica em `localStorage` e é aplicada antes da primeira pintura. `series-1` e `series-3` foram escurecidos em relação à primeira proposta para passar AA sobre `raised`; um teste (`src/styles/contraste.test.ts`) mede todos os pares nos dois temas.
 
 ### Paleta de séries
 
@@ -256,7 +256,7 @@ linha tem rótulo direto no fim ("E2 96,1"), sem depender de legenda.
 | `Tabs` | Abas acessíveis (setas, Home e End) |
 | `Segmented` | Seleção única em linha (filtros, janela do gráfico), padrão radiogroup com setas |
 | `EscalaLimites` | Prévia normal, aviso e crítico de uma regra, com o valor atual como ponto de luz |
-| `Toast` | Aviso não bloqueante, `aria-live="polite"`, some sozinho em 8 s exceto Crítico |
+| `Toast` | Aviso não bloqueante, `aria-live="polite"`, some sozinho em 8 s exceto Crítico. O toast Crítico fica fora de região viva: o anúncio assertivo vem só do `AnunciadorSeveridade` global, uma vez por transição |
 | `CopyableCode` | Texto mono com botão de copiar |
 | `CollectorRing` | Vista esquemática do anel coletor com as escovas ao redor (ver "Anel coletor") |
 | `ApiErrorState` | Erro de rede ou de servidor com causa provável e "Tentar de novo" |
@@ -339,3 +339,4 @@ identidade Harrier (`src/assets/collector-reference.jpg`).
 - `/eventos` eventos da sessão
 - `/regras-qualidade` quality gates
 - `/sistema` saúde do pipeline
+- `?modo=tv` em qualquer rota: modo apresentação (só a visão geral, sem navegação; Esc sai)
