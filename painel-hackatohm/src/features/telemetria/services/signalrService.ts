@@ -42,10 +42,15 @@ class SignalRService {
       if (
         this.connection.state === signalR.HubConnectionState.Disconnected
       ) {
-        this.connection.start().catch((err) => {
-          console.error('[SignalR] Erro ao reiniciar:', err);
-          this.notificarStatus('desconectado');
-        });
+        // Sem este aviso, o store não recarrega os motores ao voltar a conexão.
+        this.notificarStatus('conectando');
+        this.connection
+          .start()
+          .then(() => this.notificarStatus('conectado'))
+          .catch((err) => {
+            console.error('[SignalR] Erro ao reiniciar:', err);
+            this.notificarStatus('desconectado');
+          });
       }
       return;
     }
