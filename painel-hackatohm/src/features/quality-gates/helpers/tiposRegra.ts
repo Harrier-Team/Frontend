@@ -8,6 +8,10 @@ export interface TipoRegraInfo {
   /** Unidade por extenso, usada nos rótulos dos campos. */
   unidadeLonga: string;
   descricao: string;
+  /** Uma linha: o que o tipo avalia. */
+  avalia: string;
+  /** Uma linha: quando a regra fica "aguardando amostras". */
+  aguardaQuando: string;
   /** Faixa aceita para cada limite. `null` = sem limite naquele lado. */
   min: number | null;
   max: number | null;
@@ -24,6 +28,8 @@ export const TIPOS_REGRA: Record<TipoRegra, TipoRegraInfo> = {
     unidade: '°C',
     unidadeLonga: '°C',
     descricao: 'Avalia a temperatura atual de cada escova contra os limites.',
+    avalia: 'A temperatura de cada escova, a cada lote.',
+    aguardaQuando: 'Quase nunca: basta uma leitura válida.',
     min: -55,
     max: 200,
     padrao: { aviso: 80, critico: 95 },
@@ -35,6 +41,8 @@ export const TIPOS_REGRA: Record<TipoRegra, TipoRegraInfo> = {
     unidadeLonga: '°C/min',
     descricao:
       'Avalia a velocidade de subida da temperatura. Precisa de duas leituras da escova para ser calculado.',
+    avalia: 'Quão rápido cada escova esquenta, entre dois lotes seguidos.',
+    aguardaQuando: 'No primeiro lote, quando ainda não há leitura anterior.',
     min: 0,
     max: null,
     padrao: { aviso: 5, critico: 10 },
@@ -46,6 +54,8 @@ export const TIPOS_REGRA: Record<TipoRegra, TipoRegraInfo> = {
     unidadeLonga: '°C de diferença',
     descricao:
       'Avalia a diferença entre a escova mais quente e a mais fria do motor. Precisa de pelo menos duas escovas no lote.',
+    avalia: 'A diferença entre a escova mais quente e a mais fria do motor.',
+    aguardaQuando: 'Quando o motor tem uma só escova no lote.',
     min: 0,
     max: null,
     padrao: { aviso: 10, critico: 15 },
@@ -90,3 +100,23 @@ export function descreverLimites(tipoRegra: string, parametros: ParametrosRegra)
 
 export const TIPO_GRADIENTE: TipoRegra = 'temperatura.gradiente_termico';
 export const TIPO_ASSIMETRIA: TipoRegra = 'temperatura.assimetria_escovas';
+
+/** Faixa aceita, em texto: "de -55 a 200 °C", "0 ou mais °C/min". */
+export function descreverFaixa(info: TipoRegraInfo): string {
+  if (info.min !== null && info.max !== null) return `de ${info.min} a ${info.max} ${info.unidade}`;
+  if (info.min !== null) return `${info.min} ou mais ${info.unidade}`;
+  if (info.max !== null) return `até ${info.max} ${info.unidade}`;
+  return info.unidade;
+}
+
+/** Grupos na ordem do catálogo (estático, gradiente, assimetria); regras por nome. Grupos vazios saem. */
+export function agruparRegrasPorTipo<T extends { tipoRegra: string; nome: string }>(
+  regras: T[]
+): Array<{ info: TipoRegraInfo; regras: T[] }> {
+  return LISTA_TIPOS_REGRA.map((info) => ({
+    info,
+    regras: regras
+      .filter((r) => obterTipoRegra(r.tipoRegra).tipo === info.tipo)
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+  })).filter((grupo) => grupo.regras.length > 0);
+}

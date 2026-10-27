@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  agruparRegrasPorTipo,
+  descreverFaixa,
   descreverLimites,
   formatarValorGate,
   LISTA_TIPOS_REGRA,
@@ -40,5 +42,27 @@ describe('catálogo de tipos', () => {
 
   it('cai no limiar estático para tipo desconhecido', () => {
     expect(obterTipoRegra('x').tipo).toBe('temperatura.limiar_estatico');
+  });
+});
+
+describe('descreverFaixa', () => {
+  it('descreve a faixa por tipo', () => {
+    expect(descreverFaixa(obterTipoRegra('temperatura.limiar_estatico'))).toBe('de -55 a 200 °C');
+    expect(descreverFaixa(obterTipoRegra('temperatura.gradiente_termico'))).toBe('0 ou mais °C/min');
+  });
+});
+
+describe('agruparRegrasPorTipo', () => {
+  it('agrupa na ordem do catálogo, ordena por nome e omite grupos vazios', () => {
+    const grupos = agruparRegrasPorTipo([
+      { tipoRegra: 'temperatura.assimetria_escovas', nome: 'Z' },
+      { tipoRegra: 'temperatura.limiar_estatico', nome: 'b' },
+      { tipoRegra: 'temperatura.limiar_estatico', nome: 'A' },
+    ]);
+    expect(grupos.map((g) => g.info.tipo)).toEqual([
+      'temperatura.limiar_estatico',
+      'temperatura.assimetria_escovas',
+    ]);
+    expect(grupos[0].regras.map((r) => r.nome)).toEqual(['A', 'b']);
   });
 });

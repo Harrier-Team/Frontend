@@ -10,6 +10,7 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { QualityRuleForm } from '@/features/quality-gates/components/QualityRuleForm';
 import { QualityRuleList } from '@/features/quality-gates/components/QualityRuleList';
 import { useRegrasQualidade } from '@/features/quality-gates/hooks/useRegrasQualidade';
+import { useUsoDasRegras } from '@/features/quality-gates/hooks/useUsoDasRegras';
 import {
   RegraQualidade,
   RegraQualidadeRequest,
@@ -29,6 +30,7 @@ export const RegrasQualidade: React.FC = () => {
     excluir,
     alternarAtivo,
   } = useRegrasQualidade();
+  const uso = useUsoDasRegras();
   const [formAberto, setFormAberto] = useState(false);
   const [regraEditando, setRegraEditando] = useState<RegraQualidade | null>(null);
   const [regraExcluindo, setRegraExcluindo] = useState<RegraQualidade | null>(null);
@@ -133,6 +135,7 @@ export const RegrasQualidade: React.FC = () => {
       ) : (
         <QualityRuleList
           regras={regras}
+          uso={uso}
           salvando={salvando}
           excluindoId={excluindoId}
           onEdit={abrirEdicao}

@@ -4,10 +4,12 @@ import { RegraQualidade } from '@/features/quality-gates/types/regraQualidade';
 import { IconButton } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Switch';
 import { Panel } from '@/components/ui/Panel';
-import { descreverLimites, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
+import { agruparRegrasPorTipo, descreverLimites } from '@/features/quality-gates/helpers/tiposRegra';
 
 interface QualityRuleListProps {
   regras: RegraQualidade[];
+  /** Motores que usam cada regra; null enquanto carrega ou se a consulta falhou. */
+  uso: Record<string, number> | null;
   salvando: boolean;
   excluindoId: string | null;
   onEdit: (regra: RegraQualidade) => void;
@@ -15,47 +17,81 @@ interface QualityRuleListProps {
   onDelete: (regra: RegraQualidade) => void;
 }
 
+function textoDeUso(n: number | undefined): string {
+  if (!n) return 'Nenhum motor usa esta regra';
+  return n === 1 ? 'Usada em 1 motor' : `Usada em ${n} motores`;
+}
+
+/** Catálogo agrupado por tipo, cada grupo com a unidade dos seus limites. */
 export const QualityRuleList: React.FC<QualityRuleListProps> = ({
   regras,
+  uso,
   salvando,
   excluindoId,
   onEdit,
   onToggle,
   onDelete,
 }) => (
-  <Panel>
-    {regras.map((regra) => (
-      <article key={regra.id} className="flex items-center gap-4 px-5 py-5">
-        <div className={`min-w-0 flex-1 ${regra.ativo ? '' : 'opacity-55'}`}>
-          <h2 className="truncate text-[15px] text-ink">{regra.nome}</h2>
-          {regra.descricao && (
-            <p className="mt-0.5 line-clamp-2 text-[13px] text-ink-2">{regra.descricao}</p>
-          )}
-          <p className="num mt-2 text-[13px] text-ink-2">
-            <span className="text-ink-3">{obterTipoRegra(regra.tipoRegra).rotulo}</span>
-            {' · '}
-            {descreverLimites(regra.tipoRegra, regra.parametros)}
-          </p>
+  <div className="space-y-10">
+    {agruparRegrasPorTipo(regras).map(({ info, regras: doTipo }) => (
+      <section key={info.tipo} aria-labelledby={`grupo-${info.tipo}`} className="space-y-3">
+        <div>
+          <h2 id={`grupo-${info.tipo}`} className="display text-base">
+            {info.rotulo}
+            <span className="num ml-2 text-[13px] text-ink-3">{info.unidade}</span>
+          </h2>
+          <p className="mt-0.5 text-[13px] text-ink-3">{info.avalia}</p>
         </div>
-        <Switch
-          checked={regra.ativo}
-          disabled={salvando}
-          label={regra.ativo ? 'Desativar regra' : 'Ativar regra'}
-          onChange={() => onToggle(regra)}
-        />
-        <div className="flex gap-1">
-          <IconButton label={`Editar ${regra.nome}`} onClick={() => onEdit(regra)}>
-            <Pencil className="h-4 w-4" aria-hidden="true" />
-          </IconButton>
-          <IconButton
-            label={`Excluir ${regra.nome}`}
-            disabled={excluindoId === regra.id}
-            onClick={() => onDelete(regra)}
-          >
-            <Trash2 className="h-4 w-4" aria-hidden="true" />
-          </IconButton>
-        </div>
-      </article>
+        <Panel>
+          {doTipo.map((regra) => (
+            <article key={regra.id} className="flex items-center gap-4 px-5 py-4">
+              <div className={`min-w-0 flex-1 ${regra.ativo ? '' : 'opacity-60'}`}>
+                <h3 className="truncate text-[15px] text-ink">{regra.nome}</h3>
+                {regra.descricao && (
+                  <p className="mt-0.5 line-clamp-2 text-[13px] text-ink-2">{regra.descricao}</p>
+                )}
+                <p className="num mt-1.5 text-[13px] text-ink-2">
+                  {descreverLimites(regra.tipoRegra, regra.parametros)}
+                  {uso && (
+                    <>
+                      <span aria-hidden="true" className="px-1.5 text-ink-3">
+                        ·
+                      </span>
+                      <span className="text-ink-3">{textoDeUso(uso[regra.id])}</span>
+                    </>
+                  )}
+                  {!regra.ativo && (
+                    <>
+                      <span aria-hidden="true" className="px-1.5 text-ink-3">
+                        ·
+                      </span>
+                      <span className="text-ink-3">Desativada</span>
+                    </>
+                  )}
+                </p>
+              </div>
+              <Switch
+                checked={regra.ativo}
+                disabled={salvando}
+                label={regra.ativo ? 'Desativar regra' : 'Ativar regra'}
+                onChange={() => onToggle(regra)}
+              />
+              <div className="flex gap-1">
+                <IconButton label={`Editar ${regra.nome}`} onClick={() => onEdit(regra)}>
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
+                </IconButton>
+                <IconButton
+                  label={`Excluir ${regra.nome}`}
+                  disabled={excluindoId === regra.id}
+                  onClick={() => onDelete(regra)}
+                >
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                </IconButton>
+              </div>
+            </article>
+          ))}
+        </Panel>
+      </section>
     ))}
-  </Panel>
+  </div>
 );

@@ -134,7 +134,7 @@ dialog.sheet {
   border-radius: 16px;
   margin: auto;
   padding: 0;
-  width: min(560px, calc(100vw - 32px));
+  width: min(640px, calc(100vw - 32px));
   max-height: calc(100vh - 48px);
   box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.7);
 }

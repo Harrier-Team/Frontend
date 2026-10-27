@@ -7,8 +7,10 @@ import {
   RegraQualidadeRequest,
   TipoRegra,
 } from '@/features/quality-gates/types/regraQualidade';
+import { TipoRegraSelector } from '@/features/quality-gates/components/TipoRegraSelector';
+import { EscalaLimites } from '@/features/quality-gates/components/EscalaLimites';
 import {
-  LISTA_TIPOS_REGRA,
+  descreverFaixa,
   obterTipoRegra,
   TIPO_LIMIAR_ESTATICO,
   TIPOS_REGRA,
@@ -100,28 +102,10 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
 
   return (
     <form onSubmit={submit} className="space-y-5 px-6 pb-6 pt-5" noValidate>
-      <div>
-        <label htmlFor="regra-tipo" className="field-label">
-          Tipo de regra
-        </label>
-        <select
-          id="regra-tipo"
-          value={values.tipoRegra}
-          disabled={Boolean(regra)}
-          onChange={(event) => trocarTipo(event.target.value as TipoRegra)}
-          className="field"
-        >
-          {LISTA_TIPOS_REGRA.map((item) => (
-            <option key={item.tipo} value={item.tipo}>
-              {item.rotulo} ({item.unidade})
-            </option>
-          ))}
-        </select>
-        <p className="mt-1.5 text-[13px] text-ink-3">
-          {tipo.descricao}
-          {regra && ' O tipo não pode ser alterado depois de criada.'}
-        </p>
-      </div>
+      <TipoRegraSelector valor={values.tipoRegra} onChange={trocarTipo} desabilitado={Boolean(regra)} />
+      {regra && (
+        <p className="-mt-3 text-[13px] text-ink-3">O tipo não pode ser alterado depois de criada.</p>
+      )}
 
       <div>
         <label htmlFor="regra-nome" className="field-label">
@@ -188,6 +172,17 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
           />
           {errors.critico && <p className="field-error">{errors.critico}</p>}
         </div>
+      </div>
+      <p className="-mt-3 text-[13px] text-ink-3">
+        Cada limite aceita valores {descreverFaixa(tipo)}. O aviso deve ser menor que o crítico; igual ao limite já dispara.
+      </p>
+      <div className="rounded-xl border border-line px-4 py-3">
+        <p className="mb-2 text-[13px] text-ink-2">Prévia da escala</p>
+        <EscalaLimites
+          tipoRegra={values.tipoRegra}
+          aviso={values.parametros.aviso}
+          critico={values.parametros.critico}
+        />
       </div>
 
       <div className="flex items-center justify-between gap-4 rounded-xl border border-line px-4 py-3">
