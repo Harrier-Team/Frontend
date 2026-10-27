@@ -1,8 +1,13 @@
 import React from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Moon, Sun } from 'lucide-react';
 import harrierEmblem from '../assets/harrier-emblem.jpg';
 import { useConexaoHub } from '@/features/telemetria/hooks/useTelemetriaStore';
 import { SIMULADOR_ATIVO } from '@/dev/simuladorAtivo';
+import { useCriticosNaoVistos } from '@/features/eventos/hooks/useEventos';
+import { useTema } from '@/features/tema/useTema';
+import { rotuloDaTroca } from '@/features/tema/temaHelper';
+import { IconButton } from './ui/Button';
 
 const linkBase =
   'relative flex h-14 items-center whitespace-nowrap px-1 text-sm transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-px after:transition-colors';
@@ -63,13 +68,41 @@ const BadgeSimulacao: React.FC = () => (
   </span>
 );
 
+const TrocaDeTema: React.FC = () => {
+  const { tema, alternar } = useTema();
+  const Icone = tema === 'dark' ? Sun : Moon;
+  return (
+    <IconButton label={rotuloDaTroca(tema)} onClick={alternar}>
+      <Icone className="h-4 w-4" aria-hidden="true" />
+    </IconButton>
+  );
+};
+
+/** Contador de críticos não vistos: o número e o texto para leitor de tela, além da cor. */
+const ContadorCriticos: React.FC = () => {
+  const n = useCriticosNaoVistos();
+  if (n === 0) return null;
+  return (
+    <span
+      className="num ml-1.5 inline-flex min-w-[18px] items-center justify-center rounded-full px-1.5 text-[11px] font-medium leading-[18px]"
+      style={{ background: 'var(--color-sev-critico)', color: 'var(--color-canvas)' }}
+    >
+      {n}
+      <span className="sr-only">{n === 1 ? ' crítico não visto' : ' críticos não vistos'}</span>
+    </span>
+  );
+};
+
+const classeLink = (ativo: boolean) =>
+  `${linkBase} ${ativo ? 'text-ink after:bg-flare' : 'text-ink-2 after:bg-transparent hover:text-ink'}`;
+
 export const Header: React.FC = () => {
   const { pathname } = useLocation();
   const emMotores = pathname === '/' || pathname.startsWith('/motores');
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-md">
-      <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center gap-5 px-5 sm:gap-8 sm:px-8">
+      <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center gap-3 px-5 sm:gap-8 sm:px-8">
         <Link to="/" className="flex items-center gap-3" aria-label="Harrier, início">
           {/* Recorte da logo em alta resolução; `screen` apaga o fundo escuro e deixa só o aço e a luz. */}
           <img
@@ -77,8 +110,7 @@ export const Header: React.FC = () => {
             alt=""
             width={46}
             height={33}
-            className="h-[33px] w-[46px] object-contain"
-            style={{ mixBlendMode: 'screen' }}
+            className="harrier-emblema h-[33px] w-[46px] object-contain"
           />
           <span
             className="hidden text-[13px] font-medium uppercase text-ink sm:inline"
@@ -88,31 +120,31 @@ export const Header: React.FC = () => {
           </span>
         </Link>
 
-        <nav aria-label="Principal" className="flex items-center gap-4 sm:gap-5">
+        <nav aria-label="Principal" className="flex items-center gap-3 sm:gap-5">
           <Link
             to="/"
             aria-current={emMotores ? 'page' : undefined}
-            className={`${linkBase} ${
-              emMotores ? 'text-ink after:bg-flare' : 'text-ink-2 after:bg-transparent hover:text-ink'
-            }`}
+            className={classeLink(emMotores)}
           >
             Motores
           </Link>
-          <NavLink
-            to="/regras-qualidade"
-            className={({ isActive }) =>
-              `${linkBase} ${
-                isActive ? 'text-ink after:bg-flare' : 'text-ink-2 after:bg-transparent hover:text-ink'
-              }`
-            }
-          >
-            Quality gates
+          <NavLink to="/eventos" className={({ isActive }) => classeLink(isActive)}>
+            Eventos
+            <ContadorCriticos />
+          </NavLink>
+          <NavLink to="/regras-qualidade" className={({ isActive }) => classeLink(isActive)}>
+            <span className="sm:hidden">Regras</span>
+            <span className="hidden sm:inline">Quality gates</span>
+          </NavLink>
+          <NavLink to="/sistema" className={({ isActive }) => classeLink(isActive)}>
+            Sistema
           </NavLink>
         </nav>
 
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-2 sm:gap-4">
           {SIMULADOR_ATIVO && <BadgeSimulacao />}
           <ConexaoAoVivo />
+          <TrocaDeTema />
         </div>
       </div>
       <FaixaHubDesconectado />

@@ -96,6 +96,15 @@
     font-feature-settings: 'tnum' 1;
   }
 
+  /* Recorte da logo: `screen` apaga o fundo escuro no tema escuro; no claro, inverte e usa `multiply`. */
+  .harrier-emblema {
+    mix-blend-mode: screen;
+  }
+  :root[data-theme='light'] .harrier-emblema {
+    filter: invert(1) contrast(1.05);
+    mix-blend-mode: multiply;
+  }
+
   /* Link para pular a navegação: só aparece com o foco do teclado */
   .skip-link {
     position: absolute;

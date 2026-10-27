@@ -10,8 +10,23 @@
       content="Painel de monitoramento de motores, sensores e telemetria do Hackatohm."
     />
     <title>Harrier | Telemetria de motores</title>
+    <style>
+      html { background: #0b0d10; }
+      html[data-theme='light'] { background: #f3f4f6; }
+    </style>
+    <script>
+      // Aplica o tema salvo antes da primeira pintura, para não piscar escuro no tema claro.
+      try {
+        if (localStorage.getItem('harrier:tema') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f3f4f6');
+        }
+      } catch (erro) {
+        /* armazenamento bloqueado: segue no tema escuro */
+      }
+    </script>
   </head>
-  <body style="background:#0b0d10">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
