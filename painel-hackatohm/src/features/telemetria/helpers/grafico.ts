@@ -251,3 +251,22 @@ export function pontosSparkline(
     y: margem + (1 - (p.v - min) / (max - min)) * (altura - 2 * margem),
   }));
 }
+
+/**
+ * Afasta rótulos que se sobreporiam no eixo vertical, mantendo a ordem e o
+ * espaço mínimo entre eles dentro de [topo, base].
+ */
+export function afastarRotulos(ys: number[], minimo: number, topo: number, base: number): number[] {
+  const ordem = ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y);
+  for (let k = 0; k < ordem.length; k += 1) {
+    const anterior = k > 0 ? ordem[k - 1].y : topo - minimo;
+    ordem[k].y = Math.max(ordem[k].y, anterior + minimo);
+  }
+  for (let k = ordem.length - 1; k >= 0; k -= 1) {
+    const proximo = k < ordem.length - 1 ? ordem[k + 1].y : base + minimo;
+    ordem[k].y = Math.min(ordem[k].y, proximo - minimo);
+  }
+  const saida = new Array<number>(ys.length);
+  for (const { y, i } of ordem) saida[i] = y;
+  return saida;
+}

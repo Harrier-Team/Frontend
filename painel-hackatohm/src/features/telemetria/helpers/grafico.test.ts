@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PontoEscova } from '@/features/telemetria/store/tipos';
 import {
+  afastarRotulos,
   afinarMarcadores,
   cadenciaMediana,
   calcularEscalaY,
@@ -172,5 +173,25 @@ describe('pontosSparkline', () => {
     expect(new Set(plana.map((p) => p.y)).size).toBe(1);
     expect(plana[0].y).toBeCloseTo(12);
     expect(pontosSparkline([], 80, 24, 3)).toEqual([]);
+  });
+});
+
+describe('afastarRotulos', () => {
+  it('separa rótulos sobrepostos mantendo a ordem', () => {
+    const ys = afastarRotulos([100, 102, 101, 300], 14, 0, 400);
+    const ordenado = [...ys].sort((a, b) => a - b);
+    for (let i = 1; i < ordenado.length; i += 1) {
+      expect(ordenado[i] - ordenado[i - 1]).toBeGreaterThanOrEqual(14 - 1e-9);
+    }
+    expect(ys[3]).toBe(300);
+    expect(ys[0]).toBeLessThan(ys[2]);
+    expect(ys[2]).toBeLessThan(ys[1]);
+  });
+
+  it('respeita os limites verticais', () => {
+    const ys = afastarRotulos([1, 2], 14, 0, 400);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(0);
+    const baixo = afastarRotulos([399, 400], 14, 0, 400);
+    expect(Math.max(...baixo)).toBeLessThanOrEqual(400);
   });
 });
