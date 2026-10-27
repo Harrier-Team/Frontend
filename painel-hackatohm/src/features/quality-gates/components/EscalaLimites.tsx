@@ -35,10 +35,11 @@ export const EscalaLimites: React.FC<EscalaLimitesProps> = ({
   const pAviso = posicaoNaEscala(aviso, escala);
   const pCritico = posicaoNaEscala(critico, escala);
   const temValor = typeof valor === 'number' && Number.isFinite(valor);
-  const descricao = `Escala: normal abaixo de ${formatarValorGate(tipoRegra, aviso)}, aviso a partir de ${formatarValorGate(
+  const descricao = `Escala: normal abaixo de ${formatarValorGate(tipoRegra, aviso, 'limite')}, aviso a partir de ${formatarValorGate(
     tipoRegra,
-    aviso
-  )}, crítico a partir de ${formatarValorGate(tipoRegra, critico)}.${
+    aviso,
+    'limite'
+  )}, crítico a partir de ${formatarValorGate(tipoRegra, critico, 'limite')}.${
     temValor ? ` Valor atual ${formatarValorGate(tipoRegra, valor)}.` : ''
   }`;
 
@@ -79,10 +80,10 @@ export const EscalaLimites: React.FC<EscalaLimitesProps> = ({
       <div className="num relative mt-1 h-4 text-xs text-ink-3" aria-hidden="true">
         <span className="absolute left-0">Normal</span>
         <span className="absolute -translate-x-full pr-1" style={{ left: `${pAviso}%`, color: 'var(--color-sev-alerta)' }}>
-          aviso {formatarValorGate(tipoRegra, aviso)}
+          aviso {formatarValorGate(tipoRegra, aviso, 'limite')}
         </span>
         <span className="absolute pl-1" style={{ left: `${pCritico}%`, color: 'var(--color-sev-critico)' }}>
-          crítico {formatarValorGate(tipoRegra, critico)}
+          crítico {formatarValorGate(tipoRegra, critico, 'limite')}
         </span>
       </div>
     </div>

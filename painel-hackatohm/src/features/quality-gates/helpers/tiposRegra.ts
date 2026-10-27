@@ -102,10 +102,18 @@ export function ehRegraEditavel(regra: { tipoRegra: string }): boolean {
   return ehTipoRegra(regra.tipoRegra);
 }
 
-const formatadorNumero = new Intl.NumberFormat('pt-BR', {
+const formatadorObservado = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+// Limites são configurados pelo usuário: mantêm as casas que ele digitou (até 2) e dispensam ",0".
+const formatadorLimite = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 0,
   maximumFractionDigits: 2,
 });
+
+/** `observado` é medido (sempre uma casa decimal); `limite` é configurado (sem ",0" sobrando). */
+export type PapelDoValor = 'observado' | 'limite';
 
 /**
  * Valor observado ou limite com a unidade do tipo da regra
@@ -113,17 +121,20 @@ const formatadorNumero = new Intl.NumberFormat('pt-BR', {
  */
 export function formatarValorGate(
   tipoRegra: string | null | undefined,
-  valor: number | null | undefined
+  valor: number | null | undefined,
+  papel: PapelDoValor = 'observado'
 ): string {
   if (valor === null || valor === undefined || !Number.isFinite(valor)) return '—';
-  const numero = formatadorNumero.format(valor);
-  return ehTipoRegra(tipoRegra) ? `${numero} ${TIPOS_REGRA[tipoRegra].unidade}` : numero;
+  // Tipo desconhecido: sem unidade nem precisão inventadas.
+  if (!ehTipoRegra(tipoRegra)) return formatadorLimite.format(valor);
+  const numero = (papel === 'limite' ? formatadorLimite : formatadorObservado).format(valor);
+  return `${numero} ${TIPOS_REGRA[tipoRegra].unidade}`;
 }
 
 /** Texto dos limites de uma regra: "Aviso em 80 °C, crítico em 95 °C". */
 export function descreverLimites(tipoRegra: string, parametros: ParametrosRegra): string {
-  const aviso = formatarValorGate(tipoRegra, parametros.aviso);
-  const critico = formatarValorGate(tipoRegra, parametros.critico);
+  const aviso = formatarValorGate(tipoRegra, parametros.aviso, 'limite');
+  const critico = formatarValorGate(tipoRegra, parametros.critico, 'limite');
   return `Aviso em ${aviso}, crítico em ${critico}`;
 }
 

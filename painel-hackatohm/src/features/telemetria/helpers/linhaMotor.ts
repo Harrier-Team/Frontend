@@ -137,7 +137,7 @@ export function descreverMotivo(motivo: MotivoStatus, nomeMotor: string): string
       : `escova ${motivo.numeroEscova} de ${nomeMotor}`;
   const valores =
     motivo.valorObservado !== null && motivo.valorLimite !== null
-      ? `, ${formatarValorGate(motivo.tipoRegra, motivo.valorObservado)} ≥ ${formatarValorGate(motivo.tipoRegra, motivo.valorLimite)}`
+      ? `, ${formatarValorGate(motivo.tipoRegra, motivo.valorObservado)} ≥ ${formatarValorGate(motivo.tipoRegra, motivo.valorLimite, 'limite')}`
       : '';
   const frase = `${onde}: ${tipo.rotulo.toLowerCase()}${valores}`;
   return frase.charAt(0).toUpperCase() + frase.slice(1);

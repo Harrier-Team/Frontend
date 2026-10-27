@@ -13,8 +13,20 @@ import {
 describe('formatarValorGate', () => {
   it('usa a unidade do tipo da regra', () => {
     expect(formatarValorGate('temperatura.limiar_estatico', 96.1)).toBe('96,1 °C');
-    expect(formatarValorGate('temperatura.gradiente_termico', 6.25)).toBe('6,25 °C/min');
+    expect(formatarValorGate('temperatura.gradiente_termico', 6.2)).toBe('6,2 °C/min');
     expect(formatarValorGate('temperatura.assimetria_escovas', 25.2)).toBe('25,2 °C');
+  });
+
+  it('valor observado tem sempre uma casa decimal', () => {
+    expect(formatarValorGate('temperatura.limiar_estatico', 98.34)).toBe('98,3 °C');
+    expect(formatarValorGate('temperatura.assimetria_escovas', 35.49)).toBe('35,5 °C');
+    expect(formatarValorGate('temperatura.limiar_estatico', 95)).toBe('95,0 °C');
+  });
+
+  it('limite dispensa o ",0" e preserva até duas casas configuradas', () => {
+    expect(formatarValorGate('temperatura.limiar_estatico', 95, 'limite')).toBe('95 °C');
+    expect(formatarValorGate('temperatura.limiar_estatico', 82.5, 'limite')).toBe('82,5 °C');
+    expect(formatarValorGate('temperatura.gradiente_termico', 6.25, 'limite')).toBe('6,25 °C/min');
   });
 
   it('não acrescenta unidade a tipos desconhecidos', () => {

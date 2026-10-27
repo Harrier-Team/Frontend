@@ -49,7 +49,7 @@ export const GateRow: React.FC<GateRowProps> = ({ resultado, escopo, esmaecido =
             <p className="num ml-auto whitespace-nowrap text-ink-2">
               <span className="text-ink">{formatarValorGate(resultado.tipoRegra, resultado.valorObservado)}</span>
               {' ≥ '}
-              {formatarValorGate(resultado.tipoRegra, resultado.valorLimite)}
+              {formatarValorGate(resultado.tipoRegra, resultado.valorLimite, 'limite')}
             </p>
           )}
         </div>
