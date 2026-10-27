@@ -62,8 +62,8 @@ npm run preview
 gerar arquivos, `npm test` executa os testes unitários com Vitest e
 `npm run build` gera a versão de produção.
 
-As rotas são `/` (visão geral), `/motores/:id`, `/eventos`,
-`/regras-qualidade` e `/sistema`.
+As rotas são `/` (visão geral), `/motores/:id`, `/alertas` (`/eventos`
+redireciona para ela), `/regras-qualidade` e `/sistema`.
 
 `npm run preview` serve o build localmente. O proxy configurado para
 desenvolvimento não substitui a configuração de encaminhamento de `/api` e
@@ -107,10 +107,12 @@ SignalR necessária no ambiente de produção.
   leituras repetidas e sem deixar uma resposta HTTP antiga sobrescrever o
   dado mais recente do hub.
 - Reconexão automática do cliente SignalR.
-- Catálogo de regras de Quality Gates com os três tipos do backend, com nome
-  amigável e o técnico como subtítulo: Limite de temperatura (limiar estático,
-  °C), Velocidade de aquecimento (gradiente térmico, °C/min) e Diferença entre
-  escovas (assimetria, °C de diferença). Tipo desconhecido aparece pelo
+- Catálogo de regras de Quality Gates com os quatro tipos do backend, com nome
+  amigável e o técnico como subtítulo, agrupados pela categoria: Tempo até o
+  limite (previsão por tendência, minutos; Preditivo), Velocidade de aquecimento
+  (gradiente térmico, °C/min; Aceleração), Limite de temperatura (limiar
+  estático, °C) e Diferença entre escovas (assimetria, °C de diferença;
+  Condição). Tipo desconhecido aparece pelo
   identificador, sem unidade e somente leitura. Regras novas começam sem
   limites sugeridos; erros de campo do Problem Details aparecem no campo e o
   modal permanece aberto. A edição envia o objeto completo, incluindo `tipoRegra`.
@@ -129,14 +131,33 @@ SignalR necessária no ambiente de produção.
   motor tem uma regra de limiar estático ativa.
 - Falhas de rede ou de servidor aparecem como erro com opção de tentar de novo,
   nunca como lista vazia ou "motor não encontrado".
-- Eventos da sessão (`/eventos`): registro em memória (até 500) só das
-  transições de severidade do motor ou da escova e da situação Online,
-  Degradado e Offline, com hora, motor, escova, regra, valor e limite. Vale
-  apenas para esta sessão do navegador. "Marcar como visto" zera o contador de
-  críticos do menu.
-- Transição para Crítico gera um aviso (toast) por motor e o título da aba
-  passa a `(N) …` enquanto houver críticos não vistos. A mudança de severidade é
-  anunciada a leitores de tela uma vez por transição (Crítico em `assertive`).
+- Previsão por tendência: a regra "Tempo até o limite" usa aviso e crítico em
+  minutos de antecedência (aviso maior que crítico), a temperatura a antecipar
+  (-55 a 200 °C) e, em campo avançado, a janela de leituras (5 a 60, padrão 12).
+  `temperaturaLimite` e `janela` só vão no corpo desse tipo. A estimativa vem
+  sempre do backend: o painel mostra "~8 min", "~1 h 20 min" ou "agora" e o
+  horário previsto ("≈ 14:38", horário do lote mais os minutos), sem contagem
+  regressiva. Aparece no cartão "Previsão" do detalhe do motor, nos
+  diagnósticos, no relógio do anel coletor, na linha do motor ("95 °C em
+  ~8 min") e como frase grande no modo apresentação. No gráfico, a projeção é
+  tracejada, rotulada "Estimativa", só existe enquanto o gate dispara e o eixo
+  avança no máximo 30 min.
+- Alertas de manutenção (`/alertas`), persistidos pelo backend: abas "Em
+  aberto" (lista viva, mais graves primeiro), "Histórico" (paginado, 50 por
+  página, com filtros de motor, situação, categoria, severidade e tipo de regra
+  na URL) e "Conexão" (situação Online, Degradado e Offline do motor e quedas do
+  hub, só desta sessão). O evento `ReceberAlertaManutencao` insere ou atualiza
+  pelo `id`; como o encerramento não gera evento, a lista é recarregada ao
+  conectar e reconectar o hub, após o status de um motor com alerta aberto (com
+  espera de 2 s) e ao voltar o foco para a aba. O detalhe do motor tem a seção
+  "Alertas" (abertos e os 10 últimos encerrados). Se `/api/alertas` responder
+  404, a página mostra "Alertas indisponíveis nesta versão da API" e mantém o
+  registro de conexão.
+- Um alerta Crítico novo gera um aviso (toast) que fica até ser dispensado, e
+  uma previsão nova gera um aviso discreto. O título da aba passa a `(N) …`
+  enquanto houver críticos em aberto não reconhecidos. "Reconhecer" vale só
+  neste navegador (`localStorage`). A mudança de severidade é anunciada a
+  leitores de tela uma vez por transição (Crítico em `assertive`).
 - Sistema (`/sistema`): `/health/live` e `/health/ready` (texto ou JSON),
   estado do hub, idade do último lote, lotes da sessão, cadência medida
   (mediana) e o caminho ESP, API, Fila, Banco, Hub e Painel com o estado de cada
@@ -165,14 +186,19 @@ VITE_SIMULADOR=true npm run dev
 ```
 
 O simulador troca o transporte HTTP do axios e a fonte de eventos do store, sem
-tocar nos componentes. Ele cria seis motores fictícios (aquecimento com subida
+tocar nos componentes. Ele cria sete motores fictícios (aquecimento com subida
 de gradiente e assimetria, crítico estável, normal, um que silencia 90 s depois
-de abrir o painel, um que nunca envia lote e um sem regras), três regras e
+de abrir o painel, um que nunca envia lote, um sem regras e o Motor G, em
+aquecimento lento, onde a previsão por tendência dispara minutos antes do limite
+estático), quatro regras e
 lotes a cada ~3 s (ruído suave: só a escova que aquece dispara gradiente;
 `VITE_SIMULADOR_CADENCIA_S` muda o intervalo), com um histórico recente para o gráfico ter curva. Motores
 cadastrados na tela começam a enviar lotes após ~9 s. `VITE_SIMULADOR_MOTORES=1`
 mantém só o Motor A (útil para o modo apresentação com um único motor). O
-simulador também responde a `/health/live` e `/health/ready`. Enquanto ativo, o
+simulador implementa a regra de tendência (mínimos quadrados, como o backend),
+`GET /api/alertas` com filtros e paginação, o ciclo de vida dos alertas e o
+evento `ReceberAlertaManutencao`; também responde a `/health/live` e
+`/health/ready`. Enquanto ativo, o
 cabeçalho mostra o selo "Simulação".
 
 A condição é `import.meta.env.DEV && VITE_SIMULADOR === "true"`: o código do
@@ -235,7 +261,8 @@ painel-hackatohm/
 │   ├── app/                  Rotas e composição da aplicação
 │   ├── components/           Componentes compartilhados e UI
 │   ├── features/
-│   │   ├── eventos/          Registro de eventos da sessão
+│   │   ├── alertas/          Alertas de manutenção: serviço, store, página
+│   │   ├── eventos/          Registro de conexão da sessão
 │   │   ├── motores/          Motores, sensores e vínculos por motor
 │   │   ├── quality-gates/    Regras, resultados e contratos de qualidade
 │   │   ├── sistema/          Saúde da API e pipeline
@@ -261,7 +288,8 @@ import { api } from '@/services/api';
 
 Os testes unitários atuais cobrem:
 
-- validação dos três tipos de regra de Quality Gates e seus limites;
+- validação dos quatro tipos de regra de Quality Gates e seus limites (na
+  previsão, ordem invertida, temperatura limite e janela);
 - formatação de valores por `tipoRegra` (°C, °C/min, diferença em °C);
 - estados de avaliação, consolidação de severidade e frescor do dado;
 - store de telemetria: deduplicação, monotonicidade, recarga ao conectar e
@@ -269,7 +297,11 @@ Os testes unitários atuais cobrem:
 - limites do medidor a partir da regra vinculada;
 - validação do MAC do ESP e do cadastro de motor;
 - formatação de severidades e temperaturas, valores de gate (uma casa);
-- detecção de transições, registro e contador de eventos, título da aba;
+- previsão por tendência: leitura do gate, formatação em minutos e horário
+  previsto, projeção do gráfico limitada a +30 min;
+- alertas: normalização, filtros na URL, store (evento por `id`, recargas,
+  404), reconhecimento no `localStorage` e avisos sem duplicar;
+- registro de conexão da sessão e título da aba;
 - mapeamento de saúde, cadência, pipeline do sistema e persistência do tema;
 - contraste WCAG AA dos tokens nos dois temas.
 

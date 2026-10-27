@@ -19,7 +19,7 @@ divergência, eles prevalecem e este documento deve ser corrigido.
 3. **Silêncio não é normalidade.** Sem lote recente, o último diagnóstico fica
    na tela marcado como desatualizado. Nunca volta sozinho para "Normal".
 4. **Todo alerta explica a si mesmo.** Regra, escova, valor observado e limite,
-   na unidade correta (°C, °C/min ou diferença em °C).
+   na unidade correta (°C, °C/min, diferença em °C ou minutos na previsão).
 5. **Honesto com os dados.** Nada de "vida útil restante" ou "% de desgaste":
    o backend avalia regras, não estima falhas. Rótulos dizem "nesta sessão"
    quando o dado só existe em memória.
@@ -113,20 +113,80 @@ diagnóstico.
 | `temperatura.limiar_estatico` | Limite de temperatura | Limiar estático | °C | -55 a 200 |
 | `temperatura.gradiente_termico` | Velocidade de aquecimento | Gradiente térmico | °C/min | ≥ 0 |
 | `temperatura.assimetria_escovas` | Diferença entre escovas | Assimetria entre escovas | °C de diferença | ≥ 0 |
+| `temperatura.previsao_tendencia` | Tempo até o limite | Previsão por tendência | min | aviso > crítico > 0 (ordem invertida) |
+
+Categorias do backend: **Preditivo** (previsão por tendência), **Aceleração**
+(gradiente) e **Condição** (limiar e assimetria). O seletor de tipo e o catálogo
+usam esses grupos.
 
 - Tipo desconhecido aparece pelo identificador, sem unidade inventada, e não
   pode ser editado nem alternado pelo painel.
 - Trocar o tipo no formulário limpa os limites; regras novas começam sem
   valores sugeridos (limites dependem do equipamento).
 
-- Sempre `aviso < critico`; comparação `>=` (igual ao limite já dispara).
+- Nos tipos de temperatura, sempre `aviso < critico`; comparação `>=` (igual ao
+  limite já dispara). Na previsão a ordem é invertida: `aviso` e `critico` são
+  minutos de antecedência, com `aviso > critico > 0`.
 - Formatar `valorObservado` e `valorLimite` pela unidade do `tipoRegra`. Não
   acrescentar "°C" indiscriminadamente.
+- Previsão por tendência: `temperaturaLimite` (°C, -55 a 200, obrigatório) e
+  `janela` (inteiro de 5 a 60, opcional, padrão 12, em campo avançado). Esses
+  dois campos **só** vão no corpo do tipo de previsão (nos outros o backend
+  responde 400) e trocar de tipo no formulário os descarta. O backend devolve
+  uma única mensagem para `parametros`; nesse tipo ela aparece no topo do
+  formulário.
 - Edição (`PUT`) envia o objeto completo, **incluindo `tipoRegra`**: omitir o
   tipo faz o backend convertê-la em limiar estático.
 - A assimetria pertence ao motor: o backend repete o mesmo resultado em cada
   escova, mas a tela mostra uma vez, no escopo do motor. Ela também não entra
   na severidade de uma escova isolada nem nos marcadores da curva dela.
+
+### Previsão por tendência
+
+- A estimativa **vem do backend**: `valorObservado` são os minutos até o limite
+  (0 = a reta já passou dele), `valorLimite` é o horizonte atingido e os
+  `metadados` trazem `inclinacaoCelsiusPorMinuto`, `temperaturaLimite` e
+  `amostras`. O painel não ajusta reta nem classifica. Com `Normal` o backend não
+  manda valores, então o texto calmo fala do horizonte da regra ("Sem tendência
+  de atingir 95 °C nos próximos 30 min"), nunca de um número. Menos de 5
+  leituras é "Aguardando amostras".
+- Formato: "~8 min", "~1 h 20 min", "agora" para 0, e o horário previsto
+  "≈ 14:38" = `dataHora` do lote + minutos. Sem contagem regressiva por
+  segundo, que fingiria precisão. Valor e horizonte aparecem como "~8 min até
+  95 °C" e "horizonte 10 min", nunca com "≥".
+- Telas: cartão "Previsão" no detalhe do motor; relógio e minutos na escova do
+  anel coletor (a cor continua vindo da severidade); "95 °C em ~8 min" na linha
+  do motor; frase grande "Escova 2 → 95 °C em ~8 min" no modo apresentação.
+
+### Alertas de manutenção
+
+- Um alerta é um **evento persistido** no backend: abre quando um gate passa a
+  disparar, é atualizado enquanto continua e é encerrado (`resolvidoEm`) quando
+  para; se voltar a disparar, abre outro. A chave é regra + sensor; a assimetria
+  gera um por motor, com `sensorId` e `numeroEscova` nulos ("Motor inteiro").
+  Regra excluída: `regraQualidadeId` nulo e o alerta continua legível ("regra
+  excluída").
+- `GET /api/alertas` filtra por `motorId`, `ativo`, `categoria`, `tipoRegra` e
+  `severidade`, com `pagina` (≥ 1) e `tamanho` (1 a 200, padrão 50), e responde
+  `{ itens, pagina, tamanho, total }`.
+- O evento `ReceberAlertaManutencao` (mesmo item) só chega quando um alerta abre
+  ou **sobe** de severidade; encerramento e queda não geram evento. Por isso a
+  lista em aberto é recarregada ao conectar e reconectar o hub, após o status de
+  um motor com alerta aberto (espera de 2 s) e ao voltar o foco para a aba. O
+  evento insere ou atualiza pelo `id`, sem duplicar.
+- O texto principal do alerta é montado pelo painel (vírgula decimal e unidade
+  do tipo); a `mensagem` do backend fica como detalhe técnico recolhido.
+  `categoria`, `tipoRegra` ou severidade desconhecidos não quebram: aparecem
+  pelo identificador, com o número sem unidade; severidade desconhecida é
+  "Sem classificação".
+- O painel **não** detecta severidade por conta própria: avisos e contador vêm
+  dos alertas. Crítico gera toast que fica até ser dispensado e `(N)` no título
+  da aba (N = críticos em aberto não reconhecidos); previsão nova gera um toast
+  discreto; alerta que continua aberto não avisa de novo. "Reconhecer" é só do
+  navegador (`localStorage`, protegido por try/catch), com chave `id` + início.
+- Se `/api/alertas` responder 404 (backend sem a funcionalidade), a página mostra
+  "Alertas indisponíveis nesta versão da API" e mantém o registro de conexão; nada
+  mais quebra.
 
 ### Histórico
 
@@ -256,6 +316,9 @@ linha tem rótulo direto no fim ("E2 96,1"), sem depender de legenda.
 | `Tabs` | Abas acessíveis (setas, Home e End) |
 | `Segmented` | Seleção única em linha (filtros, janela do gráfico), padrão radiogroup com setas |
 | `EscalaLimites` | Prévia normal, aviso e crítico de uma regra, com o valor atual como ponto de luz |
+| `EscalaAntecedencia` | Prévia da previsão: régua de tempo da direita para a esquerda (agora, crítico, aviso, sem urgência) e a frase "Avisa 30 min antes de 95 °C; crítico 10 min antes" |
+| `PrevisaoMotor` | Cartão "Previsão" do detalhe: escova de menor tempo, as outras em lista, ou a linha calma do horizonte |
+| `TabelaAlertas` | Alertas com severidade, categoria, motor e escova, regra, valor, início, duração e "Reconhecer" |
 | `Toast` | Aviso não bloqueante, `aria-live="polite"`, some sozinho em 8 s exceto Crítico. O toast Crítico fica fora de região viva: o anúncio assertivo vem só do `AnunciadorSeveridade` global, uma vez por transição |
 | `CopyableCode` | Texto mono com botão de copiar |
 | `CollectorRing` | Vista esquemática do anel coletor com as escovas ao redor (ver "Anel coletor") |
@@ -281,6 +344,12 @@ Desenhado em SVG próprio, sem biblioteca de gráficos.
 - Lacunas maiores que 3× a cadência quebram a linha (não interpolar).
 - Crosshair mostra hora, valor de cada escova e ΔT naquele lote.
 - Título indica "Janela da sessão": o backend não fornece histórico.
+- Previsão: com o gate de tendência disparando, linha horizontal tracejada na
+  temperatura limite, segmento de projeção tracejado do valor da reta no lote
+  (`temperaturaLimite − inclinação × minutos`) até (horário previsto, limite),
+  numa faixa hachurada rotulada "Estimativa". O eixo X avança até o horário
+  previsto, no máximo +30 min; a projeção é cortada nesse teto. Tudo deriva de
+  valores do backend e some quando o gate para de disparar.
 - Alternativa acessível: tabela com os últimos 20 lotes, acessível por botão.
 
 ## Anel coletor
@@ -336,7 +405,7 @@ identidade Harrier (`src/assets/collector-reference.jpg`).
 - `/` visão geral (`/motores` e `/inicio` redirecionam)
 - `/motores/:id` detalhe do motor, aba Monitoramento (`/motores/:id/regras` e
   `/motores/:id/dispositivo` abrem as outras abas)
-- `/eventos` eventos da sessão
+- `/alertas` alertas de manutenção: abas Em aberto, Histórico e Conexão, filtros na URL (`/eventos` redireciona)
 - `/regras-qualidade` quality gates
 - `/sistema` saúde do pipeline
 - `?modo=tv` em qualquer rota: modo apresentação (só a visão geral, sem navegação; Esc sai)
