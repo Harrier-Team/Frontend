@@ -347,13 +347,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                     fill="url(#hachura-estimativa)"
                   />
                   <line x1={x(fim)} x2={x(fim)} y1={margem.topo} y2={margem.topo + areaA} stroke="var(--color-line-strong)" strokeDasharray="2 3" />
-                  <text
-                    x={x(fimEixo) - 6}
-                    y={margem.topo + 12}
-                    textAnchor="end"
-                    fontSize={12}
-                    fill="var(--color-ink-3)"
-                  >
+                  <text x={x(fim) + 6} y={margem.topo + areaA - 6} fontSize={12} fill="var(--color-ink-3)">
                     Estimativa
                   </text>
                 </g>

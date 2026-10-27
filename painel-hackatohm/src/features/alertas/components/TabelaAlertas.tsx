@@ -86,7 +86,7 @@ export const TabelaAlertas: React.FC<TabelaAlertasProps> = ({
               Duração
             </th>
             {comAcao && (
-              <th scope="col" className="px-4 py-3 sm:px-5">
+              <th scope="col" className="hidden px-4 py-3 sm:table-cell sm:px-5">
                 <span className="sr-only">Ação</span>
               </th>
             )}
@@ -100,6 +100,23 @@ export const TabelaAlertas: React.FC<TabelaAlertasProps> = ({
             const critico = alerta.severidade === 'Critico' && alerta.ativo;
             const reconhecido = reconhecidos?.has(chaveDoAlerta(alerta)) ?? false;
             const temValores = alerta.valorObservado !== null;
+            const acao =
+              critico &&
+              (reconhecido ? (
+                <span className="inline-flex items-center gap-1 text-[13px] text-ink-3">
+                  <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                  Reconhecido
+                </span>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => onReconhecer?.(alerta)}
+                  aria-label={`Reconhecer alerta crítico de ${motor}, ${escopoDoAlerta(alerta).toLowerCase()}`}
+                >
+                  Reconhecer
+                </Button>
+              ));
             return (
               <tr
                 key={alerta.id}
@@ -132,6 +149,7 @@ export const TabelaAlertas: React.FC<TabelaAlertasProps> = ({
                     {!semMotor && ' · '}
                     {escopoDoAlerta(alerta)} · {formatoInicio.format(Date.parse(alerta.iniciadoEm))}
                   </p>
+                  {comAcao && acao && <div className="mt-2 sm:hidden">{acao}</div>}
                   <details className="mt-1.5 text-[13px] text-ink-3">
                     <summary className="cursor-pointer select-none">Detalhe técnico</summary>
                     <dl className="num mt-1.5 space-y-0.5">
@@ -183,23 +201,8 @@ export const TabelaAlertas: React.FC<TabelaAlertasProps> = ({
                   {descreverDuracao(alerta, agora)}
                 </td>
                 {comAcao && (
-                  <td className="whitespace-nowrap px-4 py-3 text-right align-top sm:px-5">
-                    {critico &&
-                      (reconhecido ? (
-                        <span className="inline-flex items-center gap-1 text-[13px] text-ink-3">
-                          <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                          Reconhecido
-                        </span>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => onReconhecer?.(alerta)}
-                          aria-label={`Reconhecer alerta crítico de ${motor}, ${escopoDoAlerta(alerta).toLowerCase()}`}
-                        >
-                          Reconhecer
-                        </Button>
-                      ))}
+                  <td className="hidden whitespace-nowrap px-4 py-3 text-right align-top sm:table-cell sm:px-5">
+                    {acao}
                   </td>
                 )}
               </tr>
