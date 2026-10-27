@@ -87,6 +87,7 @@ export function useRegrasQualidade() {
     atualizar(regra.id, {
       nome: regra.nome,
       descricao: regra.descricao,
+      tipoRegra: regra.tipoRegra,
       parametros: regra.parametros,
       ativo: !regra.ativo,
     });

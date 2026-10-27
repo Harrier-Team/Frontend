@@ -4,6 +4,7 @@ import { RegraQualidade } from '@/features/quality-gates/types/regraQualidade';
 import { IconButton } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Switch';
 import { Panel } from '@/components/ui/Panel';
+import { descreverLimites, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
 
 interface QualityRuleListProps {
   regras: RegraQualidade[];
@@ -31,7 +32,9 @@ export const QualityRuleList: React.FC<QualityRuleListProps> = ({
             <p className="mt-0.5 line-clamp-2 text-[13px] text-ink-2">{regra.descricao}</p>
           )}
           <p className="num mt-2 text-[13px] text-ink-2">
-            Aviso em {regra.parametros.aviso} °C, crítico em {regra.parametros.critico} °C
+            <span className="text-ink-3">{obterTipoRegra(regra.tipoRegra).rotulo}</span>
+            {' · '}
+            {descreverLimites(regra.tipoRegra, regra.parametros)}
           </p>
         </div>
         <Switch

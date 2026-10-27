@@ -7,6 +7,7 @@ import {
 const valoresValidos: RegraQualidadeFormValues = {
   nome: 'Temperatura crítica',
   descricao: 'Verifica o limite térmico.',
+  tipoRegra: 'temperatura.limiar_estatico',
   parametros: { aviso: 60, critico: 80 },
   ativo: true,
 };
@@ -16,16 +17,10 @@ describe('validarRegraQualidade', () => {
     expect(validarRegraQualidade(valoresValidos)).toEqual({});
   });
 
-  it('exige nome e valida o intervalo dos limites', () => {
-    const erros = validarRegraQualidade({
-      ...valoresValidos,
-      nome: ' ',
-      parametros: { aviso: 130, critico: -60 },
-    });
-
-    expect(erros.nome).toBe('O nome da regra é obrigatório.');
-    expect(erros.aviso).toBeDefined();
-    expect(erros.critico).toBeDefined();
+  it('exige nome', () => {
+    expect(validarRegraQualidade({ ...valoresValidos, nome: ' ' }).nome).toBe(
+      'O nome da regra é obrigatório.'
+    );
   });
 
   it('exige que o limite crítico seja maior que o aviso', () => {
@@ -35,5 +30,54 @@ describe('validarRegraQualidade', () => {
     });
 
     expect(erros.critico).toContain('maior');
+  });
+
+  it('limiar estático aceita de -55 a 200 °C', () => {
+    expect(
+      validarRegraQualidade({ ...valoresValidos, parametros: { aviso: -55, critico: 200 } })
+    ).toEqual({});
+
+    const erros = validarRegraQualidade({
+      ...valoresValidos,
+      parametros: { aviso: -56, critico: 201 },
+    });
+    expect(erros.aviso).toContain('-55');
+    expect(erros.critico).toContain('200');
+  });
+
+  it('limiar estático aceita limites acima de 125 °C', () => {
+    expect(
+      validarRegraQualidade({ ...valoresValidos, parametros: { aviso: 150, critico: 180 } })
+    ).toEqual({});
+  });
+
+  it('gradiente térmico exige limites não negativos em °C/min', () => {
+    const base = { ...valoresValidos, tipoRegra: 'temperatura.gradiente_termico' as const };
+    expect(validarRegraQualidade({ ...base, parametros: { aviso: 0, critico: 10 } })).toEqual({});
+    expect(validarRegraQualidade({ ...base, parametros: { aviso: 300, critico: 500 } })).toEqual({});
+
+    const erros = validarRegraQualidade({ ...base, parametros: { aviso: -1, critico: 5 } });
+    expect(erros.aviso).toContain('negativo');
+  });
+
+  it('assimetria entre escovas exige limites não negativos e aviso menor que crítico', () => {
+    const base = { ...valoresValidos, tipoRegra: 'temperatura.assimetria_escovas' as const };
+    expect(validarRegraQualidade({ ...base, parametros: { aviso: 10, critico: 15 } })).toEqual({});
+
+    const negativo = validarRegraQualidade({ ...base, parametros: { aviso: -5, critico: -1 } });
+    expect(negativo.aviso).toBeDefined();
+    expect(negativo.critico).toBeDefined();
+
+    const invertido = validarRegraQualidade({ ...base, parametros: { aviso: 15, critico: 10 } });
+    expect(invertido.critico).toContain('maior');
+  });
+
+  it('rejeita limites não numéricos', () => {
+    const erros = validarRegraQualidade({
+      ...valoresValidos,
+      parametros: { aviso: Number.NaN, critico: Number.POSITIVE_INFINITY },
+    });
+    expect(erros.aviso).toBeDefined();
+    expect(erros.critico).toBeDefined();
   });
 });

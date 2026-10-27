@@ -1,7 +1,7 @@
 import React from 'react';
 import { ResultadoGateRealtime } from '@/features/quality-gates/types/qualityGate';
 import { SEVERIDADE_THEME } from '@/features/quality-gates/helpers/qualityGateHelper';
-import { formatarGrau } from '@/features/telemetria/helpers/statusHelper';
+import { formatarValorGate } from '@/features/quality-gates/helpers/tiposRegra';
 
 /** Uma regra que disparou: o que aconteceu, quanto e contra qual limite. */
 export const QualityGateResult: React.FC<{ resultado: ResultadoGateRealtime }> = ({ resultado }) => {
@@ -21,14 +21,18 @@ export const QualityGateResult: React.FC<{ resultado: ResultadoGateRealtime }> =
         {temValores && (
           <p className="num text-[13px] text-ink-2">
             {resultado.valorObservado !== null && (
-              <span className="text-ink">{formatarGrau(resultado.valorObservado)} °C</span>
+              <span className="text-ink">
+                {formatarValorGate(resultado.tipoRegra, resultado.valorObservado)}
+              </span>
             )}
-            {resultado.valorObservado !== null && resultado.valorLimite !== null && ' de '}
-            {resultado.valorLimite !== null && <span>{formatarGrau(resultado.valorLimite)} °C</span>}
+            {resultado.valorObservado !== null && resultado.valorLimite !== null && ' ≥ '}
+            {resultado.valorLimite !== null && <span>{formatarValorGate(resultado.tipoRegra, resultado.valorLimite)}</span>}
           </p>
         )}
       </div>
-      <p className="mt-1 text-[13px] leading-relaxed text-ink-2">{resultado.mensagemDiagnostico}</p>
+      {resultado.mensagemDiagnostico && (
+        <p className="mt-1 text-[13px] leading-relaxed text-ink-2">{resultado.mensagemDiagnostico}</p>
+      )}
     </div>
   );
 };

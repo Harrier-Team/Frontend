@@ -1,6 +1,11 @@
 import { NivelSeveridade } from './qualityGate';
 
-export interface ParametrosLimiarTemperatura {
+export type TipoRegra =
+  | 'temperatura.limiar_estatico'
+  | 'temperatura.gradiente_termico'
+  | 'temperatura.assimetria_escovas';
+
+export interface ParametrosRegra {
   aviso: number;
   critico: number;
 }
@@ -9,17 +14,19 @@ export interface RegraQualidade {
   id: string;
   nome: string;
   descricao: string | null;
-  tipoRegra: string;
+  tipoRegra: TipoRegra;
   severidadePadrao: NivelSeveridade;
-  parametros: ParametrosLimiarTemperatura;
+  parametros: ParametrosRegra;
   ativo: boolean;
   criadoEm: string;
 }
 
+/** Corpo do POST e do PUT: no PUT o objeto vai completo, incluindo `tipoRegra`. */
 export interface RegraQualidadeRequest {
   nome: string;
   descricao?: string | null;
-  parametros: ParametrosLimiarTemperatura;
+  tipoRegra: TipoRegra;
+  parametros: ParametrosRegra;
   ativo: boolean;
 }
 

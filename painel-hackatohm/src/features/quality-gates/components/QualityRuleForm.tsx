@@ -2,9 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Switch';
 import {
+  ParametrosRegra,
   RegraQualidade,
   RegraQualidadeRequest,
+  TipoRegra,
 } from '@/features/quality-gates/types/regraQualidade';
+import {
+  LISTA_TIPOS_REGRA,
+  obterTipoRegra,
+  TIPO_LIMIAR_ESTATICO,
+  TIPOS_REGRA,
+} from '@/features/quality-gates/helpers/tiposRegra';
 import {
   FormErrors,
   RegraQualidadeFormValues,
@@ -21,7 +29,8 @@ interface QualityRuleFormProps {
 const valoresIniciais: RegraQualidadeFormValues = {
   nome: '',
   descricao: '',
-  parametros: { aviso: 80, critico: 95 },
+  tipoRegra: TIPO_LIMIAR_ESTATICO,
+  parametros: { ...TIPOS_REGRA[TIPO_LIMIAR_ESTATICO].padrao },
   ativo: true,
 };
 
@@ -42,6 +51,7 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
         ? {
             nome: regra.nome,
             descricao: regra.descricao ?? '',
+            tipoRegra: regra.tipoRegra,
             parametros: regra.parametros,
             ativo: regra.ativo,
           }
@@ -54,6 +64,15 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
     key: K,
     value: RegraQualidadeFormValues[K]
   ) => setValues((current) => ({ ...current, [key]: value }));
+
+  const trocarTipo = (tipo: TipoRegra) => {
+    setValues((current) => ({
+      ...current,
+      tipoRegra: tipo,
+      parametros: { ...TIPOS_REGRA[tipo].padrao } as ParametrosRegra,
+    }));
+    setErrors({});
+  };
 
   const updateLimit = (key: 'aviso' | 'critico', value: string) => {
     updateValue('parametros', {
@@ -71,13 +90,39 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
     await onSubmit({
       nome: values.nome.trim(),
       descricao: values.descricao.trim() || null,
+      tipoRegra: values.tipoRegra,
       parametros: values.parametros,
       ativo: values.ativo,
     });
   };
 
+  const tipo = obterTipoRegra(values.tipoRegra);
+
   return (
     <form onSubmit={submit} className="space-y-5 px-6 pb-6 pt-5" noValidate>
+      <div>
+        <label htmlFor="regra-tipo" className="field-label">
+          Tipo de regra
+        </label>
+        <select
+          id="regra-tipo"
+          value={values.tipoRegra}
+          disabled={Boolean(regra)}
+          onChange={(event) => trocarTipo(event.target.value as TipoRegra)}
+          className="field"
+        >
+          {LISTA_TIPOS_REGRA.map((item) => (
+            <option key={item.tipo} value={item.tipo}>
+              {item.rotulo} ({item.unidade})
+            </option>
+          ))}
+        </select>
+        <p className="mt-1.5 text-[13px] text-ink-3">
+          {tipo.descricao}
+          {regra && ' O tipo não pode ser alterado depois de criada.'}
+        </p>
+      </div>
+
       <div>
         <label htmlFor="regra-nome" className="field-label">
           Nome
@@ -113,7 +158,7 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="regra-aviso" className="field-label">
-            Aviso a partir de (°C)
+            Aviso a partir de ({tipo.unidadeLonga})
           </label>
           <input
             id="regra-aviso"
@@ -129,7 +174,7 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
         </div>
         <div>
           <label htmlFor="regra-critico" className="field-label">
-            Crítico a partir de (°C)
+            Crítico a partir de ({tipo.unidadeLonga})
           </label>
           <input
             id="regra-critico"

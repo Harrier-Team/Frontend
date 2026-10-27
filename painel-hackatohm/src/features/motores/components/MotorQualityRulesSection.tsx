@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { useRegrasQualidade } from '@/features/quality-gates/hooks/useRegrasQualidade';
 import { useRegrasQualidadeMotor } from '../hooks/useRegrasQualidadeMotor';
 import { RegraQualidade, VinculoRegraQualidade } from '@/features/quality-gates/types/regraQualidade';
+import { descreverLimites, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
 import { Alert } from '../../../components/ui/Alert';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { Panel } from '../../../components/ui/Panel';
@@ -158,7 +159,9 @@ const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, operando, onToggle, on
       <div className={`min-w-0 flex-1 ${executando ? '' : 'opacity-60'}`}>
         <h3 className="truncate text-[15px] text-ink">{regra.nome}</h3>
         <p className="num mt-0.5 text-[13px] text-ink-2">
-          Aviso em {regra.parametros.aviso} °C, crítico em {regra.parametros.critico} °C
+          <span className="text-ink-3">{obterTipoRegra(regra.tipoRegra).rotulo}</span>
+          {' · '}
+          {descreverLimites(regra.tipoRegra, regra.parametros)}
         </p>
         {vinculo.ativo && !regra.ativo && (
           <p className="mt-1 text-[13px] text-warn">Desativada em Quality gates, não está sendo avaliada.</p>
