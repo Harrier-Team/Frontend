@@ -1,8 +1,11 @@
 import { EstadoTelemetria, MotorTelemetria } from '@/features/telemetria/store/tipos';
+import type { StatusConexaoHub } from '@/features/telemetria/services/signalrService';
 import {
   acumularEventos,
+  detectarConexao,
   detectarTransicoes,
   EventoSessao,
+  NovoEvento,
   snapshotDoMotor,
   SnapshotMotor,
 } from '../helpers/transicoes';
@@ -12,8 +15,6 @@ export const LIMITE_EVENTOS = 500;
 export interface EstadoEventos {
   /** Mais recente primeiro, no máximo `LIMITE_EVENTOS`. */
   eventos: EventoSessao[];
-  /** Eventos com `id` até este valor já foram vistos. */
-  vistoAte: number;
 }
 
 export interface FonteTelemetria {
@@ -22,22 +23,24 @@ export interface FonteTelemetria {
 }
 
 /**
- * Registro em memória das transições da sessão, derivado do store de
- * telemetria (status do hub, lotes e consultas). O primeiro retrato de cada
- * motor é só a linha de base: carregar a página não gera evento.
+ * Registro em memória da conexão na sessão, derivado do store de telemetria:
+ * situação de cada motor (Online, Degradado, Offline) e quedas do hub. O
+ * primeiro retrato de cada motor é só a linha de base: carregar a página não
+ * gera evento. Severidade não é registrada aqui; vem dos alertas do servidor.
  */
 export function criarRegistroEventos(fonte: FonteTelemetria, agora: () => number, limite = LIMITE_EVENTOS) {
-  let estado: EstadoEventos = { eventos: [], vistoAte: 0 };
+  let estado: EstadoEventos = { eventos: [] };
   let proximoId = 1;
   const ouvintes = new Set<() => void>();
-  const ouvintesNovos = new Set<(novos: EventoSessao[]) => void>();
   const retratos = new Map<number, SnapshotMotor>();
   const vistos = new Map<number, MotorTelemetria>();
+  let conexaoAnterior: StatusConexaoHub | null = null;
+  let houveQueda = false;
   let usuarios = 0;
   let descartar: (() => void) | null = null;
 
   function processar() {
-    const motores = fonte.obterEstado().motores;
+    const { motores, conexao } = fonte.obterEstado();
     for (const id of [...retratos.keys()]) {
       if (!motores[id]) {
         retratos.delete(id);
@@ -45,7 +48,13 @@ export function criarRegistroEventos(fonte: FonteTelemetria, agora: () => number
       }
     }
 
-    const novos: EventoSessao[] = [];
+    const brutos: NovoEvento[] = [];
+
+    const resultado = detectarConexao(conexaoAnterior, conexao, houveQueda, agora());
+    conexaoAnterior = conexao;
+    houveQueda = resultado.houveQueda;
+    if (resultado.evento) brutos.push(resultado.evento);
+
     for (const motor of Object.values(motores)) {
       if (vistos.get(motor.motorId) === motor) continue;
       vistos.set(motor.motorId, motor);
@@ -57,16 +66,13 @@ export function criarRegistroEventos(fonte: FonteTelemetria, agora: () => number
       const antes = retratos.get(motor.motorId);
       retratos.set(motor.motorId, depois);
       if (!antes) continue;
-
-      for (const bruto of detectarTransicoes(motor.motorId, antes, depois, em)) {
-        novos.push({ ...bruto, id: proximoId++ });
-      }
+      brutos.push(...detectarTransicoes(motor.motorId, antes, depois, em));
     }
-    if (novos.length === 0) return;
+    if (brutos.length === 0) return;
 
-    estado = { ...estado, eventos: acumularEventos(estado.eventos, novos, limite) };
+    const novos = brutos.map((bruto) => ({ ...bruto, id: proximoId++ }));
+    estado = { eventos: acumularEventos(estado.eventos, novos, limite) };
     ouvintes.forEach((ouvinte) => ouvinte());
-    ouvintesNovos.forEach((ouvinte) => ouvinte(novos));
   }
 
   return {
@@ -77,19 +83,6 @@ export function criarRegistroEventos(fonte: FonteTelemetria, agora: () => number
       };
     },
     obterEstado: () => estado,
-    /** Chamado a cada rodada de transições novas (toast, título da aba). */
-    aoNovosEventos(ouvinte: (novos: EventoSessao[]) => void) {
-      ouvintesNovos.add(ouvinte);
-      return () => {
-        ouvintesNovos.delete(ouvinte);
-      };
-    },
-    marcarComoVisto() {
-      const ultimo = proximoId - 1;
-      if (estado.vistoAte === ultimo) return;
-      estado = { ...estado, vistoAte: ultimo };
-      ouvintes.forEach((ouvinte) => ouvinte());
-    },
     /** Passa a observar o store de telemetria. Contagem de referências. */
     iniciar(): () => void {
       usuarios += 1;

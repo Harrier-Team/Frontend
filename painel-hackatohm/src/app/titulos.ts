@@ -1,4 +1,9 @@
-import { TITULO_BASE } from '@/features/eventos/helpers/transicoes';
+export const TITULO_BASE = 'Harrier | Telemetria de motores';
+
+/** "(2) Harrier | Telemetria de motores" com críticos em aberto não reconhecidos; o título normal sem eles. */
+export function formatarTituloAba(naoReconhecidos: number, base: string = TITULO_BASE): string {
+  return naoReconhecidos > 0 ? `(${naoReconhecidos}) ${base}` : base;
+}
 
 /** Título da aba por rota (WCAG 2.4.2): a página, depois o produto. A visão geral usa o título padrão. */
 export function tituloDaPagina(pathname: string): string {

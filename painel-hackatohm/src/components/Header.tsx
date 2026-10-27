@@ -4,7 +4,7 @@ import { Moon, Sun } from 'lucide-react';
 import harrierEmblem from '../assets/harrier-emblem.jpg';
 import { useConexaoHub } from '@/features/telemetria/hooks/useTelemetriaStore';
 import { SIMULADOR_ATIVO } from '@/dev/simuladorAtivo';
-import { useCriticosNaoVistos } from '@/features/eventos/hooks/useEventos';
+import { useCriticosNaoReconhecidos } from '@/features/alertas/hooks/useAlertas';
 import { useTema } from '@/features/tema/useTema';
 import { rotuloDaTroca } from '@/features/tema/temaHelper';
 import { IconButton } from './ui/Button';
@@ -78,9 +78,9 @@ const TrocaDeTema: React.FC = () => {
   );
 };
 
-/** Contador de críticos não vistos: o número e o texto para leitor de tela, além da cor. */
+/** Contador de críticos em aberto não reconhecidos: o número e o texto para leitor de tela, além da cor. */
 const ContadorCriticos: React.FC = () => {
-  const n = useCriticosNaoVistos();
+  const n = useCriticosNaoReconhecidos();
   if (n === 0) return null;
   return (
     <span
@@ -88,7 +88,7 @@ const ContadorCriticos: React.FC = () => {
       style={{ background: 'var(--color-sev-critico)', color: 'var(--color-canvas)' }}
     >
       {n}
-      <span className="sr-only">{n === 1 ? ' crítico não visto' : ' críticos não vistos'}</span>
+      <span className="sr-only">{n === 1 ? ' crítico em aberto não reconhecido' : ' críticos em aberto não reconhecidos'}</span>
     </span>
   );
 };

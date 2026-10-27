@@ -1,33 +1,38 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { tituloDaPagina } from '@/app/titulos';
+import { formatarTituloAba, tituloDaPagina } from '@/app/titulos';
 import { useToast } from '@/components/ui/toastContext';
 import { useMonitoramento } from '@/hooks/useMonitoramento';
+import { decidirAviso } from '@/features/alertas/helpers/apresentacao';
+import { useCriticosNaoReconhecidos, useIniciarAlertas } from '@/features/alertas/hooks/useAlertas';
+import { alertasStore } from '@/features/alertas/store/alertasStore';
 import { useAgora } from '@/features/telemetria/hooks/useAgora';
 import { useTelemetriaMotores } from '@/features/telemetria/hooks/useTelemetriaStore';
 import { resumirMotor } from '@/features/telemetria/helpers/resumoMotor';
 import { AnunciadorSeveridade } from '@/features/telemetria/components/AnunciadorSeveridade';
-import { useCriticosNaoVistos, useRegistroEventos } from '../hooks/useEventos';
-import { registroEventos } from '../store/registroEventos';
-import { frasearEvento } from '../helpers/apresentacao';
-import { ehTransicaoParaCritico, formatarTituloAba } from '../helpers/transicoes';
+import { useRegistroEventos } from '../hooks/useEventos';
 
 /**
  * Efeitos globais de operação, sem interface própria:
- *  - alimenta o registro de eventos a partir do store de telemetria;
- *  - um aviso (toast) por motor a cada transição para Crítico;
- *  - título da aba com os críticos não vistos: "(2) Harrier";
+ *  - alimenta o registro de conexão e o store de alertas;
+ *  - um aviso (toast) por alerta de manutenção que abre ou sobe de severidade,
+ *    vindo de `ReceberAlertaManutencao`: Crítico fica até ser dispensado e a
+ *    previsão nova é um aviso discreto;
+ *  - título da aba com os críticos em aberto ainda não reconhecidos: "(2) Harrier";
  *  - anúncio da mudança de severidade para leitores de tela (única região
  *    assertiva do painel; o toast crítico não anuncia por conta própria).
+ * O painel não detecta severidade por conta própria: quem abre e encerra
+ * alertas é o backend, e ele persiste o registro.
  */
 export const MonitorOperacional: React.FC = () => {
   useRegistroEventos();
+  useIniciarAlertas();
   const { motores } = useMonitoramento();
   const telemetria = useTelemetriaMotores();
   const agora = useAgora();
   const { mostrar } = useToast();
   const navigate = useNavigate();
-  const naoVistos = useCriticosNaoVistos();
+  const naoReconhecidos = useCriticosNaoReconhecidos();
   const { pathname } = useLocation();
 
   // O ouvinte vive o tempo do painel; lê nomes e navegação pela referência mais nova.
@@ -42,27 +47,17 @@ export const MonitorOperacional: React.FC = () => {
 
   useEffect(
     () =>
-      registroEventos.aoNovosEventos((novos) => {
-        const porMotor = new Map<number, typeof novos>();
-        for (const evento of novos.filter(ehTransicaoParaCritico)) {
-          porMotor.set(evento.motorId, [...(porMotor.get(evento.motorId) ?? []), evento]);
-        }
-        for (const [motorId, eventos] of porMotor) {
-          const nome = nomes.current.get(motorId) ?? `Motor ${motorId}`;
-          mostrar({
-            tom: 'critico',
-            titulo: `${nome} ficou crítico`,
-            mensagem: eventos.map((e) => frasearEvento(e, nome)).join(' · '),
-            acao: { rotulo: 'Abrir o motor', aoClicar: () => irPara.current(`/motores/${motorId}`) },
-          });
-        }
+      alertasStore.aoNovoAlerta((alerta) => {
+        const nome = nomes.current.get(alerta.motorId) ?? `Motor ${alerta.motorId}`;
+        const aviso = decidirAviso(alerta, nome, () => irPara.current(`/motores/${alerta.motorId}`));
+        if (aviso) mostrar(aviso);
       }),
     [mostrar]
   );
 
   useEffect(() => {
-    document.title = formatarTituloAba(naoVistos, tituloDaPagina(pathname));
-  }, [naoVistos, pathname]);
+    document.title = formatarTituloAba(naoReconhecidos, tituloDaPagina(pathname));
+  }, [naoReconhecidos, pathname]);
 
   const estados = useMemo(
     () =>

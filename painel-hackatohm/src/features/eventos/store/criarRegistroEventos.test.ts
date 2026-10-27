@@ -1,35 +1,22 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { StatusConexaoHub } from '@/features/telemetria/services/signalrService';
 import { EstadoTelemetria, MotorTelemetria } from '@/features/telemetria/store/tipos';
-import { gate, gateAlerta, iso, leitura, status } from '@/features/telemetria/testing/fabricas';
+import { gate, iso, leitura, status } from '@/features/telemetria/testing/fabricas';
 import { criarRegistroEventos } from './criarRegistroEventos';
 
-function motorCom(severidade: 'Normal' | 'Critico', situacao: 'Online' | 'Offline' = 'Online', t = 0): MotorTelemetria {
-  const gates = severidade === 'Critico' ? [gateAlerta('Critico')] : [gate()];
-  const l = leitura({ dataHora: iso(t), valorCelsius: severidade === 'Critico' ? 96.1 : 50, resultadosQualityGates: gates });
+function motorCom(situacao: 'Online' | 'Offline' | 'Degradado', t = 0): MotorTelemetria {
+  const l = leitura({ dataHora: iso(t), resultadosQualityGates: [gate()] });
   const s = status({
-    severidadeGeral: severidade,
     situacao,
-    motivo:
-      severidade === 'Critico'
-        ? {
-            numeroEscova: 1,
-            nomeRegra: 'Limiar estático',
-            tipoRegra: 'temperatura.limiar_estatico',
-            codigoRegra: 'TEMP_CRITICA',
-            valorObservado: 96.1,
-            valorLimite: 95,
-            mensagemDiagnostico: null,
-          }
-        : null,
     escovas: [
       {
         sensorId: l.sensorId,
         numeroEscova: 1,
         valorCelsius: l.valorCelsius,
-        severidade,
+        severidade: 'Normal',
         dataHora: l.dataHora,
-        alertaDesgaste: severidade === 'Critico',
-        resultadosQualityGates: gates,
+        alertaDesgaste: false,
+        resultadosQualityGates: [gate()],
       },
     ],
   });
@@ -47,8 +34,8 @@ function motorCom(severidade: 'Normal' | 'Critico', situacao: 'Online' | 'Offlin
   };
 }
 
-function montar() {
-  let estado: EstadoTelemetria = { motores: {}, conexao: 'conectado', ultimaAtualizacao: null };
+function montar(conexaoInicial: StatusConexaoHub = 'conectado') {
+  let estado: EstadoTelemetria = { motores: {}, conexao: conexaoInicial, ultimaAtualizacao: null };
   const ouvintes = new Set<() => void>();
   const fonte = {
     subscribe: (cb: () => void) => {
@@ -58,64 +45,72 @@ function montar() {
     obterEstado: () => estado,
   };
   const registro = criarRegistroEventos(fonte, () => 1000, 3);
+  const notificar = () => ouvintes.forEach((cb) => cb());
   return {
     registro,
     definir(motor: MotorTelemetria | null) {
       estado = { ...estado, motores: motor ? { 1: motor } : {} };
-      ouvintes.forEach((cb) => cb());
+      notificar();
+    },
+    conectar(conexao: StatusConexaoHub) {
+      estado = { ...estado, conexao };
+      notificar();
     },
   };
 }
 
-describe('registro de eventos', () => {
+describe('registro de conexão da sessão', () => {
   it('a primeira leitura é só linha de base e não gera evento', () => {
     const { registro, definir } = montar();
     registro.iniciar();
-    definir(motorCom('Critico'));
+    definir(motorCom('Offline'));
     expect(registro.obterEstado().eventos).toEqual([]);
-  });
-
-  it('registra Normal para Crítico uma vez e avisa os ouvintes', () => {
-    const { registro, definir } = montar();
-    const aviso = vi.fn();
-    registro.aoNovosEventos(aviso);
-    registro.iniciar();
-    definir(motorCom('Normal', 'Online', 0));
-    definir(motorCom('Critico', 'Online', 10));
-    definir(motorCom('Critico', 'Online', 20));
-
-    const { eventos } = registro.obterEstado();
-    expect(eventos).toHaveLength(1);
-    expect(eventos[0]).toMatchObject({ tipo: 'escova', de: 'Normal', para: 'Critico', numeroEscova: 1 });
-    expect(eventos[0].evidencia).toMatchObject({ valor: 96.1, limite: 95 });
-    expect(aviso).toHaveBeenCalledTimes(1);
   });
 
   it('registra Online para Offline', () => {
     const { registro, definir } = montar();
     registro.iniciar();
-    definir(motorCom('Normal', 'Online', 0));
-    definir(motorCom('Normal', 'Offline', 0));
+    definir(motorCom('Online', 0));
+    definir(motorCom('Offline', 0));
     expect(registro.obterEstado().eventos.map((e) => [e.tipo, e.de, e.para])).toEqual([['situacao', 'Online', 'Offline']]);
   });
 
-  it('marcar como visto avança o marcador e não apaga eventos', () => {
+  it('não registra severidade: isso vem dos alertas do servidor', () => {
     const { registro, definir } = montar();
     registro.iniciar();
-    definir(motorCom('Normal'));
-    definir(motorCom('Critico', 'Online', 10));
-    expect(registro.obterEstado().vistoAte).toBe(0);
-    registro.marcarComoVisto();
-    expect(registro.obterEstado().vistoAte).toBe(1);
-    expect(registro.obterEstado().eventos).toHaveLength(1);
+    definir(motorCom('Online', 0));
+    const critico = motorCom('Online', 10);
+    critico.status = { ...critico.status!, severidadeGeral: 'Critico' };
+    critico.escovas[1].ultima = leitura({
+      dataHora: iso(10),
+      resultadosQualityGates: [gate({ disparouAlerta: true, severidade: 'Critico', valorObservado: 96, valorLimite: 95 })],
+    });
+    definir(critico);
+    expect(registro.obterEstado().eventos).toEqual([]);
+  });
+
+  it('registra a queda do hub e a retomada, não a primeira conexão', () => {
+    const { registro, conectar } = montar('desconectado');
+    registro.iniciar();
+    conectar('conectando');
+    conectar('conectado');
+    expect(registro.obterEstado().eventos).toEqual([]);
+
+    conectar('reconectando');
+    conectar('desconectado');
+    conectar('conectado');
+    expect(registro.obterEstado().eventos.map((e) => [e.tipo, e.motorId, e.para])).toEqual([
+      ['hub', null, 'conectado'],
+      ['hub', null, 'reconectando'],
+    ]);
   });
 
   it('mantém no máximo o limite de eventos, descartando os mais antigos', () => {
     const { registro, definir } = montar();
     registro.iniciar();
-    definir(motorCom('Normal'));
+    definir(motorCom('Online'));
     for (let i = 0; i < 5; i += 1) {
-      definir(motorCom(i % 2 === 0 ? 'Critico' : 'Normal', 'Online', 10 * (i + 1)));
+      definir(motorCom(i % 2 === 0 ? 'Offline' : 'Online', 10 * (i + 1)));
     }
     const ids = registro.obterEstado().eventos.map((e) => e.id);
     expect(ids).toEqual([5, 4, 3]);
@@ -124,9 +119,20 @@ describe('registro de eventos', () => {
   it('para de observar quando o último usuário sai', () => {
     const { registro, definir } = montar();
     const parar = registro.iniciar();
-    definir(motorCom('Normal'));
+    definir(motorCom('Online'));
     parar();
-    definir(motorCom('Critico', 'Online', 10));
+    definir(motorCom('Offline', 10));
     expect(registro.obterEstado().eventos).toEqual([]);
+  });
+
+  it('só o último usuário desliga o registro', () => {
+    const { registro, definir } = montar();
+    const a = registro.iniciar();
+    const b = registro.iniciar();
+    definir(motorCom('Online'));
+    a();
+    definir(motorCom('Offline', 10));
+    expect(registro.obterEstado().eventos).toHaveLength(1);
+    b();
   });
 });
