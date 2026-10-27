@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatarMacDigitado,
   macValido,
   normalizarMac,
   proximoNumeroEscova,
@@ -78,5 +79,22 @@ describe('proximoNumeroEscova', () => {
     expect(proximoNumeroEscova([])).toBe(1);
     expect(proximoNumeroEscova([escova(1), escova(2)])).toBe(3);
     expect(proximoNumeroEscova([escova(1), escova(3)])).toBe(2);
+  });
+});
+
+describe('formatarMacDigitado', () => {
+  it('monta a máscara enquanto digita', () => {
+    expect(formatarMacDigitado('aa')).toBe('AA');
+    expect(formatarMacDigitado('aabb')).toBe('AA:BB');
+    expect(formatarMacDigitado('aabbc')).toBe('AA:BB:C');
+  });
+
+  it('aceita MAC colado com outros separadores e limita a 12 dígitos', () => {
+    expect(formatarMacDigitado('aa-bb-cc-dd-ee-ff')).toBe('AA:BB:CC:DD:EE:FF');
+    expect(formatarMacDigitado('aabbccddeeff00')).toBe('AA:BB:CC:DD:EE:FF');
+  });
+
+  it('descarta caracteres que não são hexadecimais', () => {
+    expect(formatarMacDigitado('zz12')).toBe('12');
   });
 });

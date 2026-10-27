@@ -3,6 +3,10 @@ import { ApiRequestError } from '../types/api';
 /** Mensagens para os `code` do Problem Details que o painel conhece. */
 const MENSAGENS_POR_CODIGO: Record<string, string> = {
   quality_rule_already_linked: 'Esta regra já está vinculada a este motor.',
+  sensors_already_registered:
+    'Este MAC ou algum número de escova já está cadastrado em outro motor. Confira os dados e tente de novo.',
+  sensor_already_registered: 'Já existe um sensor com este identificador.',
+  invalid_payload: 'Há dados inválidos no cadastro. Confira os campos abaixo.',
 };
 
 export const MENSAGEM_SEM_RESPOSTA =
@@ -56,4 +60,10 @@ export function ehNaoEncontrado(error: unknown): boolean {
 
 export function obterErrosDeCampo(error: unknown): Record<string, string[]> {
   return error instanceof ApiRequestError ? error.fieldErrors : {};
+}
+
+/** Mensagens por campo do Problem Details (`errors`), sem repetição, para listar ao usuário. */
+export function listarErrosDeCampo(error: unknown): string[] {
+  const mensagens = Object.values(obterErrosDeCampo(error)).flat();
+  return [...new Set(mensagens.filter((m) => typeof m === 'string' && m.trim() !== ''))];
 }

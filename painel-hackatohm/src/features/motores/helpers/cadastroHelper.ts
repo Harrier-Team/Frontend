@@ -17,6 +17,15 @@ export function normalizarMac(valor: string): string {
   return limpo;
 }
 
+/**
+ * Máscara enquanto digita: só hexadecimais, em maiúsculas, em pares separados
+ * por ':' (no máximo 12 dígitos). Colar 'aa-bb-cc-dd-ee-ff' também funciona.
+ */
+export function formatarMacDigitado(valor: string): string {
+  const digitos = valor.replace(/[^0-9a-fA-F]/g, '').toUpperCase().slice(0, 12);
+  return (digitos.match(/.{1,2}/g) ?? []).join(':');
+}
+
 export function macValido(valor: string): boolean {
   return MAC_COMPLETO.test(normalizarMac(valor));
 }

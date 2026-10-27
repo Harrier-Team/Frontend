@@ -304,7 +304,7 @@ export function criarServidorSimulado(agora: () => number = Date.now) {
           if (motores.some((s) => s.mac === mac)) {
             return {
               status: 409,
-              data: { title: 'Conflito', detail: 'Já existe um motor com este MAC.', status: 409, code: 'esp_mac_already_registered' },
+              data: { title: 'Conflito', detail: 'Já existe um motor com este MAC.', status: 409, code: 'sensors_already_registered' },
             };
           }
           const sim = adicionarMotor(

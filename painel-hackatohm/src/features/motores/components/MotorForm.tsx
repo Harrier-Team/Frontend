@@ -2,18 +2,20 @@ import React, { useState } from 'react';
 import { MotorInput } from '../types/motor';
 import { SensorFormList } from './SensorFormList';
 import { useMotorForm } from '../hooks/useMotorForm';
-import { ErrosCadastro, normalizarMac, validarMac } from '../helpers/cadastroHelper';
+import { ErrosCadastro, formatarMacDigitado, normalizarMac, validarMac } from '../helpers/cadastroHelper';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
 
 interface MotorFormProps {
   salvando: boolean;
   erro: string | null;
+  /** Mensagens por campo devolvidas pela API (Problem Details). */
+  detalhesErro?: string[];
   onSubmit: (dados: MotorInput) => Promise<void>;
   onCancel: () => void;
 }
 
-export const MotorForm: React.FC<MotorFormProps> = ({ salvando, erro, onSubmit, onCancel }) => {
+export const MotorForm: React.FC<MotorFormProps> = ({ salvando, erro, detalhesErro = [], onSubmit, onCancel }) => {
   const form = useMotorForm();
   const [erros, setErros] = useState<ErrosCadastro>({});
 
@@ -34,7 +36,18 @@ export const MotorForm: React.FC<MotorFormProps> = ({ salvando, erro, onSubmit, 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 px-6 pb-6 pt-5" noValidate>
-      {erro && <Alert tone="error" title={erro} />}
+      {erro && (
+        <div>
+          <Alert tone="error" title={erro} />
+          {detalhesErro.length > 0 && (
+            <ul className="mt-2 list-disc space-y-0.5 pl-9 text-[13px] text-ink-2">
+              {detalhesErro.map((mensagem) => (
+                <li key={mensagem}>{mensagem}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
       {erros.escovas && <Alert tone="error" title={erros.escovas} />}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -87,9 +100,9 @@ export const MotorForm: React.FC<MotorFormProps> = ({ salvando, erro, onSubmit, 
           aria-invalid={Boolean(erros.mac)}
           aria-describedby="motor-mac-ajuda"
           value={form.mac}
-          onChange={(event) => form.setMac(event.target.value)}
+          onChange={(event) => form.setMac(formatarMacDigitado(event.target.value))}
           onBlur={normalizarMacAoSair}
-          className="field num uppercase"
+          className="field font-mono uppercase"
         />
         {erros.mac ? (
           <p className="field-error">{erros.mac}</p>

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { guardarMacDoMotor } from '../features/motores/helpers/macMotor';
 import { Plus } from 'lucide-react';
 import harrierMark from '../assets/harrier-mark.png';
 import { useMonitoramento } from '../hooks/useMonitoramento';
@@ -38,6 +39,7 @@ export const VisaoGeral: React.FC = () => {
   const agora = useAgora();
   const [filtro, setFiltro] = useState<FiltroMotor>('todos');
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const cadastroAberto = params.get('novo') === 'true';
 
   const linhas = useMemo(
@@ -198,7 +200,16 @@ export const VisaoGeral: React.FC = () => {
       )}
 
       <AnunciadorSeveridade motores={estadosDosMotores} />
-      <ModalCadastro aberto={cadastroAberto} onFechar={fecharCadastro} onCadastrar={cadastrarMotor} />
+      <ModalCadastro
+        aberto={cadastroAberto}
+        onFechar={fecharCadastro}
+        onCadastrar={cadastrarMotor}
+        onConcluido={(motor, dados) => {
+          // O MAC não volta do backend antes do primeiro lote: guarda o informado para o detalhe mostrar.
+          guardarMacDoMotor(motor.id, dados.sensoresIniciais[0]?.macAddress ?? '');
+          navigate(`/motores/${motor.id}`);
+        }}
+      />
     </div>
   );
 };
