@@ -14,6 +14,8 @@ export class ApiRequestError extends Error {
   readonly code?: string;
   readonly traceId?: string;
   readonly fieldErrors: Record<string, string[]>;
+  /** Mensagem do backend (`detail`/`title`), quando houve resposta. */
+  readonly detail?: string;
 
   constructor(message: string, payload: ApiErrorPayload = {}) {
     super(message);
@@ -22,5 +24,16 @@ export class ApiRequestError extends Error {
     this.code = payload.code;
     this.traceId = payload.traceId;
     this.fieldErrors = payload.errors ?? {};
+    this.detail = payload.detail ?? payload.title;
+  }
+
+  /** Sem resposta da API: rede fora, backend parado ou tempo esgotado. */
+  get semResposta(): boolean {
+    return this.status === undefined;
+  }
+
+  /** A API respondeu com erro de servidor (5xx). */
+  get erroDeServidor(): boolean {
+    return this.status !== undefined && this.status >= 500;
   }
 }
