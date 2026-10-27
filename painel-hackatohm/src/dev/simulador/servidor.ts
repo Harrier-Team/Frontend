@@ -47,7 +47,12 @@ const iso = (t: number) => new Date(t).toISOString();
  * lotes e o status agregado como o contrato do backend descreve. O painel o
  * enxerga pelas mesmas costuras de sempre: HTTP (axios) e o hub.
  */
-export function criarServidorSimulado(agora: () => number = Date.now, cadenciaMs: number = CADENCIA_SIMULADA_MS) {
+export function criarServidorSimulado(
+  agora: () => number = Date.now,
+  cadenciaMs: number = CADENCIA_SIMULADA_MS,
+  /** Quantos dos motores semeados manter (do primeiro em diante); útil para demonstrar um único motor. */
+  maximoDeMotores?: number
+) {
   const instalacao = agora();
   let proximoMotor = 1;
   let proximaRegra = 1;
@@ -164,6 +169,9 @@ export function criarServidorSimulado(agora: () => number = Date.now, cadenciaMs
     vincular(sim.motor.id, limiar.id);
     vincular(sim.motor.id, gradiente.id);
     vincular(sim.motor.id, assimetria.id);
+  }
+  if (maximoDeMotores !== undefined) {
+    for (const removido of motores.splice(maximoDeMotores)) vinculos.delete(removido.motor.id);
   }
 
   /* ---------- Lotes e status ---------- */
@@ -299,6 +307,11 @@ export function criarServidorSimulado(agora: () => number = Date.now, cadenciaMs
   function tratar(metodo: string, caminho: string, corpo: unknown): RespostaSimulada {
     const partes = caminho.split('?')[0].split('/').filter(Boolean);
     const m = metodo.toUpperCase();
+
+    // Health checks do ASP.NET: texto puro, como no backend real.
+    if (partes[0] === 'health' && m === 'GET' && (partes[1] === 'live' || partes[1] === 'ready')) {
+      return { status: 200, data: 'Healthy' };
+    }
 
     if (partes[0] === 'motores') {
       if (partes.length === 1) {

@@ -119,3 +119,11 @@ describe('ruído e gradiente', () => {
     for (const t of instantes) expect(t % 3000).toBe(0);
   });
 });
+
+describe('servidor simulado: saúde', () => {
+  it('responde aos health checks como o backend, em texto puro', () => {
+    const servidor = criarServidorSimulado(() => Date.parse('2026-10-26T14:30:00Z'));
+    expect(servidor.tratar('get', '/health/live', undefined)).toEqual({ status: 200, data: 'Healthy' });
+    expect(servidor.tratar('get', '/health/ready', undefined)).toEqual({ status: 200, data: 'Healthy' });
+  });
+});

@@ -21,6 +21,11 @@ export default defineConfig({
         changeOrigin: true,
         ws: true, // Habilita WebSockets para o SignalR
       },
+      // Health checks do backend, usados pela página Sistema.
+      '/health': {
+        target: 'http://127.0.0.1:5281',
+        changeOrigin: true,
+      },
     },
   },
 })
