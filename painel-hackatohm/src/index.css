@@ -17,7 +17,15 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--color-canvas);
+    /* Brilho radial quase imperceptível no canto superior direito: o eclipse da logo. */
+    background:
+      radial-gradient(
+        58rem 34rem at 88% -6%,
+        color-mix(in srgb, var(--color-flare) 6%, transparent),
+        transparent 70%
+      )
+      no-repeat,
+      var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: 15px;
@@ -86,6 +94,26 @@
   .num {
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum' 1;
+  }
+
+  /* Link para pular a navegação: só aparece com o foco do teclado */
+  .skip-link {
+    position: absolute;
+    left: 16px;
+    top: -64px;
+    z-index: 60;
+    padding: 10px 16px;
+    border-radius: var(--radius-control);
+    background: var(--color-flare);
+    color: var(--color-canvas);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: top 0.15s var(--ease-out);
+  }
+  .skip-link:focus-visible {
+    top: 12px;
+    outline-offset: 2px;
   }
 
   /* Sobretítulo: 10 px, caixa alta, espaçamento largo */

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import harrierMark from '../assets/harrier-mark.png';
+import harrierEmblem from '../assets/harrier-emblem.jpg';
 import { useConexaoHub } from '@/features/telemetria/hooks/useTelemetriaStore';
 import { SIMULADOR_ATIVO } from '@/dev/simuladorAtivo';
 
 const linkBase =
-  'relative flex h-14 items-center px-1 text-sm transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-px after:transition-colors';
+  'relative flex h-14 items-center whitespace-nowrap px-1 text-sm transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-px after:transition-colors';
 
 const ConexaoAoVivo: React.FC = () => {
   const statusConexaoHub = useConexaoHub();
@@ -56,7 +56,7 @@ const FaixaHubDesconectado: React.FC = () => {
 
 const BadgeSimulacao: React.FC = () => (
   <span
-    className="rounded-full border border-line-strong px-2.5 py-0.5 text-xs text-ink-2"
+    className="rounded-full border border-line-strong px-2.5 py-0.5 text-xs text-ink-2 max-sm:px-2"
     title="Os dados desta tela são fictícios (VITE_SIMULADOR=true)"
   >
     Simulação
@@ -71,7 +71,15 @@ export const Header: React.FC = () => {
     <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-md">
       <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center gap-5 px-5 sm:gap-8 sm:px-8">
         <Link to="/" className="flex items-center gap-3" aria-label="Harrier, início">
-          <img src={harrierMark} alt="" className="h-8 w-auto" />
+          {/* Recorte da logo em alta resolução; `screen` apaga o fundo escuro e deixa só o aço e a luz. */}
+          <img
+            src={harrierEmblem}
+            alt=""
+            width={46}
+            height={33}
+            className="h-[33px] w-[46px] object-contain"
+            style={{ mixBlendMode: 'screen' }}
+          />
           <span
             className="hidden text-[13px] font-medium uppercase text-ink sm:inline"
             style={{ fontStretch: '125%', letterSpacing: '0.34em' }}
