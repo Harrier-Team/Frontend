@@ -119,7 +119,8 @@ diagnóstico.
 - Edição (`PUT`) envia o objeto completo, **incluindo `tipoRegra`**: omitir o
   tipo faz o backend convertê-la em limiar estático.
 - A assimetria pertence ao motor: o backend repete o mesmo resultado em cada
-  escova, mas a tela mostra uma vez, no escopo do motor.
+  escova, mas a tela mostra uma vez, no escopo do motor. Ela também não entra
+  na severidade de uma escova isolada nem nos marcadores da curva dela.
 
 ### Histórico
 
@@ -130,6 +131,9 @@ diagnóstico.
 
 ### Cadastro
 
+- O backend não devolve o MAC no detalhe do motor; ele chega nos lotes
+  (`espMacAddress`). Antes do primeiro lote, o painel mostra o MAC informado no
+  cadastro, guardado só na aba (`sessionStorage`).
 - Um motor tem **um** ESP (um MAC) que envia todas as escovas em cada lote.
   O formulário pede o MAC uma vez e os números de escova (positivos e únicos).
 - Validar no cliente com as mesmas regras do backend e exibir os erros do
@@ -243,7 +247,9 @@ linha tem rótulo direto no fim ("E2 96,1"), sem depender de legenda.
 | `GateRow` | Regra, escopo (escova ou motor), severidade, `valor ≥ limite` com unidade |
 | `MotorRow` | Linha da visão geral |
 | `BrushCard` | Cartão da escova no detalhe |
-| `Tabs` | Abas acessíveis (setas do teclado) |
+| `Tabs` | Abas acessíveis (setas, Home e End) |
+| `Segmented` | Seleção única em linha (filtros, janela do gráfico), padrão radiogroup com setas |
+| `EscalaLimites` | Prévia normal, aviso e crítico de uma regra, com o valor atual como ponto de luz |
 | `Toast` | Aviso não bloqueante, `aria-live="polite"`, some sozinho em 8 s exceto Crítico |
 | `CopyableCode` | Texto mono com botão de copiar |
 | `ApiErrorState` | Erro de rede ou de servidor com causa provável e "Tentar de novo" |
@@ -253,6 +259,8 @@ Base já existente e mantida: `Button`, `IconButton`, `Dialog`,
 `LoadingState`.
 
 ## Gráfico de tendência
+
+Desenhado em SVG próprio, sem biblioteca de gráficos.
 
 - Eixo Y em °C com margem de 5 °C acima do maior valor ou do limite crítico.
 - Eixo X em horário local `HH:mm:ss`; janelas de 5 min, 15 min e sessão.
@@ -296,7 +304,8 @@ Base já existente e mantida: `Button`, `IconButton`, `Dialog`,
 ## Rotas
 
 - `/` visão geral (`/motores` e `/inicio` redirecionam)
-- `/motores/:id` detalhe do motor, com abas Monitoramento, Regras e Dispositivo
+- `/motores/:id` detalhe do motor, aba Monitoramento (`/motores/:id/regras` e
+  `/motores/:id/dispositivo` abrem as outras abas)
 - `/eventos` eventos da sessão
 - `/regras-qualidade` quality gates
 - `/sistema` saúde do pipeline

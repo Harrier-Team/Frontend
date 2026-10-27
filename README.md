@@ -68,7 +68,10 @@ SignalR necessária no ambiente de produção.
 
 ## Funcionalidades
 
-- Visão geral dos motores ordenada por urgência, com filtro por estado.
+- Visão geral dos motores ordenada por urgência, com filtros por estado (setas
+  do teclado), título que responde "algum motor precisa de ação?", o motivo do
+  motor mais grave, temperaturas por escova, sparkline da sessão, ΔT e idade do
+  último lote.
 - Severidade sempre vinda do backend (`severidade` dos gates e
   `severidadeGeral` do status do motor); o painel não classifica por
   temperatura.
@@ -77,6 +80,12 @@ SignalR necessária no ambiente de produção.
 - Frescor do dado por motor: Ao vivo (menos de 30 s), Atrasado, e Degradado ou
   Offline conforme a `situacao` do backend. Silêncio não é normalidade: o
   último diagnóstico fica visível e marcado como desatualizado.
+- Detalhe do motor com abas Monitoramento, Regras e Dispositivo
+  (`/motores/:id`, `/motores/:id/regras`, `/motores/:id/dispositivo`): cartões
+  por escova, cartão do motor com a assimetria (mostrada uma vez, no escopo do
+  motor), gráfico de tendência da sessão (5 min, 15 min e sessão, limites
+  tracejados da regra do motor, marcadores de alerta, lacunas, crosshair e
+  tabela acessível) e diagnósticos agrupados por regra.
 - Cadastro, detalhamento e exclusão protegida de motores e suas escovas. Cada
   motor tem um único MAC de ESP (`AA:BB:CC:DD:EE:FF`) e escovas com números
   positivos e únicos.
@@ -91,6 +100,12 @@ SignalR necessária no ambiente de produção.
 - Catálogo de regras de Quality Gates com os três tipos do backend: limiar
   estático (°C), gradiente térmico (°C/min) e assimetria entre escovas (°C de
   diferença). A edição envia o objeto completo, incluindo `tipoRegra`.
+- Cadastro de motor com máscara de MAC, mensagens do Problem Details em
+  linguagem de usuário e, ao salvar, abertura do motor com "Aguardando primeiro
+  lote" e o MAC copiável.
+- Quality gates com três cartões de tipo, campos com unidade e faixa, prévia da
+  escala e catálogo agrupado por tipo com a quantidade de motores que usam cada
+  regra.
 - Associação, ativação, desativação e remoção de Quality Gates por motor; o
   status dos motores afetados é recarregado após cada alteração.
 - Exibição de diagnósticos de Quality Gates com valor e limite na unidade do
@@ -99,6 +114,31 @@ SignalR necessária no ambiente de produção.
   motor tem uma regra de limiar estático ativa.
 - Falhas de rede ou de servidor aparecem como erro com opção de tentar de novo,
   nunca como lista vazia ou "motor não encontrado".
+
+## Simulador de telemetria (somente desenvolvimento)
+
+Para ver as telas sem o backend, inicie o Vite com a variável
+`VITE_SIMULADOR=true`:
+
+```powershell
+cd painel-hackatohm
+$env:VITE_SIMULADOR = "true"; npm run dev
+```
+
+```bash
+VITE_SIMULADOR=true npm run dev
+```
+
+O simulador troca o transporte HTTP do axios e a fonte de eventos do store, sem
+tocar nos componentes. Ele cria seis motores fictícios (aquecimento com subida
+de gradiente e assimetria, crítico estável, normal, um que silencia 90 s depois
+de abrir o painel, um que nunca envia lote e um sem regras), três regras e
+lotes a cada ~3 s, com um histórico recente para o gráfico ter curva. Motores
+cadastrados na tela começam a enviar lotes após ~9 s. Enquanto ativo, o
+cabeçalho mostra o selo "Simulação".
+
+A condição é `import.meta.env.DEV && VITE_SIMULADOR === "true"`: o código do
+simulador (`src/dev/`) não entra no build de produção.
 
 ## Contratos de API utilizados
 
