@@ -10,7 +10,7 @@ import { rotuloDaTroca } from '@/features/tema/temaHelper';
 import { IconButton } from './ui/Button';
 
 const linkBase =
-  'relative flex h-14 items-center whitespace-nowrap px-1 text-sm transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-px after:transition-colors';
+  'relative flex h-14 items-center whitespace-nowrap px-0.5 text-[13px] sm:px-1 sm:text-sm focus-visible:outline-offset-[-2px] transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-px after:transition-colors';
 
 const ConexaoAoVivo: React.FC = () => {
   const statusConexaoHub = useConexaoHub();
@@ -61,7 +61,7 @@ const FaixaHubDesconectado: React.FC = () => {
 
 const BadgeSimulacao: React.FC = () => (
   <span
-    className="rounded-full border border-line-strong px-2.5 py-0.5 text-xs text-ink-2 max-sm:px-2"
+    className="hidden rounded-full border border-line-strong px-2.5 py-0.5 text-xs text-ink-2 sm:inline-block"
     title="Os dados desta tela são fictícios (VITE_SIMULADOR=true)"
   >
     Simulação
@@ -103,14 +103,14 @@ export const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-md">
       <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center gap-3 px-5 sm:gap-8 sm:px-8">
-        <Link to="/" className="flex items-center gap-3" aria-label="Harrier, início">
+        <Link to="/" className="flex shrink-0 items-center gap-3" aria-label="Harrier, início">
           {/* Recorte da logo em alta resolução; `screen` apaga o fundo escuro e deixa só o aço e a luz. */}
           <img
             src={harrierEmblem}
             alt=""
             width={46}
             height={33}
-            className="harrier-emblema h-[33px] w-[46px] object-contain"
+            className="harrier-emblema h-[23px] w-[32px] object-contain sm:h-[33px] sm:w-[46px]"
           />
           <span
             className="hidden text-[13px] font-medium uppercase text-ink sm:inline"
@@ -120,7 +120,7 @@ export const Header: React.FC = () => {
           </span>
         </Link>
 
-        <nav aria-label="Principal" className="flex items-center gap-3 sm:gap-5">
+        <nav aria-label="Principal" className="flex min-w-0 items-center gap-2 overflow-x-auto sm:gap-5 [scrollbar-width:none]">
           <Link
             to="/"
             aria-current={emMotores ? 'page' : undefined}
@@ -141,7 +141,7 @@ export const Header: React.FC = () => {
           </NavLink>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2 sm:gap-4">
+        <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-4">
           {SIMULADOR_ATIVO && <BadgeSimulacao />}
           <ConexaoAoVivo />
           <TrocaDeTema />

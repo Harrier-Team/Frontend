@@ -187,6 +187,12 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora, 
     } else if (event.key === 'ArrowRight') {
       event.preventDefault();
       setCursor((atual) => (atual === null ? lotes.length - 1 : Math.min(atual + 1, lotes.length - 1)));
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      setCursor(0);
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      setCursor(lotes.length - 1);
     } else if (event.key === 'Escape') {
       setCursor(null);
     }

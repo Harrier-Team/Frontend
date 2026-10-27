@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { tituloDaPagina } from '@/app/titulos';
 import { useToast } from '@/components/ui/toastContext';
 import { useMonitoramento } from '@/hooks/useMonitoramento';
 import { useAgora } from '@/features/telemetria/hooks/useAgora';
@@ -27,6 +28,7 @@ export const MonitorOperacional: React.FC = () => {
   const { mostrar } = useToast();
   const navigate = useNavigate();
   const naoVistos = useCriticosNaoVistos();
+  const { pathname } = useLocation();
 
   // O ouvinte vive o tempo do painel; lê nomes e navegação pela referência mais nova.
   const nomes = useRef(new Map<number, string>());
@@ -59,8 +61,8 @@ export const MonitorOperacional: React.FC = () => {
   );
 
   useEffect(() => {
-    document.title = formatarTituloAba(naoVistos);
-  }, [naoVistos]);
+    document.title = formatarTituloAba(naoVistos, tituloDaPagina(pathname));
+  }, [naoVistos, pathname]);
 
   const estados = useMemo(
     () =>

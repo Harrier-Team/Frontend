@@ -13,13 +13,40 @@ export const Menu: React.FC<{ label: string; items: MenuItem[] }> = ({ label, it
   const [open, setOpen] = useState(false);
   const raiz = useRef<HTMLDivElement>(null);
 
+  const botaoDoMenu = () => raiz.current?.querySelector<HTMLElement>('[aria-haspopup="menu"]') ?? null;
+  const itensDoMenu = () => Array.from(raiz.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+  const fechar = (devolverFoco: boolean) => {
+    setOpen(false);
+    // O item some ao fechar: sem devolver o foco ao botão, ele cairia no <body>.
+    if (devolverFoco) botaoDoMenu()?.focus();
+  };
+
   useEffect(() => {
     if (!open) return;
+    itensDoMenu()[0]?.focus();
     const fora = (event: MouseEvent) => {
       if (!raiz.current?.contains(event.target as Node)) setOpen(false);
     };
     const tecla = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        setOpen(false);
+        botaoDoMenu()?.focus();
+        return;
+      }
+      if (event.key === 'Tab') {
+        setOpen(false);
+        return;
+      }
+      const itens = itensDoMenu();
+      const atual = itens.indexOf(document.activeElement as HTMLElement);
+      let alvo: number | null = null;
+      if (event.key === 'ArrowDown') alvo = (atual + 1) % itens.length;
+      else if (event.key === 'ArrowUp') alvo = (atual - 1 + itens.length) % itens.length;
+      else if (event.key === 'Home') alvo = 0;
+      else if (event.key === 'End') alvo = itens.length - 1;
+      if (alvo === null) return;
+      event.preventDefault();
+      itens[alvo]?.focus();
     };
     document.addEventListener('mousedown', fora);
     document.addEventListener('keydown', tecla);
@@ -45,7 +72,7 @@ export const Menu: React.FC<{ label: string; items: MenuItem[] }> = ({ label, it
               type="button"
               role="menuitem"
               onClick={() => {
-                setOpen(false);
+                fechar(true);
                 item.onSelect();
               }}
               className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-line ${

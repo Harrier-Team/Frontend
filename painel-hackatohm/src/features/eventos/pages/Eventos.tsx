@@ -95,11 +95,17 @@ export const Eventos: React.FC = () => {
             </caption>
             <thead>
               <tr className="border-b border-line">
-                {['Hora', 'Motor', 'Escova', 'Transição'].map((titulo) => (
-                  <th key={titulo} scope="col" className="eyebrow px-4 py-3 font-medium sm:px-5">
+                <th scope="col" className="eyebrow px-4 py-3 font-medium sm:px-5">
+                  Hora
+                </th>
+                {['Motor', 'Escova'].map((titulo) => (
+                  <th key={titulo} scope="col" className="eyebrow hidden px-4 py-3 font-medium sm:px-5 md:table-cell">
                     {titulo}
                   </th>
                 ))}
+                <th scope="col" className="eyebrow px-4 py-3 font-medium sm:px-5">
+                  Transição
+                </th>
                 {['Regra', 'Valor', 'Limite'].map((titulo) => (
                   <th key={titulo} scope="col" className="eyebrow hidden px-4 py-3 font-medium md:table-cell">
                     {titulo}
@@ -127,16 +133,26 @@ export const Eventos: React.FC = () => {
                       )}
                       {formatarHora(new Date(evento.em).toISOString())}
                     </td>
-                    <td className="px-4 py-3 align-top sm:px-5">
+                    <td className="hidden px-4 py-3 align-top sm:px-5 md:table-cell">
                       <Link to={`/motores/${evento.motorId}`} className="rounded-sm text-ink underline-offset-2 hover:underline">
                         {nomeDe(evento.motorId)}
                       </Link>
                     </td>
-                    <td className="num px-4 py-3 align-top text-ink-2 sm:px-5">
+                    <td className="num hidden px-4 py-3 align-top text-ink-2 sm:px-5 md:table-cell">
                       {evento.numeroEscova ?? '—'}
                       <span className="sr-only">{evento.numeroEscova === null ? ' (motor inteiro)' : ''}</span>
                     </td>
                     <td className="px-4 py-3 align-top sm:px-5">
+                      {/* Sem as colunas de motor e escova (telas estreitas), a identificação vem aqui. */}
+                      <Link
+                        to={`/motores/${evento.motorId}`}
+                        className="mb-1 block rounded-sm text-ink underline-offset-2 hover:underline md:hidden"
+                      >
+                        {nomeDe(evento.motorId)}
+                        {evento.numeroEscova !== null && (
+                          <span className="text-ink-3"> · escova {evento.numeroEscova}</span>
+                        )}
+                      </Link>
                       <span className="sr-only">{descreverTransicao(evento)}</span>
                       <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5" aria-hidden="true">
                         <Ponta evento={evento} valor={evento.de} />

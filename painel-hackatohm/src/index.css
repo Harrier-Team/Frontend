@@ -152,9 +152,9 @@
     border-color: var(--color-ink-3);
   }
   .field:focus-visible {
-    outline: none;
+    outline: 2px solid var(--color-flare);
+    outline-offset: 1px;
     border-color: var(--color-ink-2);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-flare) 16%, transparent);
   }
   .field[aria-invalid='true'] {
     border-color: var(--color-sev-critico);
