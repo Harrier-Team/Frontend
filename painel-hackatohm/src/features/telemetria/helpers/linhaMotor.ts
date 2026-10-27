@@ -25,7 +25,7 @@ export const ROTULO_FILTRO: Record<FiltroMotor, string> = {
 };
 
 /** Ordem de exibição dos filtros (após "Todos"). */
-export const ORDEM_FILTROS: FiltroMotor[] = [
+export const ORDEM_FILTROS: Array<Exclude<FiltroMotor, 'todos'>> = [
   'Critico',
   'AlertaPreditivo',
   'Atencao',
