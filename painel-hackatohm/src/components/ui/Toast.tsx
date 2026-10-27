@@ -53,8 +53,9 @@ const ItemToast: React.FC<{ item: ToastItem; onFechar: (id: number) => void }> =
 };
 
 /**
- * Infraestrutura de avisos não bloqueantes. A região é `aria-live="polite"`;
- * avisos críticos usam `role="alert"` no próprio item para interromper uma vez.
+ * Infraestrutura de avisos não bloqueantes. Avisos comuns entram numa região
+ * `aria-live="polite"`. O aviso crítico fica numa região sem `aria-live`: quem
+ * anuncia a transição, uma única vez e em `assertive`, é o `AnunciadorSeveridade`.
  */
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [itens, setItens] = useState<ToastItem[]>([]);
@@ -68,19 +69,23 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const api = useMemo<ToastApi>(() => ({ mostrar, fechar }), [mostrar, fechar]);
+  const criticos = itens.filter((item) => item.tom === 'critico');
+  const comuns = itens.filter((item) => item.tom !== 'critico');
 
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div
-        aria-live="polite"
-        className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex flex-col gap-2 sm:inset-x-auto sm:right-6 sm:w-96"
-      >
-        {itens.map((item) => (
-          <div key={item.id} role={item.tom === 'critico' ? 'alert' : undefined}>
-            <ItemToast item={item} onFechar={fechar} />
-          </div>
-        ))}
+      <div className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex flex-col gap-2 sm:inset-x-auto sm:right-6 sm:w-96">
+        <div aria-live="polite" className="flex flex-col gap-2">
+          {comuns.map((item) => (
+            <ItemToast key={item.id} item={item} onFechar={fechar} />
+          ))}
+        </div>
+        <div role="region" aria-label="Avisos críticos" className="flex flex-col gap-2">
+          {criticos.map((item) => (
+            <ItemToast key={item.id} item={item} onFechar={fechar} />
+          ))}
+        </div>
       </div>
     </ToastContext.Provider>
   );

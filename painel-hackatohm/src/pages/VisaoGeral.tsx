@@ -17,22 +17,15 @@ import { useTelemetriaMotores } from '../features/telemetria/hooks/useTelemetria
 import { useAgora } from '../features/telemetria/hooks/useAgora';
 import { telemetriaStore } from '../features/telemetria/store/telemetriaStore';
 import { resumirMotor } from '../features/telemetria/helpers/resumoMotor';
-import {
-  compararPorUrgencia,
-  ehSeveridadeAnormal,
-  EstadoPrincipal,
-} from '../features/telemetria/helpers/estadoHelper';
+import { compararPorUrgencia, EstadoPrincipal } from '../features/telemetria/helpers/estadoHelper';
 import {
   contarPorFiltro,
-  descreverMotivo,
   filtroDoEstado,
   FiltroMotor,
-  motivoDoMotor,
   ORDEM_FILTROS,
   ROTULO_FILTRO,
 } from '../features/telemetria/helpers/linhaMotor';
-import { formatarGrau, formatarRelativo } from '../features/telemetria/helpers/statusHelper';
-import { AnunciadorSeveridade } from '../features/telemetria/components/AnunciadorSeveridade';
+import { subtituloDaFrota, tituloDaFrota } from '../features/telemetria/helpers/frota';
 import { SeveritySymbol } from '../features/telemetria/components/SeveritySymbol';
 
 function plural(n: number, singular: string, pluralForm: string) {
@@ -89,11 +82,6 @@ export const VisaoGeral: React.FC = () => {
 
   const contagem = useMemo(() => contarPorFiltro(linhas.map((l) => l.resumo.principal)), [linhas]);
   const total = linhas.length;
-  const estadosDosMotores = useMemo(
-    () => linhas.map((l) => ({ id: l.motor.id, nome: l.motor.nome, principal: l.resumo.principal })),
-    [linhas]
-  );
-
   // O filtro escolhido vale mesmo com zero motores no estado: a lista vazia explica e oferece limpar.
   const visiveis = linhas.filter(
     (linha) =>
@@ -113,51 +101,8 @@ export const VisaoGeral: React.FC = () => {
     void telemetriaStore.recarregarTodos();
   };
 
-  const titulo = (() => {
-    if (total === 0) return erro ? 'Motores indisponíveis' : 'Nenhum motor cadastrado';
-    if (contagem.Critico > 0) return plural(contagem.Critico, 'motor crítico', 'motores críticos');
-    if (contagem.AlertaPreditivo > 0)
-      return plural(contagem.AlertaPreditivo, 'motor com alerta preditivo', 'motores com alerta preditivo');
-    if (contagem.Atencao > 0) return plural(contagem.Atencao, 'motor pede atenção', 'motores pedem atenção');
-    if (contagem['sem-dados'] === total && linhas.every((l) => l.resumo.dado === 'sem-leitura'))
-      return 'Aguardando o primeiro lote';
-    if (contagem['sem-dados'] > 0)
-      return plural(contagem['sem-dados'], 'motor sem dados recentes', 'motores sem dados recentes');
-    if (contagem.Normal === total) return 'Todos os motores normais';
-    return 'Nenhum alerta ativo';
-  })();
-
-  // Linha de apoio: o motivo do motor mais grave (o quê, onde, quanto) ou a maior leitura.
-  const subtitulo = useMemo(() => {
-    const mais = linhas[0];
-    if (!mais) return null;
-    if (ehSeveridadeAnormal(mais.resumo.severidade)) {
-      const motivo = motivoDoMotor(mais.telemetria, mais.resumo.motivo);
-      if (motivo) {
-        return `${descreverMotivo(motivo, mais.motor.nome)} · ${formatarRelativo(mais.resumo.ultimoLoteEm, agora)}`;
-      }
-    }
-    let quente: { motor: string; escova: number; valor: number; dataHora: string } | null = null;
-    for (const linha of linhas) {
-      for (const [numero, serie] of Object.entries(linha.telemetria?.escovas ?? {})) {
-        const ultima = serie.ultima;
-        if (ultima && (!quente || ultima.valorCelsius > quente.valor)) {
-          quente = {
-            motor: linha.motor.nome,
-            escova: Number(numero),
-            valor: ultima.valorCelsius,
-            dataHora: ultima.dataHora,
-          };
-        }
-      }
-    }
-    return quente
-      ? `Maior leitura: ${formatarGrau(quente.valor)} °C, escova ${quente.escova} de ${quente.motor}, ${formatarRelativo(
-          quente.dataHora,
-          agora
-        )}.`
-      : null;
-  }, [linhas, agora]);
+  const titulo = tituloDaFrota(linhas, erro);
+  const subtitulo = useMemo(() => subtituloDaFrota(linhas, agora), [linhas, agora]);
 
   const abrirCadastro = () => setParams({ novo: 'true' });
   const fecharCadastro = () => setParams({}, { replace: true });
@@ -353,7 +298,6 @@ export const VisaoGeral: React.FC = () => {
         </section>
       )}
 
-      <AnunciadorSeveridade motores={estadosDosMotores} />
       <ModalCadastro
         aberto={cadastroAberto}
         onFechar={fecharCadastro}
