@@ -7,15 +7,16 @@ import { PontoEscova } from '../store/tipos';
 import { formatarGrau } from '../helpers/statusHelper';
 import {
   afastarRotulos,
-  afinarMarcadores,
   cadenciaMediana,
   caminhoLinha,
   calcularEscalaY,
   calcularTicksX,
   dividirEmSegmentos,
+  dividirPorSeveridade,
   JANELAS,
   JanelaGrafico,
   loteProximo,
+  marcadoresDeTransicao,
   montarLotes,
   recortarJanela,
   reduzirPontos,
@@ -147,7 +148,11 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora }
       reduzirPontos(seg, Math.max(Math.floor(areaL), 40))
     );
     const ultimo = serie.pontos[serie.pontos.length - 1];
-    return { ...serie, ...estiloSerie(indice), segmentos, ultimo };
+    // Transições calculadas sobre toda a série: recortar a janela não cria marcador novo.
+    const marcadores = marcadoresDeTransicao(series[indice].pontos).filter(
+      (ponto) => ponto.t >= inicio && ponto.t <= fim
+    );
+    return { ...serie, ...estiloSerie(indice), segmentos, ultimo, marcadores };
   });
 
   const posicoesRotulo = afastarRotulos(
@@ -319,25 +324,31 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora }
                   ) : null
                 )}
 
-              {/* Linhas por escova */}
+              {/* Linhas por escova: o trecho em alerta usa a cor da severidade */}
               {tracos.map((traco) =>
-                traco.segmentos.map((segmento, i) => (
-                  <path
-                    key={`${traco.numeroEscova}-${i}`}
-                    d={caminhoLinha(segmento.map((p) => ({ x: x(p.t), y: y(p.v) })))}
-                    fill="none"
-                    stroke={traco.cor}
-                    strokeWidth={1.5}
-                    strokeDasharray={traco.tracejado}
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                ))
+                traco.segmentos.flatMap((segmento, i) =>
+                  dividirPorSeveridade(segmento).map((trecho, j) => (
+                    <path
+                      key={`${traco.numeroEscova}-${i}-${j}`}
+                      d={caminhoLinha(trecho.pontos.map((p) => ({ x: x(p.t), y: y(p.v) })))}
+                      fill="none"
+                      stroke={
+                        trecho.severidade
+                          ? COR_SEVERIDADE[trecho.severidade as Exclude<NivelSeveridade, 'Normal'>]
+                          : traco.cor
+                      }
+                      strokeWidth={1.5}
+                      strokeDasharray={traco.tracejado}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                    />
+                  ))
+                )
               )}
 
-              {/* Marcadores dos pontos que dispararam alerta */}
+              {/* Marcador só na transição: primeiro ponto em severidade anormal ou mais grave */}
               {tracos.map((traco) =>
-                afinarMarcadores(traco.pontos, x, 16).map((ponto: PontoEscova) => {
+                traco.marcadores.map((ponto: PontoEscova) => {
                   const severidade = ponto.severidade as Exclude<NivelSeveridade, 'Normal'>;
                   const Icone = ICONE_SEVERIDADE[severidade];
                   return (

@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { PontoEscova } from '@/features/telemetria/store/tipos';
 import {
   afastarRotulos,
-  afinarMarcadores,
   cadenciaMediana,
   calcularEscalaY,
   calcularTicksX,
   dividirEmSegmentos,
+  dividirPorSeveridade,
   loteProximo,
+  marcadoresDeTransicao,
   montarLotes,
   pontosSparkline,
   recortarJanela,
@@ -139,19 +140,39 @@ describe('montarLotes e loteProximo', () => {
   });
 });
 
-describe('afinarMarcadores', () => {
-  it('mantém trocas de severidade e espaça os demais', () => {
+describe('marcadoresDeTransicao', () => {
+  it('marca só a entrada em severidade anormal ou mais grave', () => {
     const pontos = [
-      p(0, 80, 'AlertaPreditivo'),
-      p(1, 81, 'AlertaPreditivo'),
-      p(2, 82, 'AlertaPreditivo'),
+      p(0, 70, 'Normal'),
+      p(1, 80, 'AlertaPreditivo'),
+      p(2, 81, 'AlertaPreditivo'),
       p(3, 96, 'Critico'),
       p(4, 97, 'Critico'),
-      p(5, 50, 'Normal'),
+      p(5, 90, 'AlertaPreditivo'),
+      p(6, 50, 'Normal'),
+      p(7, 82, 'AlertaPreditivo'),
     ];
-    const marcadores = afinarMarcadores(pontos, (t) => t / 1000, 2);
-    expect(marcadores.map((m) => m.t / 1000)).toEqual([0, 2, 3]);
-    expect(marcadores.some((m) => m.severidade === 'Normal')).toBe(false);
+    expect(marcadoresDeTransicao(pontos).map((m) => m.t / 1000)).toEqual([1, 3, 7]);
+  });
+
+  it('série que já começa em alerta marca o primeiro ponto e ignora Normal e sem severidade', () => {
+    expect(marcadoresDeTransicao([p(0, 90, 'Critico'), p(1, 91, 'Critico')]).map((m) => m.t)).toEqual([0]);
+    expect(marcadoresDeTransicao([p(0, 50, null), p(1, 51, 'Normal')])).toEqual([]);
+  });
+});
+
+describe('dividirPorSeveridade', () => {
+  it('colore o trecho que chega ao ponto anormal e mantém a linha contínua', () => {
+    const pontos = [p(0, 70), p(1, 80, 'AlertaPreditivo'), p(2, 81, 'AlertaPreditivo'), p(3, 60), p(4, 61)];
+    const trechos = dividirPorSeveridade(pontos);
+    expect(trechos.map((t) => t.severidade)).toEqual(['AlertaPreditivo', null]);
+    expect(trechos.map((t) => t.pontos.length)).toEqual([3, 3]);
+    expect(trechos[0].pontos[2]).toBe(trechos[1].pontos[0]);
+  });
+
+  it('um ponto só vira um trecho neutro', () => {
+    expect(dividirPorSeveridade([p(0, 70)])).toHaveLength(1);
+    expect(dividirPorSeveridade([])).toEqual([]);
   });
 });
 

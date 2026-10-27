@@ -1,5 +1,5 @@
 import { PontoEscova } from '@/features/telemetria/store/tipos';
-import { ehSeveridadeAnormal } from './estadoHelper';
+import { ehSeveridadeAnormal, RANK_SEVERIDADE } from './estadoHelper';
 
 /** Cadência de referência do ESP (~10 s). */
 export const CADENCIA_REFERENCIA_MS = 10_000;
@@ -189,27 +189,46 @@ export function loteProximo(lotes: Lote[], t: number): number {
 }
 
 /**
- * Diminui a densidade de marcadores de alerta: mantém o primeiro, toda troca de
- * severidade e pontos com pelo menos `distanciaMinima` px do último marcador.
+ * Pontos de transição para o marcador do gráfico: o primeiro ponto em que a
+ * escova entra numa severidade anormal ou mais grave que a do ponto anterior.
+ * Pontos que permanecem no mesmo estado (ou melhoram) não geram marcador.
  */
-export function afinarMarcadores(
-  pontos: PontoEscova[],
-  posicaoX: (t: number) => number,
-  distanciaMinima: number
-): PontoEscova[] {
+export function marcadoresDeTransicao(pontos: PontoEscova[]): PontoEscova[] {
   const resultado: PontoEscova[] = [];
-  let ultimoX = -Infinity;
-  let ultimaSeveridade: PontoEscova['severidade'] = null;
+  let anterior = 0;
   for (const ponto of pontos) {
-    if (!ehSeveridadeAnormal(ponto.severidade)) continue;
-    const x = posicaoX(ponto.t);
-    if (ponto.severidade !== ultimaSeveridade || x - ultimoX >= distanciaMinima) {
-      resultado.push(ponto);
-      ultimoX = x;
-      ultimaSeveridade = ponto.severidade;
-    }
+    const rank = ehSeveridadeAnormal(ponto.severidade) ? RANK_SEVERIDADE[ponto.severidade!] : 0;
+    if (rank > anterior) resultado.push(ponto);
+    anterior = rank;
   }
   return resultado;
+}
+
+export interface TrechoSeveridade {
+  /** null = trecho na cor da série. */
+  severidade: PontoEscova['severidade'];
+  pontos: PontoEscova[];
+}
+
+/**
+ * Divide uma linha contínua em trechos pela severidade: o trecho que chega a
+ * um ponto anormal usa a cor dessa severidade; trechos vizinhos compartilham o
+ * ponto de junção, então a linha não tem buracos.
+ */
+export function dividirPorSeveridade(pontos: PontoEscova[]): TrechoSeveridade[] {
+  const trechos: TrechoSeveridade[] = [];
+  for (let i = 1; i < pontos.length; i += 1) {
+    const destino = pontos[i];
+    const severidade = ehSeveridadeAnormal(destino.severidade) ? destino.severidade : null;
+    const ultimo = trechos[trechos.length - 1];
+    if (ultimo && ultimo.severidade === severidade) {
+      ultimo.pontos.push(destino);
+    } else {
+      trechos.push({ severidade, pontos: [pontos[i - 1], destino] });
+    }
+  }
+  if (trechos.length === 0 && pontos.length === 1) trechos.push({ severidade: null, pontos });
+  return trechos;
 }
 
 /** Caminho SVG de uma linha; `pontos` já em coordenadas de tela. */
