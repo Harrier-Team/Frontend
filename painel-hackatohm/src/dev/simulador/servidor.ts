@@ -47,7 +47,7 @@ const iso = (t: number) => new Date(t).toISOString();
  * lotes e o status agregado como o contrato do backend descreve. O painel o
  * enxerga pelas mesmas costuras de sempre: HTTP (axios) e o hub.
  */
-export function criarServidorSimulado(agora: () => number = Date.now) {
+export function criarServidorSimulado(agora: () => number = Date.now, cadenciaMs: number = CADENCIA_SIMULADA_MS) {
   const instalacao = agora();
   let proximoMotor = 1;
   let proximaRegra = 1;
@@ -55,6 +55,7 @@ export function criarServidorSimulado(agora: () => number = Date.now) {
   const regras: RegraQualidade[] = [];
   const vinculos = new Map<number, Map<string, { ativo: boolean; vinculadoEm: string }>>();
 
+  const instanteDoLote = (t: number) => Math.floor(t / cadenciaMs) * cadenciaMs;
   const segundos = (t: number) => (t - instalacao) / 1000 + HISTORICO_INICIAL_S;
 
   function criarRegra(entrada: RegraQualidadeRequest): RegraQualidade {
@@ -226,10 +227,12 @@ export function criarServidorSimulado(agora: () => number = Date.now) {
 
   /** Lotes do passado recente, em ordem, para o painel ter curva ao abrir. */
   function calcularHistorico(sim: MotorSimulado): LoteGerado[] {
-    const fim = agora();
+    // Instantes alinhados à cadência: o intervalo entre lotes é sempre múltiplo dela,
+    // inclusive na passagem do histórico para os lotes ao vivo (sem dt minúsculo no gradiente).
+    const fim = instanteDoLote(agora());
     const lotes: LoteGerado[] = [];
     let anterior = new Map<number, AmostraSimulada>();
-    for (let t = fim - HISTORICO_INICIAL_S * 1000; t < fim; t += CADENCIA_SIMULADA_MS) {
+    for (let t = fim - HISTORICO_INICIAL_S * 1000; t <= fim; t += cadenciaMs) {
       if (!envia(sim, t)) continue;
       const lote = produzirLote(sim, t, anterior);
       anterior = new Map(lote.leituras.map((l) => [l.numeroEscova, { numeroEscova: l.numeroEscova, valor: l.valorCelsius, t }]));
@@ -244,10 +247,12 @@ export function criarServidorSimulado(agora: () => number = Date.now) {
 
   /** Um lote novo para cada motor que está enviando agora. */
   function tick(): LoteGerado[] {
-    const t = agora();
+    const t = instanteDoLote(agora());
     const gerados: LoteGerado[] = [];
     for (const sim of motores) {
       if (!envia(sim, t)) continue;
+      // Mesmo instante de grade (jitter do timer): não duplica o lote.
+      if (sim.ultimo && sim.ultimo.some((a) => a.t >= t)) continue;
       const anterior = new Map((sim.ultimo ?? []).map((a) => [a.numeroEscova, a]));
       const lote = produzirLote(sim, t, anterior);
       registrar(

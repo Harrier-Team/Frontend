@@ -11,8 +11,12 @@ export const CICLO_AQUECIMENTO_S = 840;
 const SUBIDA_S = 480;
 const PLATO_S = 120;
 
+/**
+ * Ruído suave (duas senoides lentas): a inclinação máxima fica abaixo de
+ * 1 °C/min, então escovas normais nunca disparam o gradiente por ruído.
+ */
 function ruido(s: number, escova: number): number {
-  return 0.25 * Math.sin(s / 17 + escova * 1.7) + 0.12 * Math.sin(s / 9 + escova * 0.6);
+  return 0.2 * Math.sin(s / 23 + escova * 1.7) + 0.08 * Math.sin(s / 11 + escova * 0.6);
 }
 
 /** Fração (0 a 1) do aquecimento no instante `s`: sobe, mantém e esfria. */
@@ -51,7 +55,7 @@ export function temperaturaSimulada(perfil: PerfilTermico, numeroEscova: number,
 export const SILENCIO_APOS_S = 90;
 /** Atraso para um motor recém-cadastrado começar a enviar lotes. */
 export const PRIMEIRO_LOTE_APOS_S = 9;
-/** Cadência dos lotes simulados. */
+/** Cadência padrão dos lotes simulados (mais rápida que a real, de ~10 s, para a demonstração). */
 export const CADENCIA_SIMULADA_MS = 3000;
 /** Quanto de histórico é gerado ao abrir o painel. */
 export const HISTORICO_INICIAL_S = 180;

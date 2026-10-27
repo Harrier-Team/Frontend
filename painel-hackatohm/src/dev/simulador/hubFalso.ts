@@ -9,7 +9,7 @@ import type { LoteGerado, ServidorSimulado } from './servidor';
  * (`ReceberLoteTelemetria` e `ReceberStatusMotor`) a cada ~3 s, mais o
  * histórico recente de cada motor logo depois que o store o conhece.
  */
-export function criarHubFalso(servidor: ServidorSimulado) {
+export function criarHubFalso(servidor: ServidorSimulado, cadenciaMs: number = CADENCIA_SIMULADA_MS) {
   const lotes = new Set<(leituras: LeituraEscova[]) => void>();
   const status = new Set<(s: MotorStatusDto) => void>();
   const conexao = new Set<(s: StatusConexaoHub) => void>();
@@ -34,7 +34,7 @@ export function criarHubFalso(servidor: ServidorSimulado) {
     iniciar() {
       if (timer) return;
       setTimeout(() => mudarConexao('conectado'), 150);
-      timer = setInterval(() => servidor.tick().forEach(entregar), CADENCIA_SIMULADA_MS);
+      timer = setInterval(() => servidor.tick().forEach(entregar), cadenciaMs);
     },
     onLoteTelemetria(cb) {
       lotes.add(cb);

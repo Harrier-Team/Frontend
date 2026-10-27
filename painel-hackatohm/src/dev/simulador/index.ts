@@ -9,8 +9,11 @@ import { criarServidorSimulado } from './servidor';
  * store. Nenhum componente sabe que está em simulação.
  */
 export function instalarSimulador(): void {
-  const servidor = criarServidorSimulado();
-  const hub = criarHubFalso(servidor);
+  // VITE_SIMULADOR_CADENCIA_S muda o intervalo entre lotes (padrão 3 s; o ESP real envia a cada ~10 s).
+  const segundos = Number(import.meta.env.VITE_SIMULADOR_CADENCIA_S);
+  const cadenciaMs = Number.isFinite(segundos) && segundos >= 1 ? Math.round(segundos * 1000) : undefined;
+  const servidor = criarServidorSimulado(Date.now, cadenciaMs);
+  const hub = criarHubFalso(servidor, cadenciaMs);
   api.defaults.adapter = criarAdaptador(servidor, hub);
   definirHubTelemetria(hub);
 }

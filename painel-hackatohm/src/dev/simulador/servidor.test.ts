@@ -76,3 +76,46 @@ describe('servidor simulado', () => {
     expect([...instantes].sort((a, b) => a - b)).toEqual(instantes);
   });
 });
+
+describe('ruído e gradiente', () => {
+  it('escovas normais nunca disparam o gradiente; só a escova que aquece', () => {
+    let agora = Date.parse('2026-10-26T14:30:01.037Z');
+    const servidor = criarServidorSimulado(() => agora);
+    const gradientesPorMotor = new Map<string, number>();
+    const registrar = (motorId: number, leituras: Array<{ numeroEscova: number; resultadosQualityGates: Array<{ tipoRegra: string; disparouAlerta: boolean }> }>) => {
+      for (const leitura of leituras) {
+        const disparou = leitura.resultadosQualityGates.some(
+          (g) => g.tipoRegra === 'temperatura.gradiente_termico' && g.disparouAlerta
+        );
+        if (disparou) {
+          const chave = `${motorId}-${leitura.numeroEscova}`;
+          gradientesPorMotor.set(chave, (gradientesPorMotor.get(chave) ?? 0) + 1);
+        }
+      }
+    };
+    for (const motorId of [1, 2, 3]) {
+      for (const lote of servidor.historico(motorId)) registrar(motorId, lote.leituras);
+    }
+    // 20 min com jitter de timer; inclui a emenda entre o histórico e os lotes ao vivo.
+    for (let i = 0; i < 400; i += 1) {
+      agora += 3000 + ((i * 37) % 90) - 45;
+      for (const lote of servidor.tick()) registrar(lote.status.motorId, lote.leituras);
+    }
+    const chaves = [...gradientesPorMotor.keys()];
+    expect(chaves.filter((c) => c.startsWith('2-') || c.startsWith('3-'))).toEqual([]);
+    expect(chaves.filter((c) => c === '1-1' || c === '1-3')).toEqual([]);
+  });
+
+  it('os lotes seguem a grade da cadência e não se repetem', () => {
+    let agora = Date.parse('2026-10-26T14:30:00.400Z');
+    const servidor = criarServidorSimulado(() => agora);
+    const instantes: number[] = [];
+    for (let i = 0; i < 6; i += 1) {
+      agora += 2900;
+      const lote = servidor.tick().find((l) => l.status.motorId === 2);
+      if (lote) instantes.push(Date.parse(lote.leituras[0].dataHora));
+    }
+    expect(new Set(instantes).size).toBe(instantes.length);
+    for (const t of instantes) expect(t % 3000).toBe(0);
+  });
+});
