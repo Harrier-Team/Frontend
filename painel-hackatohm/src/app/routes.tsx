@@ -1,12 +1,20 @@
+import { lazy } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { MonitoramentoProvider } from '../hooks/MonitoramentoProvider';
-import { DetalhesMotor } from '../features/motores/pages/DetalhesMotor';
 import { ToastProvider } from '../components/ui/Toast';
-import { VisaoGeral } from '../pages/VisaoGeral';
-import { RegrasQualidade } from '../features/quality-gates/pages/RegrasQualidade';
-import { Eventos } from '../features/eventos/pages/Eventos';
-import { Sistema } from '../features/sistema/pages/Sistema';
+
+// Cada tela vira um pedaço próprio do pacote, carregado quando a rota abre.
+// Os componentes são exportados nomeados, por isso o `.then` escolhe o export.
+const VisaoGeral = lazy(() => import('../pages/VisaoGeral').then((m) => ({ default: m.VisaoGeral })));
+const DetalhesMotor = lazy(() =>
+  import('../features/motores/pages/DetalhesMotor').then((m) => ({ default: m.DetalhesMotor }))
+);
+const RegrasQualidade = lazy(() =>
+  import('../features/quality-gates/pages/RegrasQualidade').then((m) => ({ default: m.RegrasQualidade }))
+);
+const Eventos = lazy(() => import('../features/eventos/pages/Eventos').then((m) => ({ default: m.Eventos })));
+const Sistema = lazy(() => import('../features/sistema/pages/Sistema').then((m) => ({ default: m.Sistema })));
 
 /** Rotas antigas apontam para a visão geral, preservando ?novo=true. */
 function ParaVisaoGeral() {
