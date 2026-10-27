@@ -8,6 +8,8 @@ import {
   normalizarLeituraRealtime,
   normalizarStatus,
 } from '@/features/telemetria/helpers/normalizacao';
+import { normalizarAlerta } from '@/features/alertas/helpers/normalizacao';
+import { AlertaManutencao } from '@/features/alertas/types/alerta';
 import { logDev } from '@/utils/devLog';
 
 export type StatusConexaoHub =
@@ -19,12 +21,14 @@ export type StatusConexaoHub =
 type CallbackLote = (leituras: LeituraEscova[]) => void;
 type CallbackStatusMotor = (status: MotorStatusDto) => void;
 type CallbackStatus = (status: StatusConexaoHub) => void;
+type CallbackAlerta = (alerta: AlertaManutencao) => void;
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
   private callbacksLote: Set<CallbackLote> = new Set();
   private callbacksStatusMotor: Set<CallbackStatusMotor> = new Set();
   private callbacksStatus: Set<CallbackStatus> = new Set();
+  private callbacksAlerta: Set<CallbackAlerta> = new Set();
   private statusAtual: StatusConexaoHub = 'desconectado';
 
   private notificarStatus(novoStatus: StatusConexaoHub) {
@@ -81,6 +85,12 @@ class SignalRService {
       this.callbacksStatusMotor.forEach((cb) => cb(normalizado));
     });
 
+    // Só quando um alerta de manutenção abre ou sobe de severidade; encerrar não gera evento.
+    this.connection.on('ReceberAlertaManutencao', (bruto: unknown) => {
+      const alerta = normalizarAlerta(bruto);
+      if (alerta) this.callbacksAlerta.forEach((cb) => cb(alerta));
+    });
+
     // Ciclo de vida da conexão
     this.connection.onreconnecting((error) => {
       console.warn('[SignalR] Conexão oscilando. Tentando reconectar...', error);
@@ -125,6 +135,11 @@ class SignalRService {
   public onStatusMotor(callback: CallbackStatusMotor): () => void {
     this.callbacksStatusMotor.add(callback);
     return () => this.callbacksStatusMotor.delete(callback);
+  }
+
+  public onAlertaManutencao(callback: CallbackAlerta): () => void {
+    this.callbacksAlerta.add(callback);
+    return () => this.callbacksAlerta.delete(callback);
   }
 
   public onStatusMudou(callback: CallbackStatus): () => void {

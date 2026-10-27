@@ -131,7 +131,11 @@ export function motivoDoMotor(
  * "Escova 2 de Motor A: Limite de temperatura, 96,1 °C ≥ 95 °C" (o quê, onde, quanto).
  * A assimetria é do motor: não aponta uma escova.
  */
-export function descreverMotivo(motivo: MotivoStatus, nomeMotor: string, previsao?: Previsao | null): string {
+export function descreverMotivo(
+  motivo: MotivoStatus,
+  nomeMotor: string,
+  previsao?: Pick<Previsao, 'minutos' | 'limiteC'> | null
+): string {
   const tipo = obterTipoRegra(motivo.tipoRegra);
   const onde =
     motivo.tipoRegra === 'temperatura.assimetria_escovas'
