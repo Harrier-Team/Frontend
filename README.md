@@ -69,13 +69,36 @@ SignalR necessária no ambiente de produção.
 ## Funcionalidades
 
 - Visão geral dos motores ordenada por urgência, com filtro por estado.
-- Cadastro, detalhamento e exclusão protegida de motores e suas escovas.
+- Severidade sempre vinda do backend (`severidade` dos gates e
+  `severidadeGeral` do status do motor); o painel não classifica por
+  temperatura.
+- Estados de avaliação separados da severidade: "Aguardando amostras"
+  (`DADOS_INSUFICIENTES`), "Sem regras" e "Sem leitura".
+- Frescor do dado por motor: Ao vivo (menos de 30 s), Atrasado, e Degradado ou
+  Offline conforme a `situacao` do backend. Silêncio não é normalidade: o
+  último diagnóstico fica visível e marcado como desatualizado.
+- Cadastro, detalhamento e exclusão protegida de motores e suas escovas. Cada
+  motor tem um único MAC de ESP (`AA:BB:CC:DD:EE:FF`) e escovas com números
+  positivos e únicos.
 - Atualizações de temperatura em tempo real e indicador de conexão do hub.
-- Última leitura persistida carregada pela API ao abrir o painel.
+- Status e diagnósticos do último lote carregados de
+  `GET /api/motores/{id}/status` ao abrir o painel, ao conectar e ao
+  reconectar o hub, e após 30 s sem lote de um motor.
+- Janela da sessão em memória: até 360 pontos por escova, sem duplicar
+  leituras repetidas e sem deixar uma resposta HTTP antiga sobrescrever o
+  dado mais recente do hub.
 - Reconexão automática do cliente SignalR.
-- Catálogo de regras de Quality Gates (limiar estático).
-- Associação, ativação, desativação e remoção de Quality Gates por motor.
-- Exibição de diagnósticos de Quality Gates nas leituras em tempo real.
+- Catálogo de regras de Quality Gates com os três tipos do backend: limiar
+  estático (°C), gradiente térmico (°C/min) e assimetria entre escovas (°C de
+  diferença). A edição envia o objeto completo, incluindo `tipoRegra`.
+- Associação, ativação, desativação e remoção de Quality Gates por motor; o
+  status dos motores afetados é recarregado após cada alteração.
+- Exibição de diagnósticos de Quality Gates com valor e limite na unidade do
+  tipo da regra.
+- O medidor de temperatura mostra faixas de aviso e crítico apenas quando o
+  motor tem uma regra de limiar estático ativa.
+- Falhas de rede ou de servidor aparecem como erro com opção de tentar de novo,
+  nunca como lista vazia ou "motor não encontrado".
 
 ## Contratos de API utilizados
 
@@ -85,14 +108,13 @@ O cliente HTTP usa o prefixo `/api`, configurado em
 ```text
 GET    /api/motores
 GET    /api/motores/{id}
+GET    /api/motores/{id}/status
 POST   /api/motores
 DELETE /api/motores/{id}
 POST   /api/motores/sensores/{sensorId}/ping
 
 POST   /api/sensores
 GET    /api/sensores/{sensorId}
-
-GET    /api/leituras?espMacAddress={mac}&numeroEscova={numero}
 
 GET    /api/regras-qualidade
 GET    /api/regras-qualidade/{id}
@@ -107,10 +129,12 @@ PUT    /api/motores/{motorId}/regras-qualidade/{regraId}
 DELETE /api/motores/{motorId}/regras-qualidade/{regraId}
 ```
 
-O hub SignalR é conectado por `/api/telemetriaHub` e recebe os eventos
-`ReceberTelemetria` e `ReceberLoteTelemetria`. Os resultados de Quality Gates
-são normalizados pelo frontend como uma lista, inclusive quando não houver
-resultados.
+O hub SignalR é conectado por `/api/telemetriaHub`. O painel usa
+`ReceberLoteTelemetria` como única fonte de amostras (`ReceberTelemetria` é
+ignorado para não contar a mesma leitura duas vezes) e `ReceberStatusMotor`
+para o status agregado. Na página do motor, chama `AssinarMotor` ao entrar e
+`DesassinarMotor` ao sair. Os resultados de Quality Gates são normalizados pelo
+frontend como uma lista, inclusive quando não houver resultados.
 
 ### Limitações atuais do contrato
 
@@ -135,7 +159,7 @@ painel-hackatohm/
 │   ├── features/
 │   │   ├── motores/          Motores, sensores e vínculos por motor
 │   │   ├── quality-gates/    Regras, resultados e contratos de qualidade
-│   │   └── telemetria/       SignalR, leituras e status de sensores
+│   │   └── telemetria/       SignalR, store por motor e estados de dados
 │   ├── hooks/                Provider e hooks de estado global
 │   ├── services/             Cliente HTTP compartilhado
 │   ├── styles/               Tokens visuais
@@ -156,9 +180,13 @@ import { api } from '@/services/api';
 
 Os testes unitários atuais cobrem:
 
-- validação de regras de Quality Gates;
-- limites de temperatura;
-- classificação e consolidação do status dos motores;
+- validação dos três tipos de regra de Quality Gates e seus limites;
+- formatação de valores por `tipoRegra` (°C, °C/min, diferença em °C);
+- estados de avaliação, consolidação de severidade e frescor do dado;
+- store de telemetria: deduplicação, monotonicidade, recarga ao conectar e
+  reconectar, vigia de silêncio e tratamento de erros;
+- limites do medidor a partir da regra vinculada;
+- validação do MAC do ESP e do cadastro de motor;
 - formatação de severidades e temperaturas.
 
 Execute a suíte com:
