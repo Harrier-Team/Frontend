@@ -26,11 +26,10 @@ import { useLimitesTermicos } from '../hooks/useLimitesTermicos';
 import { useRegrasQualidadeMotor } from '../hooks/useRegrasQualidadeMotor';
 import { useAssinarMotor } from '../../telemetria/hooks/useAssinarMotor';
 import { useAgora } from '../../telemetria/hooks/useAgora';
-import { estadoDaEscova, resumirMotor } from '../../telemetria/helpers/resumoMotor';
+import { resumirMotor } from '../../telemetria/helpers/resumoMotor';
 import { agruparDiagnosticos } from '../../telemetria/helpers/diagnosticos';
 import { TIPO_ASSIMETRIA } from '../../quality-gates/helpers/tiposRegra';
-import { estadoResultado } from '../../telemetria/helpers/estadoHelper';
-import { extremosDoLote } from '../../telemetria/helpers/valorRegra';
+import { dadosDoAnel } from '../../telemetria/helpers/dadosDoAnel';
 import { CollectorRing } from '../../telemetria/components/CollectorRing';
 import { SeverityBadge } from '../../telemetria/components/SeverityBadge';
 import { FreshnessIndicator } from '../../telemetria/components/FreshnessIndicator';
@@ -161,26 +160,7 @@ export const DetalhesMotor: React.FC = () => {
   const desatualizado = resumo.dado === 'atrasado' || resumo.dado === 'offline';
   const grupoAssimetria = grupos.find((g) => g.tipoRegra === TIPO_ASSIMETRIA);
 
-  const escovasDoAnel = sensores.map((sensor) => ({
-    numeroEscova: sensor.numeroEscova,
-    valor: escovas?.[sensor.numeroEscova]?.ultima?.valorCelsius ?? null,
-    estado: estadoDaEscova(escovas?.[sensor.numeroEscova]),
-  }));
-  const maiorTemperatura = escovasDoAnel.reduce<number | null>(
-    (maior, e) => (e.valor !== null && (maior === null || e.valor > maior) ? e.valor : maior),
-    null
-  );
-  const extremos = extremosDoLote(escovas);
-  const resultadoAssimetria = grupoAssimetria?.itens[0]?.resultado;
-  const assimetriaDoAnel =
-    extremos && resultadoAssimetria && estadoResultado(resultadoAssimetria) === 'avaliado'
-      ? {
-          maisQuente: extremos.maisQuente.numeroEscova,
-          maisFria: extremos.maisFria.numeroEscova,
-          diferenca: resultadoAssimetria.valorObservado ?? extremos.diferenca,
-          estado: resultadoAssimetria.severidade,
-        }
-      : null;
+  const anel = dadosDoAnel(sensores.map((sensor) => sensor.numeroEscova), telemetria);
 
   // A contagem só aparece com os vínculos carregados: zero falso seria pior que nenhum número.
   const abas = ABAS.map((a) =>
@@ -294,10 +274,10 @@ export const DetalhesMotor: React.FC = () => {
                 </h2>
                 <div className="flex flex-col justify-center rounded-[var(--radius-panel)] border border-line bg-panel px-4 py-5 sm:px-6">
                   <CollectorRing
-                    escovas={escovasDoAnel}
+                    escovas={anel.escovas}
                     desatualizado={desatualizado}
-                    maiorTemperatura={maiorTemperatura}
-                    assimetria={assimetriaDoAnel}
+                    maiorTemperatura={anel.maiorTemperatura}
+                    assimetria={anel.assimetria}
                     selecionada={escovaAtiva}
                     onSelecionar={setEscovaAtiva}
                   />

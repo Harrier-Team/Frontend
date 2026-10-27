@@ -33,6 +33,8 @@ interface CollectorRingProps {
   /** Escova destacada, compartilhada com os cartões e o gráfico. */
   selecionada: number | null;
   onSelecionar: (numeroEscova: number | null) => void;
+  /** Modo apresentação: o desenho cresce além dos 360 px. */
+  ampliado?: boolean;
   className?: string;
 }
 
@@ -54,6 +56,7 @@ export const CollectorRing: React.FC<CollectorRingProps> = ({
   assimetria,
   selecionada,
   onSelecionar,
+  ampliado = false,
   className = '',
 }) => {
   const refs = useRef<Record<number, SVGGElement | null>>({});
@@ -106,7 +109,7 @@ export const CollectorRing: React.FC<CollectorRingProps> = ({
     <figure className={`m-0 ${className}`}>
       <svg
         viewBox={`0 0 ${LADO} ${LADO}`}
-        className="mx-auto block h-auto w-full max-w-[360px] select-none overflow-visible"
+        className={`mx-auto block h-auto w-full select-none overflow-visible ${ampliado ? 'max-w-[520px]' : 'max-w-[360px]'}`}
         role="group"
         aria-label={`Anel coletor, representação esquemática. ${resumoAria}. Use as setas para percorrer as escovas.`}
       >

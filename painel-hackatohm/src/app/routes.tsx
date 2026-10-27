@@ -5,6 +5,8 @@ import { DetalhesMotor } from '../features/motores/pages/DetalhesMotor';
 import { ToastProvider } from '../components/ui/Toast';
 import { VisaoGeral } from '../pages/VisaoGeral';
 import { RegrasQualidade } from '../features/quality-gates/pages/RegrasQualidade';
+import { Eventos } from '../features/eventos/pages/Eventos';
+import { Sistema } from '../features/sistema/pages/Sistema';
 
 /** Rotas antigas apontam para a visão geral, preservando ?novo=true. */
 function ParaVisaoGeral() {
@@ -22,7 +24,9 @@ export function AppRoutes() {
             <Route path="/motores" element={<ParaVisaoGeral />} />
             <Route path="/inicio" element={<ParaVisaoGeral />} />
             <Route path="/motores/:id/:aba?" element={<DetalhesMotor />} />
+            <Route path="/eventos" element={<Eventos />} />
             <Route path="/regras-qualidade" element={<RegrasQualidade />} />
+            <Route path="/sistema" element={<Sistema />} />
             <Route path="*" element={<ParaVisaoGeral />} />
           </Route>
         </Routes>

@@ -12,7 +12,10 @@ export function instalarSimulador(): void {
   // VITE_SIMULADOR_CADENCIA_S muda o intervalo entre lotes (padrão 3 s; o ESP real envia a cada ~10 s).
   const segundos = Number(import.meta.env.VITE_SIMULADOR_CADENCIA_S);
   const cadenciaMs = Number.isFinite(segundos) && segundos >= 1 ? Math.round(segundos * 1000) : undefined;
-  const servidor = criarServidorSimulado(Date.now, cadenciaMs);
+  // VITE_SIMULADOR_MOTORES limita os motores semeados (1 mostra o modo apresentação com um único motor).
+  const quantos = Number(import.meta.env.VITE_SIMULADOR_MOTORES);
+  const maximoDeMotores = Number.isInteger(quantos) && quantos >= 1 ? quantos : undefined;
+  const servidor = criarServidorSimulado(Date.now, cadenciaMs, maximoDeMotores);
   const hub = criarHubFalso(servidor, cadenciaMs);
   api.defaults.adapter = criarAdaptador(servidor, hub);
   definirHubTelemetria(hub);
