@@ -1,8 +1,18 @@
 # Hackatohm Frontend
 
-Painel web para monitoramento de motores, sensores e telemetria do projeto
-Hackatohm. A aplicação recebe atualizações em tempo real do backend por
-SignalR.
+Painel web Harrier para telemetria térmica e manutenção preditiva das escovas
+de motores elétricos, desenvolvido para a Hackatohm. O painel acompanha as
+temperaturas em tempo real por SignalR e exibe os diagnósticos dos Quality
+Gates avaliados pelo backend.
+
+## Documentação
+
+| Documento | Conteúdo |
+| --- | --- |
+| [painel-hackatohm/DESIGN.md](painel-hackatohm/DESIGN.md) | Como o painel deve se comportar: princípios, modelo de estados, regras de dados, tokens e componentes |
+| `../Backend/docs/` | Contratos HTTP, SignalR e regras de monitoramento (fonte de verdade) |
+
+Em caso de divergência, os contratos do Backend prevalecem.
 
 ## Tecnologias
 
@@ -58,15 +68,14 @@ SignalR necessária no ambiente de produção.
 
 ## Funcionalidades
 
-- Dashboard com indicadores do estado dos motores.
-- Cadastro, listagem, detalhamento e exclusão protegida de motores.
-- Cadastro e consulta de sensores, incluindo ping de sensor.
-- Atualizações de temperatura e conexão em tempo real.
-- Primeira leitura persistida carregada pela API quando disponível.
+- Visão geral dos motores ordenada por urgência, com filtro por estado.
+- Cadastro, detalhamento e exclusão protegida de motores e suas escovas.
+- Atualizações de temperatura em tempo real e indicador de conexão do hub.
+- Última leitura persistida carregada pela API ao abrir o painel.
 - Reconexão automática do cliente SignalR.
-- Catálogo de regras de Quality Gates.
+- Catálogo de regras de Quality Gates (limiar estático).
 - Associação, ativação, desativação e remoção de Quality Gates por motor.
-- Exibição de diagnósticos de Quality Gates nas leituras realtime.
+- Exibição de diagnósticos de Quality Gates nas leituras em tempo real.
 
 ## Contratos de API utilizados
 
