@@ -16,6 +16,7 @@ import { ApiErrorState } from '../../../components/ui/ApiErrorState';
 import { useMonitoramento } from '../../../hooks/useMonitoramento';
 import { ehNaoEncontrado, obterMensagemErro } from '../../../utils/errorHelper';
 import { useMotorTelemetria } from '../../telemetria/hooks/useTelemetriaStore';
+import { useLimitesTermicos } from '../hooks/useLimitesTermicos';
 import { useAssinarMotor } from '../../telemetria/hooks/useAssinarMotor';
 import { useAgora } from '../../telemetria/hooks/useAgora';
 import { resumirMotor } from '../../telemetria/helpers/resumoMotor';
@@ -41,6 +42,7 @@ export const DetalhesMotor: React.FC = () => {
   const agora = useAgora();
   const resumo = resumirMotor(telemetria, agora);
   useAssinarMotor(motorId);
+  const limites = useLimitesTermicos(motorId ?? -1);
 
   const carregar = useCallback(() => {
     if (motorId === null) return;
@@ -178,6 +180,7 @@ export const DetalhesMotor: React.FC = () => {
                 serie={telemetria?.escovas[sensor.numeroEscova]}
                 dado={resumo.dado}
                 agora={agora}
+                limites={limites}
               />
             ))}
           </Panel>

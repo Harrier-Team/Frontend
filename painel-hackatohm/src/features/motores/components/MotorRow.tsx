@@ -10,7 +10,7 @@ import { formatarGrau } from '@/features/telemetria/helpers/statusHelper';
 import { StatusDot } from '@/features/telemetria/components/StatusDot';
 import { FrescorIndicador } from '@/features/telemetria/components/FrescorIndicador';
 import { ThermalGauge } from '@/features/telemetria/components/ThermalGauge';
-import { ParametrosRegra } from '@/features/quality-gates/types/regraQualidade';
+import { useLimitesTermicos } from '../hooks/useLimitesTermicos';
 import { SEVERIDADE_THEME } from '@/features/quality-gates/helpers/qualityGateHelper';
 
 const marcador: Record<string, string> = {
@@ -24,10 +24,10 @@ interface MotorRowProps {
   telemetria: MotorTelemetria | undefined;
   resumo: ResumoMotor;
   agora: number;
-  limites?: ParametrosRegra | null;
 }
 
-export const MotorRow: React.FC<MotorRowProps> = ({ motor, telemetria, resumo, agora, limites }) => {
+export const MotorRow: React.FC<MotorRowProps> = ({ motor, telemetria, resumo, agora }) => {
+  const limites = useLimitesTermicos(motor.id);
   const tema = TEMA_ESTADO[resumo.principal];
   const sensores = [...motor.sensores].sort((a, b) => a.numeroEscova - b.numeroEscova);
   const calmo = resumo.principal === 'Normal';
