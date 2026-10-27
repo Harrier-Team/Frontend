@@ -99,6 +99,25 @@ describe('montarPipeline', () => {
     expect(estados({ ...base, live: fora, ready: fora })).toEqual(['ok', 'falha', 'desconhecido', 'desconhecido', 'ok', 'ok']);
   });
 
+  it('502 ou 504 do proxy não conta como resposta da API', () => {
+    for (const status of [502, 504]) {
+      const proxy = mapearSaude(status, '');
+      const etapas = montarPipeline({ ...base, live: proxy, ready: proxy });
+      expect(etapas.map((s) => s.estado)).toEqual(['ok', 'falha', 'desconhecido', 'desconhecido', 'ok', 'ok']);
+      expect(etapas[1].detalhe).toBe(`O proxy não alcançou a API (HTTP ${status}).`);
+    }
+  });
+
+  it('erro HTTP sem relatório de saúde é falha da API', () => {
+    const erro = mapearSaude(500, '<html>erro</html>');
+    expect(estados({ ...base, live: erro, ready: erro })).toEqual(['ok', 'falha', 'desconhecido', 'desconhecido', 'ok', 'ok']);
+  });
+
+  it('503 com relatório "Unhealthy" vem da API: ela responde, a fila falha', () => {
+    const live = mapearSaude(503, 'Unhealthy');
+    expect(estados({ ...base, live }).slice(1, 3)).toEqual(['ok', 'falha']);
+  });
+
   it('PostgreSQL fora aparece só no banco', () => {
     const ready = mapearSaude(503, 'Unhealthy');
     expect(estados({ ...base, ready })).toEqual(['ok', 'ok', 'ok', 'falha', 'ok', 'ok']);

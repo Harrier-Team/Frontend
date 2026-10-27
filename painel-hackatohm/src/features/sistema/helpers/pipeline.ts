@@ -1,6 +1,6 @@
 import { LIMITE_ATRASO_SEGUNDOS } from '@/features/telemetria/helpers/estadoHelper';
 import type { StatusConexaoHub } from '@/features/telemetria/services/signalrService';
-import { itemDeSaude, ResultadoSaude } from './saude';
+import { apiAlcancada, itemDeSaude, ResultadoSaude } from './saude';
 
 export type EstadoEstagio = 'ok' | 'atencao' | 'falha' | 'desconhecido';
 
@@ -50,7 +50,7 @@ function segundos(valor: number): string {
  */
 export function montarPipeline(e: EntradaPipeline): EstagioPipeline[] {
   const { live, ready } = e;
-  const apiRespondeu = live !== null && live.httpStatus !== null;
+  const apiRespondeu = apiAlcancada(live);
 
   const esp = ((): Pick<EstagioPipeline, 'estado' | 'detalhe'> => {
     const idade = e.idadeUltimoLoteSegundos;
@@ -62,7 +62,16 @@ export function montarPipeline(e: EntradaPipeline): EstagioPipeline[] {
 
   const api = ((): Pick<EstagioPipeline, 'estado' | 'detalhe'> => {
     if (live === null) return { estado: 'desconhecido', detalhe: 'Consultando…' };
-    if (!apiRespondeu) return { estado: 'falha', detalhe: 'A API não respondeu.' };
+    if (live.httpStatus === null) return { estado: 'falha', detalhe: 'A API não respondeu.' };
+    if (!apiRespondeu) {
+      const gateway = live.httpStatus === 502 || live.httpStatus === 504;
+      return {
+        estado: 'falha',
+        detalhe: gateway
+          ? `O proxy não alcançou a API (HTTP ${live.httpStatus}).`
+          : `Resposta inesperada (HTTP ${live.httpStatus}).`,
+      };
+    }
     return { estado: 'ok', detalhe: `Respondeu (HTTP ${live.httpStatus}).` };
   })();
 
@@ -77,13 +86,13 @@ export function montarPipeline(e: EntradaPipeline): EstagioPipeline[] {
   })();
 
   const banco = ((): Pick<EstagioPipeline, 'estado' | 'detalhe'> => {
-    if (ready === null || ready.httpStatus === null) {
+    if (!apiAlcancada(ready)) {
       return { estado: 'desconhecido', detalhe: 'Depende da resposta da API.' };
     }
     const item = itemDeSaude(ready, 'postgres') ?? itemDeSaude(ready, 'banco');
     if (item) return { estado: estadoDe(item.estado), detalhe: item.descricao ?? 'Conexão verificada.' };
     // Texto puro: só "indisponível" aponta o banco (a fila apenas degrada).
-    return ready.estado === 'indisponivel'
+    return ready!.estado === 'indisponivel'
       ? { estado: 'falha', detalhe: 'Não foi possível conectar ao PostgreSQL.' }
       : { estado: 'ok', detalhe: 'Conexão verificada.' };
   })();

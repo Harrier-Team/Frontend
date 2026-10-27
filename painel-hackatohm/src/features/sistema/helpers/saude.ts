@@ -19,6 +19,8 @@ export interface ResultadoSaude {
   itens: ItemSaude[];
   /** Texto cru, curto, para o detalhe técnico. */
   bruto: string | null;
+  /** O corpo trouxe um relatório de saúde legível (Healthy, Degraded, Unhealthy). */
+  relatorio: boolean;
 }
 
 /** Enum numérico do .NET: 0 Unhealthy, 1 Degraded, 2 Healthy. */
@@ -77,7 +79,7 @@ function resumirBruto(corpo: unknown): string | null {
  */
 export function mapearSaude(httpStatus: number | null, corpo: unknown): ResultadoSaude {
   const bruto = resumirBruto(corpo);
-  if (httpStatus === null) return { estado: 'indisponivel', httpStatus, itens: [], bruto };
+  if (httpStatus === null) return { estado: 'indisponivel', httpStatus, itens: [], bruto, relatorio: false };
 
   let estado: EstadoSaude | null = null;
   let itens: ItemSaude[] = [];
@@ -92,7 +94,18 @@ export function mapearSaude(httpStatus: number | null, corpo: unknown): Resultad
   const porHttp: EstadoSaude = httpStatus >= 200 && httpStatus < 300 ? 'saudavel' : 'indisponivel';
   // Código HTTP de falha prevalece sobre um corpo que diga o contrário.
   const final = estado === null || (porHttp === 'indisponivel' && estado !== 'indisponivel') ? porHttp : estado;
-  return { estado: final, httpStatus, itens, bruto };
+  return { estado: final, httpStatus, itens, bruto, relatorio: estado !== null };
+}
+
+/**
+ * A resposta veio da própria API? Vale 2xx ou um relatório de saúde legível
+ * (ex.: 503 "Unhealthy"). Um 502 ou 504 sem relatório vem do proxy, que não
+ * alcançou o backend: a API não respondeu.
+ */
+export function apiAlcancada(resultado: ResultadoSaude | null): boolean {
+  if (resultado === null || resultado.httpStatus === null) return false;
+  const sucesso = resultado.httpStatus >= 200 && resultado.httpStatus < 300;
+  return sucesso || resultado.relatorio;
 }
 
 /** Estado de um item pelo nome (ex.: "postgresql"), se o corpo detalhar. */
