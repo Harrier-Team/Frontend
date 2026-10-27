@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  errosDoServidorParaFormulario,
   validarRegraQualidade,
   RegraQualidadeFormValues,
 } from './validationHelper';
@@ -79,5 +80,28 @@ describe('validarRegraQualidade', () => {
     });
     expect(erros.aviso).toBeDefined();
     expect(erros.critico).toBeDefined();
+  });
+});
+
+describe('errosDoServidorParaFormulario', () => {
+  it('leva os erros do Problem Details para o campo, ignorando a caixa e o aninhamento', () => {
+    const erros = errosDoServidorParaFormulario({
+      Nome: ['O nome da regra é obrigatório.'],
+      'Parametros.Aviso': ['Aviso inválido.'],
+      Parametros: ['Aviso deve ser menor que crítico.'],
+      tipoRegra: ['Tipo inválido.'],
+      Outro: ['Sem campo.'],
+    });
+    expect(erros).toEqual({
+      nome: 'O nome da regra é obrigatório.',
+      aviso: 'Aviso inválido.',
+      critico: 'Aviso deve ser menor que crítico.',
+      tipo: 'Tipo inválido.',
+    });
+  });
+
+  it('sem erros de campo, devolve objeto vazio', () => {
+    expect(errosDoServidorParaFormulario(null)).toEqual({});
+    expect(errosDoServidorParaFormulario({ Nome: [] })).toEqual({});
   });
 });

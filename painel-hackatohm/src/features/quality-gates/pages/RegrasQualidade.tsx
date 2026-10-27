@@ -15,7 +15,8 @@ import {
   RegraQualidade,
   RegraQualidadeRequest,
 } from '@/features/quality-gates/types/regraQualidade';
-import { obterMensagemErro } from '@/utils/errorHelper';
+import { obterErrosDeCampo, obterMensagemErro } from '@/utils/errorHelper';
+import { errosDoServidorParaFormulario } from '@/features/quality-gates/helpers/validationHelper';
 
 export const RegrasQualidade: React.FC = () => {
   const {
@@ -35,22 +36,26 @@ export const RegrasQualidade: React.FC = () => {
   const [regraEditando, setRegraEditando] = useState<RegraQualidade | null>(null);
   const [regraExcluindo, setRegraExcluindo] = useState<RegraQualidade | null>(null);
   const [operacaoErro, setOperacaoErro] = useState<string | null>(null);
+  const [errosCampo, setErrosCampo] = useState<Record<string, string[]> | null>(null);
 
   const fecharForm = () => {
     setFormAberto(false);
     setRegraEditando(null);
     setOperacaoErro(null);
+    setErrosCampo(null);
   };
 
   const abrirCriacao = () => {
     setRegraEditando(null);
     setOperacaoErro(null);
+    setErrosCampo(null);
     setFormAberto(true);
   };
 
   const abrirEdicao = (regra: RegraQualidade) => {
     setRegraEditando(regra);
     setOperacaoErro(null);
+    setErrosCampo(null);
     setFormAberto(true);
   };
 
@@ -64,8 +69,15 @@ export const RegrasQualidade: React.FC = () => {
       setFormAberto(false);
       setRegraEditando(null);
       setOperacaoErro(null);
+      setErrosCampo(null);
     } catch (error) {
-      setOperacaoErro(obterMensagemErro(error, 'Não foi possível salvar a regra.'));
+      // O modal e os valores digitados ficam; erros de campo vão para o campo.
+      const campos = obterErrosDeCampo(error);
+      setErrosCampo(Object.keys(campos).length > 0 ? campos : null);
+      const nosCampos = Object.keys(errosDoServidorParaFormulario(campos)).length > 0;
+      setOperacaoErro(
+        nosCampos ? 'Revise os campos destacados.' : obterMensagemErro(error, 'Não foi possível salvar a regra.')
+      );
     }
   };
 
@@ -161,6 +173,7 @@ export const RegrasQualidade: React.FC = () => {
               key={regraEditando?.id ?? 'nova'}
               regra={regraEditando}
               salvando={salvando}
+              errosServidor={errosCampo}
               onSubmit={salvar}
               onCancel={fecharForm}
             />

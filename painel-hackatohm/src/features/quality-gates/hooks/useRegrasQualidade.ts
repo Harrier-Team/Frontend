@@ -6,6 +6,7 @@ import {
 } from '@/features/quality-gates/types/regraQualidade';
 import { regraQualidadeService } from '@/features/quality-gates/services/regraQualidadeService';
 import { obterMensagemErro } from '@/utils/errorHelper';
+import { ehTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
 import { aposAlterarRegras } from '@/features/quality-gates/helpers/aposAlterarRegras';
 
 export function useRegrasQualidade() {
@@ -86,14 +87,19 @@ export function useRegrasQualidade() {
     }
   };
 
-  const alternarAtivo = async (regra: RegraQualidade) =>
-    atualizar(regra.id, {
+  const alternarAtivo = async (regra: RegraQualidade) => {
+    // Reenviar um tipo desconhecido faria o backend rejeitar ou converter a regra.
+    if (!ehTipoRegra(regra.tipoRegra)) {
+      throw new Error('O painel não altera regras de um tipo que não conhece.');
+    }
+    return atualizar(regra.id, {
       nome: regra.nome,
       descricao: regra.descricao,
       tipoRegra: regra.tipoRegra,
       parametros: regra.parametros,
       ativo: !regra.ativo,
     });
+  };
 
   return {
     regras,

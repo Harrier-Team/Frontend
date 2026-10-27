@@ -12,6 +12,7 @@ export const SEVERIDADE_THEME: Record<
     textClass: 'text-sev-alerta',
   },
   Critico: { label: 'Crítico', color: 'var(--color-sev-critico)', textClass: 'text-sev-critico' },
+  SemClassificacao: { label: 'Sem classificação', color: 'var(--color-ink-3)', textClass: 'text-ink-2' },
 };
 
 export function formatarSeveridade(severidade: NivelSeveridade): string {

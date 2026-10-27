@@ -91,7 +91,7 @@ describe('motivoDoMotor e descreverMotivo', () => {
         { ...base, tipoRegra: 'temperatura.limiar_estatico', valorObservado: 96.1, valorLimite: 95 },
         'Motor A'
       )
-    ).toBe('Escova 2 de Motor A: limiar estático, 96,1 °C ≥ 95 °C');
+    ).toBe('Escova 2 de Motor A: limite de temperatura, 96,1 °C ≥ 95 °C');
     expect(
       descreverMotivo(
         { ...base, tipoRegra: 'temperatura.gradiente_termico', valorObservado: 6.2, valorLimite: 5 },
@@ -103,6 +103,6 @@ describe('motivoDoMotor e descreverMotivo', () => {
         { ...base, tipoRegra: 'temperatura.assimetria_escovas', valorObservado: 25.2, valorLimite: 15 },
         'Motor A'
       )
-    ).toBe('Motor A: assimetria entre escovas, 25,2 °C ≥ 15 °C');
+    ).toBe('Motor A: diferença entre escovas, 25,2 °C ≥ 15 °C');
   });
 });

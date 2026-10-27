@@ -3,7 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { useRegrasQualidade } from '@/features/quality-gates/hooks/useRegrasQualidade';
 import { useRegrasQualidadeMotor } from '../hooks/useRegrasQualidadeMotor';
 import { RegraQualidade, VinculoRegraQualidade } from '@/features/quality-gates/types/regraQualidade';
-import { descreverLimites, formatarValorGate, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
+import { descreverLimites, ehTipoRegra, formatarValorGate, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
 import { EscalaLimites } from '@/features/quality-gates/components/EscalaLimites';
 import { SerieEscova } from '@/features/telemetria/store/tipos';
 import { valorAtualDaRegra } from '@/features/telemetria/helpers/valorRegra';
@@ -17,7 +17,6 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 import { LoadingState } from '../../../components/ui/LoadingState';
 
 interface MotorQualityRulesSectionProps {
-  motorId: number;
   /** Vínculos do motor; o estado vive na página para a aba mostrar a contagem. */
   controle: ReturnType<typeof useRegrasQualidadeMotor>;
   /** Últimas leituras do motor, para posicionar o valor atual na escala de cada regra. */
@@ -25,7 +24,6 @@ interface MotorQualityRulesSectionProps {
 }
 
 export const MotorQualityRulesSection: React.FC<MotorQualityRulesSectionProps> = ({
-  motorId,
   controle,
   escovas,
 }) => {
@@ -176,13 +174,15 @@ const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, escovas, operando, onT
           {' · '}
           {descreverLimites(regra.tipoRegra, regra.parametros)}
         </p>
-        <EscalaLimites
-          tipoRegra={regra.tipoRegra}
-          aviso={regra.parametros.aviso}
-          critico={regra.parametros.critico}
-          valor={valorAtual}
-          className="mt-3 max-w-md"
-        />
+        {ehTipoRegra(regra.tipoRegra) && (
+          <EscalaLimites
+            tipoRegra={regra.tipoRegra}
+            aviso={regra.parametros.aviso}
+            critico={regra.parametros.critico}
+            valor={valorAtual}
+            className="mt-3 max-w-md"
+          />
+        )}
         {valorAtual !== null && (
           <p className="num mt-1 text-xs text-ink-3">Agora: {formatarValorGate(regra.tipoRegra, valorAtual)}</p>
         )}

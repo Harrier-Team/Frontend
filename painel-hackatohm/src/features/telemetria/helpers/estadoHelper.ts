@@ -21,13 +21,20 @@ export const LIMITE_ATRASO_SEGUNDOS = 30;
 
 export const RANK_SEVERIDADE: Record<NivelSeveridade, number> = {
   Normal: 0,
+  // Acima de Normal (não dá para afirmar que está normal), abaixo de qualquer anormalidade.
+  SemClassificacao: 0.5,
   Atencao: 1,
   AlertaPreditivo: 2,
   Critico: 3,
 };
 
-export function ehSeveridadeAnormal(severidade: NivelSeveridade | null | undefined): boolean {
-  return Boolean(severidade) && severidade !== 'Normal';
+export type SeveridadeAnormal = 'Atencao' | 'AlertaPreditivo' | 'Critico';
+
+/** Atenção, Alerta ou Crítico. Normal e "Sem classificação" não são anormais (nem pintam de cor). */
+export function ehSeveridadeAnormal(
+  severidade: NivelSeveridade | null | undefined
+): severidade is SeveridadeAnormal {
+  return severidade === 'Atencao' || severidade === 'AlertaPreditivo' || severidade === 'Critico';
 }
 
 /** A maior severidade da lista; ignora ausentes. Retorna null se não houver nenhuma. */
@@ -145,6 +152,7 @@ export const PRIORIDADE_ESTADO: Record<EstadoPrincipal, number> = {
   AlertaPreditivo: 8,
   Atencao: 7,
   offline: 6,
+  SemClassificacao: 4.5,
   degradado: 5,
   'aguardando-amostras': 4,
   'sem-regras': 3,
@@ -162,10 +170,12 @@ export function estadoPrincipal(
   avaliacao: EstadoAvaliacao,
   dado: EstadoDado
 ): EstadoPrincipal {
-  if (ehSeveridadeAnormal(severidade)) return severidade as NivelSeveridade;
+  if (ehSeveridadeAnormal(severidade)) return severidade;
   if (dado === 'offline') return 'offline';
   if (dado === 'degradado') return 'degradado';
   if (avaliacao === 'sem-leitura' || dado === 'sem-leitura') return 'sem-leitura';
+  // Severidade que o painel não reconhece: nunca vira Normal.
+  if (severidade === 'SemClassificacao') return 'SemClassificacao';
   if (avaliacao === 'aguardando-amostras') return 'aguardando-amostras';
   if (avaliacao === 'sem-regras') return 'sem-regras';
   return 'Normal';

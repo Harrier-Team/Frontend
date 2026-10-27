@@ -47,7 +47,7 @@ export const BrushCard: React.FC<BrushCardProps> = ({ numeroEscova, modelo, seri
     gateGradiente && estadoResultado(gateGradiente) === 'avaliado' ? gateGradiente.valorObservado : null;
   const gradiente = gradienteDoGate ?? gradienteDaEscova(serie);
   const gradienteAnormal =
-    gateGradiente && estadoResultado(gateGradiente) === 'avaliado' && gateGradiente.severidade !== 'Normal';
+    gateGradiente && estadoResultado(gateGradiente) === 'avaliado' && ehSeveridadeAnormal(gateGradiente.severidade);
 
   const cor = anormal ? tema.color : undefined;
   const barra = estado === 'Critico' || estado === 'AlertaPreditivo' ? tema.color : null;
@@ -75,7 +75,10 @@ export const BrushCard: React.FC<BrushCardProps> = ({ numeroEscova, modelo, seri
           <h3 className="text-[15px] text-ink">Escova {numeroEscova}</h3>
           {modelo && <p className="truncate text-xs text-ink-3">{modelo}</p>}
         </div>
-        {(anormal || avaliacao === 'aguardando-amostras' || avaliacao === 'sem-regras') && (
+        {(anormal ||
+          estado === 'SemClassificacao' ||
+          avaliacao === 'aguardando-amostras' ||
+          avaliacao === 'sem-regras') && (
           <SeverityBadge estado={estado} compacto esmaecido={desatualizado} />
         )}
       </header>

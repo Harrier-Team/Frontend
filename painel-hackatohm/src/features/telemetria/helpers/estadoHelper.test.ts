@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   compararPorUrgencia,
   consolidarSeveridade,
+  ehSeveridadeAnormal,
   estadoAvaliacao,
   estadoDado,
   estadoPrincipal,
@@ -129,5 +130,22 @@ describe('estadoPrincipal e ordenação', () => {
     ] as const;
     const embaralhada = [...esperada].reverse();
     expect(embaralhada.sort(compararPorUrgencia)).toEqual([...esperada]);
+  });
+});
+
+describe('severidade desconhecida (Sem classificação)', () => {
+  it('não é anormal, não pinta de cor e nunca vira Normal', () => {
+    expect(ehSeveridadeAnormal('SemClassificacao')).toBe(false);
+    expect(estadoPrincipal('SemClassificacao', 'avaliada', 'ao-vivo')).toBe('SemClassificacao');
+  });
+
+  it('perde para qualquer severidade anormal e ganha de Normal ao consolidar', () => {
+    expect(maiorSeveridade(['Normal', 'SemClassificacao'])).toBe('SemClassificacao');
+    expect(maiorSeveridade(['SemClassificacao', 'Atencao'])).toBe('Atencao');
+    expect(consolidarSeveridade([gate({ severidade: 'SemClassificacao' }), gate()])).toBe('SemClassificacao');
+  });
+
+  it('falta de dado explica o estado antes dela', () => {
+    expect(estadoPrincipal('SemClassificacao', 'avaliada', 'offline')).toBe('offline');
   });
 });

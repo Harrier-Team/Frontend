@@ -11,11 +11,12 @@ import { TipoRegraSelector } from '@/features/quality-gates/components/TipoRegra
 import { EscalaLimites } from '@/features/quality-gates/components/EscalaLimites';
 import {
   descreverFaixa,
+  ehTipoRegra,
   obterTipoRegra,
   TIPO_LIMIAR_ESTATICO,
-  TIPOS_REGRA,
 } from '@/features/quality-gates/helpers/tiposRegra';
 import {
+  errosDoServidorParaFormulario,
   FormErrors,
   RegraQualidadeFormValues,
   validarRegraQualidade,
@@ -24,6 +25,8 @@ import {
 interface QualityRuleFormProps {
   regra?: RegraQualidade | null;
   salvando: boolean;
+  /** Erros de campo do Problem Details da última tentativa que falhou. */
+  errosServidor?: Record<string, string[]> | null;
   onSubmit: (payload: RegraQualidadeRequest) => Promise<void>;
   onCancel: () => void;
 }
@@ -32,13 +35,15 @@ const valoresIniciais: RegraQualidadeFormValues = {
   nome: '',
   descricao: '',
   tipoRegra: TIPO_LIMIAR_ESTATICO,
-  parametros: { ...TIPOS_REGRA[TIPO_LIMIAR_ESTATICO].padrao },
+  // Limites dependem do equipamento: nenhum valor sugerido.
+  parametros: { aviso: Number.NaN, critico: Number.NaN },
   ativo: true,
 };
 
 export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
   regra,
   salvando,
+  errosServidor,
   onSubmit,
   onCancel,
 }) => {
@@ -53,7 +58,7 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
         ? {
             nome: regra.nome,
             descricao: regra.descricao ?? '',
-            tipoRegra: regra.tipoRegra,
+            tipoRegra: ehTipoRegra(regra.tipoRegra) ? regra.tipoRegra : TIPO_LIMIAR_ESTATICO,
             parametros: regra.parametros,
             ativo: regra.ativo,
           }
@@ -62,16 +67,34 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
     setErrors({});
   }, [regra]);
 
+  useEffect(() => {
+    // Falha HTTP: os erros por campo aparecem no campo, e os valores digitados ficam.
+    const doServidor = errosDoServidorParaFormulario(errosServidor);
+    // oxlint-disable-next-line react/set-state-in-effect
+    if (Object.keys(doServidor).length > 0) setErrors(doServidor);
+  }, [errosServidor]);
+
+  const limparErro = (campo: keyof FormErrors) =>
+    setErrors((atual) => {
+      if (!atual[campo]) return atual;
+      const { [campo]: _removido, ...resto } = atual;
+      return resto;
+    });
+
   const updateValue = <K extends keyof RegraQualidadeFormValues>(
     key: K,
     value: RegraQualidadeFormValues[K]
-  ) => setValues((current) => ({ ...current, [key]: value }));
+  ) => {
+    setValues((current) => ({ ...current, [key]: value }));
+    if (key === 'nome' || key === 'descricao') limparErro(key);
+  };
 
   const trocarTipo = (tipo: TipoRegra) => {
     setValues((current) => ({
       ...current,
       tipoRegra: tipo,
-      parametros: { ...TIPOS_REGRA[tipo].padrao } as ParametrosRegra,
+      // Cada tipo tem unidade e faixa próprias: o valor digitado não vale para o novo tipo.
+      parametros: { aviso: Number.NaN, critico: Number.NaN } as ParametrosRegra,
     }));
     setErrors({});
   };
@@ -81,6 +104,8 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
       ...values.parametros,
       [key]: value === '' ? Number.NaN : Number(value),
     });
+    limparErro(key);
+    if (key === 'aviso') limparErro('critico');
   };
 
   const submit = async (event: React.FormEvent) => {
@@ -103,6 +128,7 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
   return (
     <form onSubmit={submit} className="space-y-5 px-6 pb-6 pt-5" noValidate>
       <TipoRegraSelector valor={values.tipoRegra} onChange={trocarTipo} desabilitado={Boolean(regra)} />
+      {errors.tipo && <p className="field-error -mt-3">{errors.tipo}</p>}
       {regra && (
         <p className="-mt-3 text-[13px] text-ink-3">O tipo não pode ser alterado depois de criada.</p>
       )}

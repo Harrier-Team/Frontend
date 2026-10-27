@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Info, OctagonAlert, TriangleAlert } from 'lucide-react';
 import { Segmented } from '@/components/ui/Segmented';
 import { ParametrosRegra } from '@/features/quality-gates/types/regraQualidade';
-import { NivelSeveridade } from '@/features/quality-gates/types/qualityGate';
+import { SeveridadeAnormal } from '../helpers/estadoHelper';
 import { PontoEscova } from '../store/tipos';
 import { formatarGrau } from '../helpers/statusHelper';
 import {
@@ -38,7 +38,7 @@ const CORES_SERIE = [
   'var(--color-series-4)',
   'var(--color-series-5)',
 ];
-const COR_SEVERIDADE: Record<Exclude<NivelSeveridade, 'Normal'>, string> = {
+const COR_SEVERIDADE: Record<SeveridadeAnormal, string> = {
   Atencao: 'var(--color-sev-atencao)',
   AlertaPreditivo: 'var(--color-sev-alerta)',
   Critico: 'var(--color-sev-critico)',
@@ -334,7 +334,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora }
                       fill="none"
                       stroke={
                         trecho.severidade
-                          ? COR_SEVERIDADE[trecho.severidade as Exclude<NivelSeveridade, 'Normal'>]
+                          ? COR_SEVERIDADE[trecho.severidade as SeveridadeAnormal]
                           : traco.cor
                       }
                       strokeWidth={1.5}
@@ -349,7 +349,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora }
               {/* Marcador só na transição: primeiro ponto em severidade anormal ou mais grave */}
               {tracos.map((traco) =>
                 traco.marcadores.map((ponto: PontoEscova) => {
-                  const severidade = ponto.severidade as Exclude<NivelSeveridade, 'Normal'>;
+                  const severidade = ponto.severidade as SeveridadeAnormal;
                   const Icone = ICONE_SEVERIDADE[severidade];
                   return (
                     <g key={`m-${traco.numeroEscova}-${ponto.t}`}>

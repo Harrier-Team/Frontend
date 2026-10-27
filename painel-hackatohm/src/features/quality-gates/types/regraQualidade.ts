@@ -14,7 +14,8 @@ export interface RegraQualidade {
   id: string;
   nome: string;
   descricao: string | null;
-  tipoRegra: TipoRegra;
+  /** Pode vir um tipo que o painel não conhece. */
+  tipoRegra: TipoRegra | (string & {});
   severidadePadrao: NivelSeveridade;
   parametros: ParametrosRegra;
   ativo: boolean;

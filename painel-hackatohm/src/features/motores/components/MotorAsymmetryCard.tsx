@@ -1,7 +1,7 @@
 import React from 'react';
 import { SerieEscova } from '@/features/telemetria/store/tipos';
 import { GrupoDiagnostico } from '@/features/telemetria/helpers/diagnosticos';
-import { EstadoDado, estaDesatualizado, estadoResultado } from '@/features/telemetria/helpers/estadoHelper';
+import { EstadoDado, ehSeveridadeAnormal, estaDesatualizado, estadoResultado } from '@/features/telemetria/helpers/estadoHelper';
 import { extremosDoLote } from '@/features/telemetria/helpers/valorRegra';
 import { formatarGrau } from '@/features/telemetria/helpers/statusHelper';
 import { SeverityBadge } from '@/features/telemetria/components/SeverityBadge';
@@ -24,7 +24,7 @@ export const MotorAsymmetryCard: React.FC<MotorAsymmetryCardProps> = ({ escovas,
   const resultado = grupo?.itens[0]?.resultado;
   const avaliado = resultado ? estadoResultado(resultado) === 'avaliado' : false;
   const severidade = avaliado ? resultado!.severidade : null;
-  const anormal = severidade !== null && severidade !== 'Normal';
+  const anormal = ehSeveridadeAnormal(severidade);
   const desatualizado = estaDesatualizado(dado);
   const valor = avaliado && resultado!.valorObservado !== null ? resultado!.valorObservado : extremos?.diferenca ?? null;
 
@@ -43,12 +43,12 @@ export const MotorAsymmetryCard: React.FC<MotorAsymmetryCardProps> = ({ escovas,
       <header className="flex items-start justify-between gap-2">
         <div>
           <h3 className="text-[15px] text-ink">Motor</h3>
-          <p className="text-xs text-ink-3">Assimetria entre escovas</p>
+          <p className="text-xs text-ink-3">Diferença entre escovas</p>
         </div>
         {grupo &&
           (grupo.aguardando ? (
             <SeverityBadge estado="aguardando-amostras" compacto />
-          ) : anormal ? (
+          ) : anormal || severidade === 'SemClassificacao' ? (
             <SeverityBadge estado={severidade!} compacto esmaecido={desatualizado} />
           ) : null)}
       </header>

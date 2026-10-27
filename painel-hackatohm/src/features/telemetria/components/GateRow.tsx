@@ -1,7 +1,7 @@
 import React from 'react';
 import { ResultadoGateRealtime } from '@/features/quality-gates/types/qualityGate';
-import { formatarValorGate, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
-import { estadoResultado, EstadoPrincipal } from '../helpers/estadoHelper';
+import { formatarValorGate, nomeRegraDistinto, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
+import { ehSeveridadeAnormal, estadoResultado, EstadoPrincipal } from '../helpers/estadoHelper';
 import { SeverityBadge } from './SeverityBadge';
 
 interface GateRowProps {
@@ -10,24 +10,32 @@ interface GateRowProps {
   escopo: { tipo: 'escova'; numeroEscova: number } | { tipo: 'motor' };
   /** Dado desatualizado: cor mantida com 60% de opacidade. */
   esmaecido?: boolean;
+  /** Sem cabeçalho de grupo por perto: repete o nome do tipo quando o nome da regra não o diz. */
+  comTipo?: boolean;
 }
 
 /** Uma regra avaliada: escopo, regra, severidade e `valor ≥ limite` na unidade do tipo. */
-export const GateRow: React.FC<GateRowProps> = ({ resultado, escopo, esmaecido = false }) => {
+export const GateRow: React.FC<GateRowProps> = ({ resultado, escopo, esmaecido = false, comTipo = false }) => {
   const aguardando = estadoResultado(resultado) === 'aguardando-amostras';
   const estado: EstadoPrincipal = aguardando ? 'aguardando-amostras' : resultado.severidade;
-  const alerta = !aguardando && resultado.severidade !== 'Normal';
+  const alerta = !aguardando && ehSeveridadeAnormal(resultado.severidade);
   const tipo = obterTipoRegra(resultado.tipoRegra);
+  // O cabeçalho do grupo já diz o tipo: o nome só aparece quando acrescenta algo.
+  const nome = nomeRegraDistinto(resultado.nomeRegra, tipo) ?? (comTipo ? tipo.rotulo : null);
   const temValores = !aguardando && resultado.valorObservado !== null && resultado.valorLimite !== null;
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-1 py-3">
       <p className="min-w-0 text-[15px] text-ink">
         <span className="text-ink-2">{escopo.tipo === 'motor' ? 'Motor' : `Escova ${escopo.numeroEscova}`}</span>
-        <span aria-hidden="true" className="px-1.5 text-ink-3">
-          ·
-        </span>
-        {resultado.nomeRegra || tipo.rotulo}
+        {nome && (
+          <>
+            <span aria-hidden="true" className="px-1.5 text-ink-3">
+              ·
+            </span>
+            {nome}
+          </>
+        )}
       </p>
       <SeverityBadge estado={estado} esmaecido={esmaecido && alerta} />
       {(temValores || resultado.mensagemDiagnostico) && (

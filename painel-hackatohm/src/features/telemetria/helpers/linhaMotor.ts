@@ -1,8 +1,7 @@
-import { NivelSeveridade } from '@/features/quality-gates/types/qualityGate';
 import { formatarValorGate, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
 import { MotivoStatus } from '@/features/telemetria/types/telemetria';
 import { MotorTelemetria, SerieEscova } from '@/features/telemetria/store/tipos';
-import { EstadoPrincipal, estadoResultado, RANK_SEVERIDADE } from './estadoHelper';
+import { EstadoPrincipal, ehSeveridadeAnormal, estadoResultado, RANK_SEVERIDADE } from './estadoHelper';
 import { montarLotes } from './grafico';
 
 /** Filtros da visão geral: severidade e, à parte, os estados sem severidade. */
@@ -104,8 +103,8 @@ export function motivoDoMotor(
     const leitura = serie.ultima;
     if (!leitura) continue;
     for (const gate of leitura.resultadosQualityGates) {
-      if (estadoResultado(gate) !== 'avaliado' || gate.severidade === 'Normal') continue;
-      const rank = RANK_SEVERIDADE[gate.severidade as NivelSeveridade];
+      if (estadoResultado(gate) !== 'avaliado' || !ehSeveridadeAnormal(gate.severidade)) continue;
+      const rank = RANK_SEVERIDADE[gate.severidade];
       if (!melhor || rank > melhor.rank) {
         melhor = {
           numeroEscova: leitura.numeroEscova,
@@ -127,7 +126,7 @@ export function motivoDoMotor(
 }
 
 /**
- * "Escova 2 de Motor A: Limiar estático, 96,1 °C ≥ 95 °C" (o quê, onde, quanto).
+ * "Escova 2 de Motor A: Limite de temperatura, 96,1 °C ≥ 95 °C" (o quê, onde, quanto).
  * A assimetria é do motor: não aponta uma escova.
  */
 export function descreverMotivo(motivo: MotivoStatus, nomeMotor: string): string {
@@ -144,7 +143,7 @@ export function descreverMotivo(motivo: MotivoStatus, nomeMotor: string): string
   return frase.charAt(0).toUpperCase() + frase.slice(1);
 }
 
-/** "Limiar estático na escova 2" / "Assimetria entre escovas": curto, para a linha do motor. */
+/** "Limite de temperatura na escova 2" / "Diferença entre escovas": curto, para a linha do motor. */
 export function rotuloCurtoDoMotivo(motivo: MotivoStatus): string {
   const tipo = obterTipoRegra(motivo.tipoRegra).rotulo;
   return motivo.tipoRegra === 'temperatura.assimetria_escovas'

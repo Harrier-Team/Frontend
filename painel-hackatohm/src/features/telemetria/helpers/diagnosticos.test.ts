@@ -80,6 +80,14 @@ describe('resumirDiagnosticos', () => {
       criticos: 1,
       dentroDoLimite: 1,
       aguardando: 2,
+      semClassificacao: 0,
     });
+  });
+
+  it('severidade desconhecida não conta como dentro do limite', () => {
+    const grupos = agruparDiagnosticos([
+      { numeroEscova: 1, resultadosQualityGates: [gate({ severidade: 'SemClassificacao' })] },
+    ]);
+    expect(resumirDiagnosticos(grupos)).toMatchObject({ dentroDoLimite: 0, semClassificacao: 1, alertas: 0 });
   });
 });

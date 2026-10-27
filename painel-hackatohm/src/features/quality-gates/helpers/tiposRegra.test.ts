@@ -3,8 +3,10 @@ import {
   agruparRegrasPorTipo,
   descreverFaixa,
   descreverLimites,
+  ehRegraEditavel,
   formatarValorGate,
   LISTA_TIPOS_REGRA,
+  nomeRegraDistinto,
   obterTipoRegra,
 } from './tiposRegra';
 
@@ -33,15 +35,22 @@ describe('formatarValorGate', () => {
 });
 
 describe('catálogo de tipos', () => {
-  it('tem três tipos com limites padrão válidos', () => {
-    expect(LISTA_TIPOS_REGRA).toHaveLength(3);
-    for (const tipo of LISTA_TIPOS_REGRA) {
-      expect(tipo.padrao.aviso).toBeLessThan(tipo.padrao.critico);
-    }
+  it('tem três tipos com nome amigável e o técnico como subtítulo', () => {
+    expect(LISTA_TIPOS_REGRA.map((t) => [t.rotulo, t.subtitulo])).toEqual([
+      ['Limite de temperatura', 'Limiar estático'],
+      ['Velocidade de aquecimento', 'Gradiente térmico'],
+      ['Diferença entre escovas', 'Assimetria entre escovas'],
+    ]);
   });
 
-  it('cai no limiar estático para tipo desconhecido', () => {
-    expect(obterTipoRegra('x').tipo).toBe('temperatura.limiar_estatico');
+  it('tipo desconhecido aparece pelo identificador, sem unidade e sem edição', () => {
+    const info = obterTipoRegra('outro.tipo');
+    expect(info.conhecido).toBe(false);
+    expect(info.rotulo).toBe('outro.tipo');
+    expect(info.unidade).toBe('');
+    expect(ehRegraEditavel({ tipoRegra: 'outro.tipo' })).toBe(false);
+    expect(ehRegraEditavel({ tipoRegra: 'temperatura.limiar_estatico' })).toBe(true);
+    expect(descreverLimites('outro.tipo', { aviso: 1, critico: 2 })).toBe('Aviso em 1, crítico em 2');
   });
 });
 
@@ -64,5 +73,28 @@ describe('agruparRegrasPorTipo', () => {
       'temperatura.assimetria_escovas',
     ]);
     expect(grupos[0].regras.map((r) => r.nome)).toEqual(['A', 'b']);
+  });
+});
+
+describe('agruparRegrasPorTipo com tipo desconhecido', () => {
+  it('separa o desconhecido pelo identificador, depois dos conhecidos', () => {
+    const grupos = agruparRegrasPorTipo([
+      { tipoRegra: 'x.y', nome: 'Z' },
+      { tipoRegra: 'temperatura.limiar_estatico', nome: 'A' },
+    ]);
+    expect(grupos.map((g) => g.info.tipo)).toEqual(['temperatura.limiar_estatico', 'x.y']);
+    expect(grupos[1].info.conhecido).toBe(false);
+  });
+});
+
+describe('nomeRegraDistinto', () => {
+  const info = obterTipoRegra('temperatura.assimetria_escovas');
+  it('omite o nome que só repete o tipo (rótulo ou nome técnico)', () => {
+    expect(nomeRegraDistinto('Assimetria entre escovas', info)).toBeNull();
+    expect(nomeRegraDistinto(' diferença entre escovas ', info)).toBeNull();
+    expect(nomeRegraDistinto('', info)).toBeNull();
+  });
+  it('mantém nomes próprios', () => {
+    expect(nomeRegraDistinto('Assimetria rígida', info)).toBe('Assimetria rígida');
   });
 });

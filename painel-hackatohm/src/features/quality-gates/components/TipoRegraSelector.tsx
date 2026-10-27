@@ -57,6 +57,7 @@ export const TipoRegraSelector: React.FC<TipoRegraSelectorProps> = ({ valor, onC
                 <span className="text-sm text-ink">{info.rotulo}</span>
                 <span className="num text-xs text-ink-3">{info.unidade}</span>
               </span>
+              <span className="-mt-1 text-xs text-ink-3">{info.subtitulo}</span>
               <span className="text-[13px] leading-snug text-ink-2">{info.avalia}</span>
               <span className="text-xs leading-snug text-ink-3">Aguardando amostras: {info.aguardaQuando.toLowerCase()}</span>
               <span className="num text-xs text-ink-3">Limites {descreverFaixa(info)}</span>

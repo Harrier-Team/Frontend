@@ -107,18 +107,21 @@ export interface ResumoDiagnosticos {
   criticos: number;
   dentroDoLimite: number;
   aguardando: number;
+  /** Severidade que o painel não reconhece: não conta como dentro do limite. */
+  semClassificacao: number;
 }
 
 /** Contagem de resultados (não de grupos), com a assimetria contada uma vez. */
 export function resumirDiagnosticos(grupos: GrupoDiagnostico[]): ResumoDiagnosticos {
-  const resumo: ResumoDiagnosticos = { alertas: 0, criticos: 0, dentroDoLimite: 0, aguardando: 0 };
+  const resumo: ResumoDiagnosticos = { alertas: 0, criticos: 0, dentroDoLimite: 0, aguardando: 0, semClassificacao: 0 };
   for (const grupo of grupos) {
     for (const { resultado } of grupo.itens) {
       if (estadoResultado(resultado) === 'aguardando-amostras') resumo.aguardando += 1;
       else if (emAlerta(resultado)) {
         resumo.alertas += 1;
         if (resultado.severidade === 'Critico') resumo.criticos += 1;
-      } else resumo.dentroDoLimite += 1;
+      } else if (resultado.severidade === 'SemClassificacao') resumo.semClassificacao += 1;
+      else resumo.dentroDoLimite += 1;
     }
   }
   return resumo;

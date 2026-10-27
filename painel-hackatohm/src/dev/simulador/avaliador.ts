@@ -143,7 +143,7 @@ export function avaliarLote(
   return saida;
 }
 
-const RANK: Record<NivelSeveridade, number> = { Normal: 0, Atencao: 1, AlertaPreditivo: 2, Critico: 3 };
+const RANK: Record<NivelSeveridade, number> = { Normal: 0, SemClassificacao: 0, Atencao: 1, AlertaPreditivo: 2, Critico: 3 };
 
 /** Severidade, contagem por escova e motivo do status agregado. */
 export function consolidarStatus(

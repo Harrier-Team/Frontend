@@ -1,8 +1,14 @@
 import { ParametrosRegra, TipoRegra } from '@/features/quality-gates/types/regraQualidade';
 
 export interface TipoRegraInfo {
-  tipo: TipoRegra;
+  /** Identificador do backend; para um tipo desconhecido, o texto recebido. */
+  tipo: string;
+  /** false = tipo que o painel não conhece (mostrado pelo identificador, só leitura). */
+  conhecido: boolean;
+  /** Nome amigável, em linguagem de operação. */
   rotulo: string;
+  /** Nome técnico do tipo, como subtítulo. */
+  subtitulo: string;
   /** Unidade curta, usada ao lado de qualquer valor ou limite. */
   unidade: string;
   /** Unidade por extenso, usada nos rótulos dos campos. */
@@ -15,16 +21,16 @@ export interface TipoRegraInfo {
   /** Faixa aceita para cada limite. `null` = sem limite naquele lado. */
   min: number | null;
   max: number | null;
-  /** Limites sugeridos ao criar uma regra do tipo. */
-  padrao: ParametrosRegra;
 }
 
 export const TIPO_LIMIAR_ESTATICO: TipoRegra = 'temperatura.limiar_estatico';
 
-export const TIPOS_REGRA: Record<TipoRegra, TipoRegraInfo> = {
+export const TIPOS_REGRA: Record<TipoRegra, TipoRegraInfo & { tipo: TipoRegra }> = {
   'temperatura.limiar_estatico': {
     tipo: 'temperatura.limiar_estatico',
-    rotulo: 'Limiar estático',
+    conhecido: true,
+    rotulo: 'Limite de temperatura',
+    subtitulo: 'Limiar estático',
     unidade: '°C',
     unidadeLonga: '°C',
     descricao: 'Avalia a temperatura atual de cada escova contra os limites.',
@@ -32,11 +38,12 @@ export const TIPOS_REGRA: Record<TipoRegra, TipoRegraInfo> = {
     aguardaQuando: 'Quase nunca: basta uma leitura válida.',
     min: -55,
     max: 200,
-    padrao: { aviso: 80, critico: 95 },
   },
   'temperatura.gradiente_termico': {
     tipo: 'temperatura.gradiente_termico',
-    rotulo: 'Gradiente térmico',
+    conhecido: true,
+    rotulo: 'Velocidade de aquecimento',
+    subtitulo: 'Gradiente térmico',
     unidade: '°C/min',
     unidadeLonga: '°C/min',
     descricao:
@@ -45,11 +52,12 @@ export const TIPOS_REGRA: Record<TipoRegra, TipoRegraInfo> = {
     aguardaQuando: 'No primeiro lote, quando ainda não há leitura anterior.',
     min: 0,
     max: null,
-    padrao: { aviso: 5, critico: 10 },
   },
   'temperatura.assimetria_escovas': {
     tipo: 'temperatura.assimetria_escovas',
-    rotulo: 'Assimetria entre escovas',
+    conhecido: true,
+    rotulo: 'Diferença entre escovas',
+    subtitulo: 'Assimetria entre escovas',
     unidade: '°C',
     unidadeLonga: '°C de diferença',
     descricao:
@@ -58,19 +66,40 @@ export const TIPOS_REGRA: Record<TipoRegra, TipoRegraInfo> = {
     aguardaQuando: 'Quando o motor tem uma só escova no lote.',
     min: 0,
     max: null,
-    padrao: { aviso: 10, critico: 15 },
   },
 };
 
-export const LISTA_TIPOS_REGRA: TipoRegraInfo[] = Object.values(TIPOS_REGRA);
+export const LISTA_TIPOS_REGRA = Object.values(TIPOS_REGRA) as Array<TipoRegraInfo & { tipo: TipoRegra }>;
 
 export function ehTipoRegra(valor: unknown): valor is TipoRegra {
   return typeof valor === 'string' && valor in TIPOS_REGRA;
 }
 
-/** Catálogo do tipo; tipo desconhecido cai no limiar estático, como o backend faz ao omitir. */
+/**
+ * Catálogo do tipo. Tipo desconhecido não herda nada de outro tipo: aparece
+ * pelo identificador, sem unidade, e o painel não o edita nem o alterna.
+ */
 export function obterTipoRegra(tipo: string | null | undefined): TipoRegraInfo {
-  return ehTipoRegra(tipo) ? TIPOS_REGRA[tipo] : TIPOS_REGRA[TIPO_LIMIAR_ESTATICO];
+  if (ehTipoRegra(tipo)) return TIPOS_REGRA[tipo];
+  const id = (tipo ?? '').trim();
+  return {
+    tipo: id,
+    conhecido: false,
+    rotulo: id || 'Tipo não informado',
+    subtitulo: 'Tipo não reconhecido pelo painel',
+    unidade: '',
+    unidadeLonga: '',
+    descricao: 'O painel não conhece este tipo de regra, então só mostra o que o servidor enviou.',
+    avalia: 'Avaliação definida pelo servidor.',
+    aguardaQuando: 'Definido pelo servidor.',
+    min: null,
+    max: null,
+  };
+}
+
+/** O painel sabe interpretar, editar e alternar regras deste tipo. */
+export function ehRegraEditavel(regra: { tipoRegra: string }): boolean {
+  return ehTipoRegra(regra.tipoRegra);
 }
 
 const formatadorNumero = new Intl.NumberFormat('pt-BR', {
@@ -103,20 +132,43 @@ export const TIPO_ASSIMETRIA: TipoRegra = 'temperatura.assimetria_escovas';
 
 /** Faixa aceita, em texto: "de -55 a 200 °C", "0 ou mais °C/min". */
 export function descreverFaixa(info: TipoRegraInfo): string {
+  if (!info.conhecido) return 'definida pelo servidor';
   if (info.min !== null && info.max !== null) return `de ${info.min} a ${info.max} ${info.unidade}`;
   if (info.min !== null) return `${info.min} ou mais ${info.unidade}`;
   if (info.max !== null) return `até ${info.max} ${info.unidade}`;
   return info.unidade;
 }
 
-/** Grupos na ordem do catálogo (estático, gradiente, assimetria); regras por nome. Grupos vazios saem. */
+/**
+ * Grupos na ordem do catálogo (estático, gradiente, assimetria); regras por
+ * nome. Tipos desconhecidos formam um grupo por identificador, depois dos
+ * conhecidos. Grupos vazios saem.
+ */
 export function agruparRegrasPorTipo<T extends { tipoRegra: string; nome: string }>(
   regras: T[]
 ): Array<{ info: TipoRegraInfo; regras: T[] }> {
-  return LISTA_TIPOS_REGRA.map((info) => ({
+  const porNome = (a: T, b: T) => a.nome.localeCompare(b.nome, 'pt-BR');
+  const conhecidos = LISTA_TIPOS_REGRA.map((info) => ({
     info,
-    regras: regras
-      .filter((r) => obterTipoRegra(r.tipoRegra).tipo === info.tipo)
-      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
-  })).filter((grupo) => grupo.regras.length > 0);
+    regras: regras.filter((r) => r.tipoRegra === info.tipo).sort(porNome),
+  }));
+  const desconhecidos = [...new Set(regras.filter((r) => !ehTipoRegra(r.tipoRegra)).map((r) => r.tipoRegra))]
+    .sort((a, b) => a.localeCompare(b))
+    .map((tipo) => ({
+      info: obterTipoRegra(tipo),
+      regras: regras.filter((r) => r.tipoRegra === tipo).sort(porNome),
+    }));
+  return [...conhecidos, ...desconhecidos].filter((grupo) => grupo.regras.length > 0);
+}
+
+/**
+ * Nome da regra para exibir ao lado do tipo: some quando só repete o tipo
+ * (pelo rótulo amigável ou pelo nome técnico), para a tela não dizer a mesma
+ * coisa duas vezes.
+ */
+export function nomeRegraDistinto(nomeRegra: string | null | undefined, info: TipoRegraInfo): string | null {
+  const nome = (nomeRegra ?? '').trim();
+  if (!nome) return null;
+  const norma = (t: string) => t.trim().toLowerCase();
+  return [info.rotulo, info.subtitulo, info.tipo].some((t) => norma(t) === norma(nome)) ? null : nome;
 }

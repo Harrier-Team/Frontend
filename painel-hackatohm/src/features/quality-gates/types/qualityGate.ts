@@ -2,7 +2,12 @@ export type NivelSeveridade =
   | 'Normal'
   | 'Atencao'
   | 'AlertaPreditivo'
-  | 'Critico';
+  | 'Critico'
+  /**
+   * Criado pelo painel, nunca enviado pelo backend: severidade ausente ou que
+   * o painel não reconhece. Nunca é tratada como Normal.
+   */
+  | 'SemClassificacao';
 
 export interface ResultadoGateRealtime {
   regraQualidadeId: string;

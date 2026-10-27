@@ -22,6 +22,7 @@ export const TEMA_ESTADO: Record<EstadoPrincipal, TemaEstado> = {
   Atencao: SEVERIDADE_THEME.Atencao,
   AlertaPreditivo: SEVERIDADE_THEME.AlertaPreditivo,
   Critico: SEVERIDADE_THEME.Critico,
+  SemClassificacao: SEVERIDADE_THEME.SemClassificacao,
   offline: neutro('Offline', 'var(--color-data-off)'),
   degradado: neutro('Degradado', 'var(--color-data-off)'),
   'aguardando-amostras': neutro('Aguardando amostras'),

@@ -293,7 +293,7 @@ export const DetalhesMotor: React.FC = () => {
           </>
         )}
 
-        {abaAtiva === 'regras' && <MotorQualityRulesSection motorId={motor.id} controle={regrasMotor} escovas={escovas} />}
+        {abaAtiva === 'regras' && <MotorQualityRulesSection controle={regrasMotor} escovas={escovas} />}
 
         {abaAtiva === 'dispositivo' && <DispositivoMotor motor={motor} telemetria={telemetria} mac={mac} />}
       </div>

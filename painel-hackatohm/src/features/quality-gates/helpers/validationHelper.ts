@@ -10,9 +10,43 @@ export interface RegraQualidadeFormValues {
 }
 
 export type FormErrors = Partial<Record<
-  'nome' | 'descricao' | 'aviso' | 'critico',
+  'nome' | 'descricao' | 'tipo' | 'aviso' | 'critico',
   string
 >>;
+
+const normalizar = (t: string) => t.toLowerCase().replace(/[^a-z]/g, '');
+
+/**
+ * Leva os erros de campo do Problem Details (`errors`) para os campos do
+ * formulário. As chaves variam de caixa e podem vir aninhadas
+ * ("Parametros.Aviso"); um erro de `Parametros` sem campo vai para o crítico,
+ * onde mora a regra "aviso menor que crítico". O que não casa com nenhum
+ * campo fica de fora (a página mostra a mensagem geral).
+ */
+export function errosDoServidorParaFormulario(
+  fieldErrors: Record<string, string[]> | null | undefined
+): FormErrors {
+  const erros: FormErrors = {};
+  for (const [chave, mensagens] of Object.entries(fieldErrors ?? {})) {
+    const mensagem = mensagens.find((m) => typeof m === 'string' && m.trim() !== '');
+    if (!mensagem) continue;
+    const ultimo = normalizar(chave.split('.').pop() ?? chave);
+    const campo: keyof FormErrors | null =
+      ultimo === 'nome'
+        ? 'nome'
+        : ultimo === 'descricao'
+          ? 'descricao'
+          : ultimo === 'tiporegra'
+            ? 'tipo'
+            : ultimo === 'aviso'
+              ? 'aviso'
+              : ultimo === 'critico' || ultimo === 'parametros'
+                ? 'critico'
+                : null;
+    if (campo && !erros[campo]) erros[campo] = mensagem;
+  }
+  return erros;
+}
 
 function validarLimite(nomeLimite: string, valor: number, info: TipoRegraInfo): string | null {
   const unidade = info.unidadeLonga;

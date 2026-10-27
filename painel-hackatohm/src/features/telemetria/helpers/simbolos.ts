@@ -1,5 +1,6 @@
 import {
   Circle,
+  CircleHelp,
   CircleDashed,
   CircleSlash2,
   Hourglass,
@@ -18,6 +19,7 @@ export const SIMBOLO_ESTADO: Record<EstadoPrincipal, LucideIcon> = {
   Atencao: Info,
   AlertaPreditivo: TriangleAlert,
   Critico: OctagonAlert,
+  SemClassificacao: CircleHelp,
   offline: WifiOff,
   degradado: CircleSlash2,
   'aguardando-amostras': Hourglass,

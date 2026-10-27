@@ -22,6 +22,18 @@ function plural(n: number, singular: string, pluralForm: string) {
   return `${n} ${n === 1 ? singular : pluralForm}`;
 }
 
+/** Tipo da regra uma vez só: nome amigável, unidade e o nome técnico como subtítulo. */
+const TituloGrupo: React.FC<{ tipoRegra: string }> = ({ tipoRegra }) => {
+  const tipo = obterTipoRegra(tipoRegra);
+  return (
+    <p className="text-[13px] text-ink-3">
+      <span className="text-ink-2">{tipo.rotulo}</span>
+      {tipo.unidade && <span className="num"> ({tipo.unidade})</span>}
+      {tipo.conhecido && <span> · {tipo.subtitulo}</span>}
+    </p>
+  );
+};
+
 const escopoDoItem = (item: ItemDiagnostico) =>
   item.numeroEscova === null
     ? ({ tipo: 'motor' } as const)
@@ -67,6 +79,7 @@ export const DiagnosticosPanel: React.FC<DiagnosticosPanelProps> = ({ motorId, g
     partes.push(plural(resumo.dentroDoLimite, 'regra dentro do limite', 'regras dentro do limite'));
   }
   if (resumo.aguardando > 0) partes.push(`${resumo.aguardando} aguardando amostras`);
+  if (resumo.semClassificacao > 0) partes.push(`${resumo.semClassificacao} sem classificação`);
 
   return (
     <section aria-labelledby="diagnosticos" className="space-y-3">
@@ -82,9 +95,7 @@ export const DiagnosticosPanel: React.FC<DiagnosticosPanelProps> = ({ motorId, g
         <div className="space-y-3">
           {comAlerta.map((grupo) => (
             <div key={grupo.chave} className="rounded-[var(--radius-panel)] border border-line bg-panel px-5 py-3">
-              <p className="text-[13px] text-ink-3">
-                {obterTipoRegra(grupo.tipoRegra).rotulo} ({obterTipoRegra(grupo.tipoRegra).unidade})
-              </p>
+              <TituloGrupo tipoRegra={grupo.tipoRegra} />
               <div className="divide-y divide-line">
                 {grupo.itens
                   .filter((i) => emAlerta(i.resultado))
@@ -118,6 +129,7 @@ export const DiagnosticosPanel: React.FC<DiagnosticosPanelProps> = ({ motorId, g
                   key={`r-${grupo.chave}-${item.numeroEscova ?? 'motor'}`}
                   resultado={item.resultado}
                   escopo={escopoDoItem(item)}
+                  comTipo
                 />
               ))
             )}

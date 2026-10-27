@@ -4,7 +4,7 @@ import { RegraQualidade } from '@/features/quality-gates/types/regraQualidade';
 import { IconButton } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Switch';
 import { Panel } from '@/components/ui/Panel';
-import { agruparRegrasPorTipo, descreverLimites } from '@/features/quality-gates/helpers/tiposRegra';
+import { agruparRegrasPorTipo, descreverLimites, ehRegraEditavel } from '@/features/quality-gates/helpers/tiposRegra';
 
 interface QualityRuleListProps {
   regras: RegraQualidade[];
@@ -38,12 +38,16 @@ export const QualityRuleList: React.FC<QualityRuleListProps> = ({
         <div>
           <h2 id={`grupo-${info.tipo}`} className="display text-base">
             {info.rotulo}
-            <span className="num ml-2 text-[13px] text-ink-3">{info.unidade}</span>
+            {info.unidade && <span className="num ml-2 text-[13px] text-ink-3">{info.unidade}</span>}
           </h2>
-          <p className="mt-0.5 text-[13px] text-ink-3">{info.avalia}</p>
+          <p className="mt-0.5 text-[13px] text-ink-3">
+            {info.conhecido ? `${info.subtitulo}. ${info.avalia}` : info.subtitulo}
+          </p>
         </div>
         <Panel>
-          {doTipo.map((regra) => (
+          {doTipo.map((regra) => {
+            const editavel = ehRegraEditavel(regra);
+            return (
             <article key={regra.id} className="flex items-center gap-4 px-5 py-4">
               <div className={`min-w-0 flex-1 ${regra.ativo ? '' : 'opacity-60'}`}>
                 <h3 className="truncate text-[15px] text-ink">{regra.nome}</h3>
@@ -68,16 +72,24 @@ export const QualityRuleList: React.FC<QualityRuleListProps> = ({
                       <span className="text-ink-3">Desativada</span>
                     </>
                   )}
+                  {!editavel && (
+                    <>
+                      <span aria-hidden="true" className="px-1.5 text-ink-3">
+                        ·
+                      </span>
+                      <span className="text-ink-3">Somente leitura: o painel não conhece este tipo</span>
+                    </>
+                  )}
                 </p>
               </div>
               <Switch
                 checked={regra.ativo}
-                disabled={salvando}
+                disabled={salvando || !editavel}
                 label={regra.ativo ? 'Desativar regra' : 'Ativar regra'}
                 onChange={() => onToggle(regra)}
               />
               <div className="flex gap-1">
-                <IconButton label={`Editar ${regra.nome}`} onClick={() => onEdit(regra)}>
+                <IconButton label={`Editar ${regra.nome}`} disabled={!editavel} onClick={() => onEdit(regra)}>
                   <Pencil className="h-4 w-4" aria-hidden="true" />
                 </IconButton>
                 <IconButton
@@ -89,7 +101,8 @@ export const QualityRuleList: React.FC<QualityRuleListProps> = ({
                 </IconButton>
               </div>
             </article>
-          ))}
+            );
+          })}
         </Panel>
       </section>
     ))}

@@ -14,15 +14,16 @@ const SEVERIDADES: NivelSeveridade[] = ['Normal', 'Atencao', 'AlertaPreditivo', 
 
 /**
  * A severidade chega como string. Tolera os números 0 a 3 de versões
- * anteriores do servidor. Valor desconhecido vira Normal.
+ * anteriores do servidor. Ausente ou desconhecido vira "Sem classificação":
+ * o painel nunca presume Normal.
  */
 export function normalizarSeveridade(valor: unknown): NivelSeveridade {
-  if (typeof valor === 'number') return SEVERIDADES[valor] ?? 'Normal';
+  if (typeof valor === 'number') return SEVERIDADES[valor] ?? 'SemClassificacao';
   if (typeof valor === 'string') {
     const encontrada = SEVERIDADES.find((s) => s.toLowerCase() === valor.toLowerCase());
     if (encontrada) return encontrada;
   }
-  return 'Normal';
+  return 'SemClassificacao';
 }
 
 export function normalizarGate(bruto: Partial<ResultadoGateRealtime>): ResultadoGateRealtime {

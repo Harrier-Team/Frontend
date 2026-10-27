@@ -8,7 +8,9 @@ describe('normalizarSeveridade', () => {
     expect(normalizarSeveridade('alertapreditivo')).toBe('AlertaPreditivo');
     expect(normalizarSeveridade(1)).toBe('Atencao');
     expect(normalizarSeveridade(3)).toBe('Critico');
-    expect(normalizarSeveridade(undefined)).toBe('Normal');
+    expect(normalizarSeveridade(undefined)).toBe('SemClassificacao');
+    expect(normalizarSeveridade('Gravissimo')).toBe('SemClassificacao');
+    expect(normalizarSeveridade(9)).toBe('SemClassificacao');
   });
 });
 
