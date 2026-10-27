@@ -46,6 +46,7 @@ divergência, eles prevalecem e este documento deve ser corrigido.
 | Aguardando amostras | `Hourglass` | "Aguardando amostras" | `ink-3` |
 | Sem regras | `CircleDashed` | "Sem regras" | `ink-3`, com link para vincular |
 | Sem leitura | — | "—" no valor | `ink-3` |
+| Sem classificação | `CircleHelp` | "Sem classificação" | `ink-3`; severidade desconhecida nunca vira Normal |
 
 ### Dado (frescor e conexão)
 
@@ -107,11 +108,16 @@ diagnóstico.
 
 ### Unidades e regras
 
-| `tipoRegra` | Rótulo | Unidade | Faixa dos limites |
-| --- | --- | --- | --- |
-| `temperatura.limiar_estatico` | Limiar estático | °C | -55 a 200 |
-| `temperatura.gradiente_termico` | Gradiente térmico | °C/min | ≥ 0 |
-| `temperatura.assimetria_escovas` | Assimetria entre escovas | °C de diferença | ≥ 0 |
+| `tipoRegra` | Rótulo | Subtítulo técnico | Unidade | Faixa dos limites |
+| --- | --- | --- | --- | --- |
+| `temperatura.limiar_estatico` | Limite de temperatura | Limiar estático | °C | -55 a 200 |
+| `temperatura.gradiente_termico` | Velocidade de aquecimento | Gradiente térmico | °C/min | ≥ 0 |
+| `temperatura.assimetria_escovas` | Diferença entre escovas | Assimetria entre escovas | °C de diferença | ≥ 0 |
+
+- Tipo desconhecido aparece pelo identificador, sem unidade inventada, e não
+  pode ser editado nem alternado pelo painel.
+- Trocar o tipo no formulário limpa os limites; regras novas começam sem
+  valores sugeridos (limites dependem do equipamento).
 
 - Sempre `aviso < critico`; comparação `>=` (igual ao limite já dispara).
 - Formatar `valorObservado` e `valorLimite` pela unidade do `tipoRegra`. Não
@@ -252,6 +258,7 @@ linha tem rótulo direto no fim ("E2 96,1"), sem depender de legenda.
 | `EscalaLimites` | Prévia normal, aviso e crítico de uma regra, com o valor atual como ponto de luz |
 | `Toast` | Aviso não bloqueante, `aria-live="polite"`, some sozinho em 8 s exceto Crítico |
 | `CopyableCode` | Texto mono com botão de copiar |
+| `CollectorRing` | Vista esquemática do anel coletor com as escovas ao redor (ver "Anel coletor") |
 | `ApiErrorState` | Erro de rede ou de servidor com causa provável e "Tentar de novo" |
 
 Base já existente e mantida: `Button`, `IconButton`, `Dialog`,
@@ -267,11 +274,34 @@ Desenhado em SVG próprio, sem biblioteca de gráficos.
 - Linhas de 1,5 px; o ponto de luz marca o último valor de cada escova.
 - Limites de aviso e crítico da regra de limiar estático como linhas
   tracejadas de 1 px nas cores de severidade, com rótulo à direita.
-- Pontos que dispararam alerta: marcador com o símbolo da severidade.
+- Marcador com o símbolo da severidade **só na transição**: no primeiro ponto
+  em que a escova entra numa severidade anormal ou mais grave. Pontos que
+  permanecem no mesmo estado não repetem o marcador; o trecho em alerta é
+  desenhado na cor da severidade, com a mesma espessura.
 - Lacunas maiores que 3× a cadência quebram a linha (não interpolar).
 - Crosshair mostra hora, valor de cada escova e ΔT naquele lote.
 - Título indica "Janela da sessão": o backend não fornece histórico.
 - Alternativa acessível: tabela com os últimos 20 lotes, acessível por botão.
+
+## Anel coletor
+
+Peça central do detalhe do motor, inspirada no render do anel coletor da
+identidade Harrier (`src/assets/collector-reference.jpg`).
+
+- SVG com o anel em traço de aço e os porta-escovas distribuídos igualmente
+  pelo número da escova: escova 1 no topo, sentido horário.
+- **É esquemático.** As posições não são medidas; a legenda fixa diz
+  "Representação esquemática: posições não medidas". O render fotográfico é
+  só decorativo (`alt=""`) e nunca indica posição ou estado de sensor.
+- Cada porta-escova mostra número, temperatura e símbolo de severidade, com as
+  mesmas regras de cor dos estados: neutro em Normal, tracejado quando sem
+  leitura ou desatualizado.
+- Com o gate de assimetria em alerta, o arco entre a escova mais quente e a
+  mais fria recebe realce na cor da severidade e o centro mostra o ΔT. Sem
+  alerta, o centro mostra a maior temperatura.
+- A seleção de escova é compartilhada na página: foco ou hover no anel destaca
+  o cartão e a linha do gráfico, e vice-versa. Setas percorrem as escovas.
+- Versão mini (28 px) na linha do motor, só com pontos por escova.
 
 ## Movimento
 
