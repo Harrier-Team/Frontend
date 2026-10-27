@@ -10,6 +10,7 @@ import { DiagnosticosPanel } from '../components/DiagnosticosPanel';
 import { DispositivoMotor } from '../components/DispositivoMotor';
 import { MotivoMotor } from '../components/MotivoMotor';
 import { PrevisaoMotor } from '../components/PrevisaoMotor';
+import { AlertasDoMotor } from '../../alertas/components/AlertasDoMotor';
 import { escolherMac, lerMacDoMotor } from '../helpers/macMotor';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Alert } from '../../../components/ui/Alert';
@@ -332,6 +333,8 @@ export const DetalhesMotor: React.FC = () => {
               temLeitura={series.some((s) => s.pontos.length > 0)}
               dado={resumo.dado}
             />
+
+            <AlertasDoMotor motorId={motor.id} nomeDoMotor={motor.nome} agora={agora} />
           </>
         )}
 

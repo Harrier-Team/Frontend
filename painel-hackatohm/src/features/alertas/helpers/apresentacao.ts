@@ -133,3 +133,25 @@ export function contarCriticosNaoReconhecidos(
 export function chaveDoAlerta(alerta: Pick<AlertaManutencao, 'id' | 'iniciadoEm'>): string {
   return `${alerta.id}@${alerta.iniciadoEm}`;
 }
+
+/** Filtros que a lista em aberto aplica no cliente (o histórico os manda ao servidor). */
+export function filtrarAlertas(
+  lista: AlertaManutencao[],
+  filtros: { motorId?: number; categoria?: string; severidade?: string; tipoRegra?: string }
+): AlertaManutencao[] {
+  return lista.filter(
+    (alerta) =>
+      (filtros.motorId === undefined || alerta.motorId === filtros.motorId) &&
+      (!filtros.categoria || alerta.categoria === filtros.categoria) &&
+      (!filtros.severidade || alerta.severidade === filtros.severidade) &&
+      (!filtros.tipoRegra || alerta.tipoRegra === filtros.tipoRegra)
+  );
+}
+
+/** Título da página: responde "há algo em aberto?". */
+export function tituloDosAlertas(abertos: AlertaManutencao[]): string {
+  const criticos = abertos.filter((alerta) => alerta.severidade === 'Critico').length;
+  if (abertos.length === 0) return 'Nenhum alerta em aberto';
+  if (criticos > 0) return criticos === 1 ? '1 alerta crítico em aberto' : `${criticos} alertas críticos em aberto`;
+  return abertos.length === 1 ? '1 alerta em aberto' : `${abertos.length} alertas em aberto`;
+}

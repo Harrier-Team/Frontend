@@ -128,8 +128,8 @@ export const Header: React.FC = () => {
           >
             Motores
           </Link>
-          <NavLink to="/eventos" className={({ isActive }) => classeLink(isActive)}>
-            Eventos
+          <NavLink to="/alertas" className={({ isActive }) => classeLink(isActive)}>
+            Alertas
             <ContadorCriticos />
           </NavLink>
           <NavLink to="/regras-qualidade" className={({ isActive }) => classeLink(isActive)}>

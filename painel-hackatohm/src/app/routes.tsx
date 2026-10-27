@@ -13,13 +13,19 @@ const DetalhesMotor = lazy(() =>
 const RegrasQualidade = lazy(() =>
   import('../features/quality-gates/pages/RegrasQualidade').then((m) => ({ default: m.RegrasQualidade }))
 );
-const Eventos = lazy(() => import('../features/eventos/pages/Eventos').then((m) => ({ default: m.Eventos })));
+const Alertas = lazy(() => import('../features/alertas/pages/Alertas').then((m) => ({ default: m.Alertas })));
 const Sistema = lazy(() => import('../features/sistema/pages/Sistema').then((m) => ({ default: m.Sistema })));
 
 /** Rotas antigas apontam para a visão geral, preservando ?novo=true. */
 function ParaVisaoGeral() {
   const { search } = useLocation();
   return <Navigate to={{ pathname: '/', search }} replace />;
+}
+
+/** A rota antiga dos eventos da sessão agora é a página de alertas (a conexão da sessão virou uma aba). */
+function ParaAlertas() {
+  const { search } = useLocation();
+  return <Navigate to={{ pathname: '/alertas', search }} replace />;
 }
 
 export function AppRoutes() {
@@ -32,7 +38,8 @@ export function AppRoutes() {
             <Route path="/motores" element={<ParaVisaoGeral />} />
             <Route path="/inicio" element={<ParaVisaoGeral />} />
             <Route path="/motores/:id/:aba?" element={<DetalhesMotor />} />
-            <Route path="/eventos" element={<Eventos />} />
+            <Route path="/alertas" element={<Alertas />} />
+            <Route path="/eventos" element={<ParaAlertas />} />
             <Route path="/regras-qualidade" element={<RegrasQualidade />} />
             <Route path="/sistema" element={<Sistema />} />
             <Route path="*" element={<ParaVisaoGeral />} />

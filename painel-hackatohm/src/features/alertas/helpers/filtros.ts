@@ -85,3 +85,9 @@ export function montarQuery(filtros: ConsultaAlertas): string {
 export function totalDePaginas(total: number, tamanho: number): number {
   return Math.max(1, Math.ceil(total / Math.max(tamanho, 1)));
 }
+
+/** Endereço de "Ver todos": o histórico do motor, com abertos e encerrados. */
+export function enderecoDosAlertasDoMotor(motorId: number): string {
+  const params = escreverParametros('historico', { ...FILTROS_PADRAO, motorId });
+  return `/alertas?${params.toString()}`;
+}

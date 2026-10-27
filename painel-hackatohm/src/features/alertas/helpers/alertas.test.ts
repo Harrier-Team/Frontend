@@ -8,11 +8,14 @@ import {
   descreverAlerta,
   descreverDuracao,
   escopoDoAlerta,
+  filtrarAlertas,
   limiteDaMensagem,
   ordenarAlertas,
   rotuloCategoria,
+  tituloDosAlertas,
 } from './apresentacao';
 import {
+  enderecoDosAlertasDoMotor,
   escreverParametros,
   FILTROS_PADRAO,
   lerAba,
@@ -305,5 +308,33 @@ describe('contador de críticos não reconhecidos', () => {
     r.reconhecer(Array.from({ length: LIMITE_RECONHECIDOS + 5 }, (_, i) => alertaCritico({ id: i + 1 })));
     expect(r.obterReconhecidos().size).toBe(LIMITE_RECONHECIDOS);
     expect(r.obterReconhecidos().has(chaveDoAlerta(alertaCritico({ id: 1 })))).toBe(false);
+  });
+});
+
+describe('lista em aberto', () => {
+  const lista = [
+    alerta({ id: 1, motorId: 1, severidade: 'AlertaPreditivo' }),
+    alertaCritico({ id: 2, motorId: 1 }),
+    alertaCritico({ id: 3, motorId: 2, numeroEscova: null, tipoRegra: 'temperatura.assimetria_escovas' }),
+  ];
+
+  it('filtra por motor, categoria, severidade e tipo no cliente', () => {
+    expect(filtrarAlertas(lista, {}).map((a) => a.id)).toEqual([1, 2, 3]);
+    expect(filtrarAlertas(lista, { motorId: 1 }).map((a) => a.id)).toEqual([1, 2]);
+    expect(filtrarAlertas(lista, { categoria: 'Preditivo' }).map((a) => a.id)).toEqual([1]);
+    expect(filtrarAlertas(lista, { severidade: 'Critico' }).map((a) => a.id)).toEqual([2, 3]);
+    expect(filtrarAlertas(lista, { tipoRegra: 'temperatura.assimetria_escovas' }).map((a) => a.id)).toEqual([3]);
+    expect(filtrarAlertas(lista, { motorId: 9 })).toEqual([]);
+  });
+
+  it('o título responde se há algo em aberto', () => {
+    expect(tituloDosAlertas([])).toBe('Nenhum alerta em aberto');
+    expect(tituloDosAlertas([lista[0]])).toBe('1 alerta em aberto');
+    expect(tituloDosAlertas([lista[0], lista[1]])).toBe('1 alerta crítico em aberto');
+    expect(tituloDosAlertas([lista[1], lista[2]])).toBe('2 alertas críticos em aberto');
+  });
+
+  it('"Ver todos" abre o histórico do motor, com abertos e encerrados', () => {
+    expect(enderecoDosAlertasDoMotor(3)).toBe('/alertas?aba=historico&motorId=3');
   });
 });

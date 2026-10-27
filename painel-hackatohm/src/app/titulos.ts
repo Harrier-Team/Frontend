@@ -11,8 +11,8 @@ export function tituloDaPagina(pathname: string): string {
   switch (secao) {
     case 'motores':
       return /^\/motores\/\d+/.test(pathname) ? 'Motor | Harrier' : TITULO_BASE;
-    case 'eventos':
-      return 'Eventos | Harrier';
+    case 'alertas':
+      return 'Alertas | Harrier';
     case 'regras-qualidade':
       return 'Quality gates | Harrier';
     case 'sistema':
