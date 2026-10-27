@@ -52,7 +52,7 @@ export const SensorFormRow: React.FC<SensorFormRowProps> = ({
         id={`modelo-${index}`}
         type="text"
         required
-        placeholder="DS18B20"
+        placeholder="MLX90614"
         value={escova.modelo}
         onChange={(event) => onChange(index, 'modelo', event.target.value)}
         className="field"

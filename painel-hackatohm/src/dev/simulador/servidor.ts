@@ -140,8 +140,8 @@ export function criarServidorSimulado(agora: () => number = Date.now, cadenciaMs
     ativo: true,
   });
 
-  const escovas3 = [1, 2, 3].map((numeroEscova) => ({ numeroEscova, modelo: 'DS18B20' }));
-  const escovas2 = [1, 2].map((numeroEscova) => ({ numeroEscova, modelo: 'DS18B20' }));
+  const escovas3 = [1, 2, 3].map((numeroEscova) => ({ numeroEscova, modelo: 'MLX90614' }));
+  const escovas2 = [1, 2].map((numeroEscova) => ({ numeroEscova, modelo: 'MLX90614' }));
 
   const semente: Array<[MotorSimulado, boolean]> = [
     [adicionarMotor({ nome: 'Motor A', tipo: 'Universal', mac: 'A4:CF:12:8B:01:11', escovas: escovas3 }, 'aquecimento', 0), true],

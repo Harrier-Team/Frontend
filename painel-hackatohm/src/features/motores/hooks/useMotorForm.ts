@@ -9,7 +9,7 @@ import {
   validarCadastroMotor,
 } from '../helpers/cadastroHelper';
 
-const MODELO_PADRAO = 'ESP32-DS18B20';
+const MODELO_PADRAO = 'MLX90614';
 
 const escovaInicial = (): EscovaForm => ({ numeroEscova: 1, modelo: MODELO_PADRAO });
 
