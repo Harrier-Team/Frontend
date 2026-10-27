@@ -323,6 +323,7 @@ export const DetalhesMotor: React.FC = () => {
               agora={agora}
               destacada={escovaAtiva}
               onDestacar={setEscovaAtiva}
+              previsoes={previsoes}
             />
 
             <DiagnosticosPanel

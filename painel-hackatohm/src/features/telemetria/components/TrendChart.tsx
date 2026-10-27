@@ -4,6 +4,9 @@ import { Segmented } from '@/components/ui/Segmented';
 import { ParametrosRegra } from '@/features/quality-gates/types/regraQualidade';
 import { SeveridadeAnormal } from '../helpers/estadoHelper';
 import { PontoEscova } from '../store/tipos';
+import { formatarLimitePrevisto, PrevisaoDaEscova } from '../helpers/previsao';
+import { fimDoEixo, limitesPrevistos, projetarPrevisao } from '../helpers/projecao';
+import { formatarMinutos } from '@/utils/tempo';
 import { formatarGrau } from '../helpers/statusHelper';
 import {
   afastarRotulos,
@@ -32,6 +35,11 @@ interface TrendChartProps {
   /** Escova em foco (compartilhada com o anel e os cartões): a linha ganha ênfase, as outras recuam. */
   destacada?: number | null;
   onDestacar?: (numeroEscova: number | null) => void;
+  /**
+   * Previsões ativas (o gate de tendência disparou). A projeção é desenhada só
+   * com os valores do backend, tracejada, numa faixa "Estimativa".
+   */
+  previsoes?: PrevisaoDaEscova[];
 }
 
 const CORES_SERIE = [
@@ -93,7 +101,14 @@ function useLargura(ref: React.RefObject<HTMLDivElement | null>): number {
  * lacunas que quebram a linha, crosshair com todas as escovas e ΔT, e tabela
  * como alternativa acessível. O backend não guarda histórico: o dado é da sessão.
  */
-export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora, destacada = null, onDestacar }) => {
+export const TrendChart: React.FC<TrendChartProps> = ({
+  series,
+  limites,
+  agora,
+  destacada = null,
+  onDestacar,
+  previsoes = [],
+}) => {
   const [janela, setJanela] = useState<JanelaGrafico>('5min');
   const [tabela, setTabela] = useState(false);
   const [cursor, setCursor] = useState<number | null>(null);
@@ -119,6 +134,17 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora, 
   const ms = JANELAS.find((j) => j.id === janela)?.ms ?? null;
   const inicio = ms !== null ? fim - ms : Math.min(primeiroT, fim - 60_000);
 
+  const projecoes = useMemo(
+    () =>
+      previsoes
+        .map((item) => projetarPrevisao(item, fim))
+        .filter((p): p is NonNullable<typeof p> => p !== null),
+    [previsoes, fim]
+  );
+  const limitesDaPrevisao = useMemo(() => limitesPrevistos(projecoes), [projecoes]);
+  // O eixo se estende até o horário previsto (no máximo +30 min); a janela de dados não muda.
+  const fimEixo = fimDoEixo(fim, projecoes);
+
   const visiveis = useMemo(
     () =>
       series.map((serie) => ({
@@ -134,16 +160,19 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora, 
   const escala = useMemo(
     () =>
       calcularEscalaY(
-        visiveis.flatMap((s) => s.pontos.map((p) => p.v)),
+        [
+          ...visiveis.flatMap((s) => s.pontos.map((p) => p.v)),
+          ...projecoes.flatMap((p) => [p.limiteC, p.inicio.v, p.fim.v]),
+        ],
         limites?.critico ?? null
       ),
-    [visiveis, limites]
+    [visiveis, limites, projecoes]
   );
 
-  const x = (t: number) => margem.esq + ((t - inicio) / Math.max(fim - inicio, 1)) * areaL;
+  const x = (t: number) => margem.esq + ((t - inicio) / Math.max(fimEixo - inicio, 1)) * areaL;
   const y = (v: number) => margem.topo + (1 - (v - escala.min) / (escala.max - escala.min)) * areaA;
 
-  const ticksX = calcularTicksX(inicio, fim, Math.max(2, Math.floor(areaL / 110)));
+  const ticksX = calcularTicksX(inicio, fimEixo, Math.max(2, Math.floor(areaL / 110)));
 
   const tracos = visiveis.map((serie, indice) => {
     // Quebra por lacuna primeiro, só depois reduz: a redução não cria falsas lacunas.
@@ -174,7 +203,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora, 
       setCursor(null);
       return;
     }
-    const t = inicio + ((px - margem.esq) / areaL) * (fim - inicio);
+    const t = inicio + ((px - margem.esq) / areaL) * (fimEixo - inicio);
     const indice = loteProximo(lotes, t);
     setCursor(indice >= 0 ? indice : null);
   };
@@ -213,6 +242,11 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora, 
           <p className="mt-0.5 text-[13px] text-ink-3">
             Janela da sessão: o backend não guarda histórico, então a curva recomeça ao recarregar a página.
           </p>
+          {projecoes.length > 0 && (
+            <p className="mt-0.5 text-[13px] text-ink-3">
+              Estimativa: tendência das últimas leituras, calculada pelo servidor. O tracejado à direita não é medição.
+            </p>
+          )}
         </div>
         <Segmented
           label="Janela do gráfico"
@@ -245,7 +279,18 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora, 
               tabIndex={0}
               aria-label={`Gráfico de temperatura das escovas na janela ${
                 JANELAS.find((j) => j.id === janela)?.rotulo
-              }. Use as setas para percorrer os lotes ou abra a tabela.`}
+              }.${
+                previsoes.length > 0
+                  ? ` Estimativa do servidor: ${previsoes
+                      .map(
+                        (item) =>
+                          `escova ${item.numeroEscova} chega a ${formatarLimitePrevisto(item.previsao.limiteC)} ${
+                            item.previsao.minutos === 0 ? 'agora' : `em ${formatarMinutos(item.previsao.minutos)}`
+                          }`
+                      )
+                      .join('; ')}.`
+                  : ''
+              } Use as setas para percorrer os lotes ou abra a tabela.`}
               onPointerMove={aoMover}
               onPointerLeave={() => setCursor(null)}
               onKeyDown={aoTeclar}
@@ -285,6 +330,34 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora, 
                 y2={margem.topo + areaA}
                 stroke="var(--color-line-strong)"
               />
+
+              {/* Futuro: faixa hachurada rotulada "Estimativa", só enquanto o gate de tendência dispara */}
+              {fimEixo > fim && (
+                <g aria-hidden="true">
+                  <defs>
+                    <pattern id="hachura-estimativa" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                      <line x1="0" y1="0" x2="0" y2="8" stroke="var(--color-ink-3)" strokeWidth="1" opacity="0.28" />
+                    </pattern>
+                  </defs>
+                  <rect
+                    x={x(fim)}
+                    y={margem.topo}
+                    width={Math.max(x(fimEixo) - x(fim), 0)}
+                    height={areaA}
+                    fill="url(#hachura-estimativa)"
+                  />
+                  <line x1={x(fim)} x2={x(fim)} y1={margem.topo} y2={margem.topo + areaA} stroke="var(--color-line-strong)" strokeDasharray="2 3" />
+                  <text
+                    x={x(fimEixo) - 6}
+                    y={margem.topo + 12}
+                    textAnchor="end"
+                    fontSize={12}
+                    fill="var(--color-ink-3)"
+                  >
+                    Estimativa
+                  </text>
+                </g>
+              )}
 
               {/* Eixo X */}
               {ticksX.map((t) => (
@@ -333,6 +406,33 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora, 
                   ) : null
                 )}
 
+              {/* Temperatura limite da previsão: linha horizontal tracejada na cor da severidade do gate */}
+              {limitesDaPrevisao.map(({ limiteC, severidade }) =>
+                limiteC >= escala.min && limiteC <= escala.max ? (
+                  <g key={`lp-${limiteC}`}>
+                    <line
+                      x1={margem.esq}
+                      x2={margem.esq + areaL}
+                      y1={y(limiteC)}
+                      y2={y(limiteC)}
+                      stroke={COR_SEVERIDADE[severidade as SeveridadeAnormal] ?? 'var(--color-ink-3)'}
+                      strokeWidth={1}
+                      strokeDasharray="2 4"
+                    />
+                    <text
+                      x={margem.esq + areaL - 6}
+                      y={y(limiteC) - 5}
+                      textAnchor="end"
+                      fontSize={12}
+                      className="num"
+                      fill={COR_SEVERIDADE[severidade as SeveridadeAnormal] ?? 'var(--color-ink-3)'}
+                    >
+                      limite previsto {formatarLimitePrevisto(limiteC)}
+                    </text>
+                  </g>
+                ) : null
+              )}
+
               {/* Linhas por escova: o trecho em alerta usa a cor da severidade */}
               {tracos.map((traco) =>
                 traco.segmentos.flatMap((segmento, i) =>
@@ -355,6 +455,30 @@ export const TrendChart: React.FC<TrendChartProps> = ({ series, limites, agora, 
                   ))
                 )
               )}
+
+              {/* Projeção: do valor da reta no lote até (horário previsto, limite); tracejada, nunca contínua */}
+              {projecoes.map((projecao) => {
+                const cor = COR_SEVERIDADE[projecao.severidade as SeveridadeAnormal] ?? 'var(--color-ink-2)';
+                const emFoco = destacada === null || destacada === projecao.numeroEscova;
+                return projecao.temSegmento ? (
+                  <g key={`pj-${projecao.numeroEscova}`} opacity={emFoco ? 1 : 0.3} aria-hidden="true">
+                    <path
+                      d={caminhoLinha([
+                        { x: x(projecao.inicio.t), y: y(projecao.inicio.v) },
+                        { x: x(projecao.fim.t), y: y(projecao.fim.v) },
+                      ])}
+                      fill="none"
+                      stroke={cor}
+                      strokeWidth={1.75}
+                      strokeDasharray="6 4"
+                      strokeLinecap="round"
+                    />
+                    {!projecao.truncada && (
+                      <circle cx={x(projecao.fim.t)} cy={y(projecao.fim.v)} r={4} fill="var(--color-panel)" stroke={cor} strokeWidth={1.75} />
+                    )}
+                  </g>
+                ) : null;
+              })}
 
               {/* Marcador só na transição: primeiro ponto em severidade anormal ou mais grave */}
               {tracos.map((traco) =>

@@ -4,6 +4,7 @@ import { MotorTelemetria } from '../store/tipos';
 import { agruparDiagnosticos } from './diagnosticos';
 import { estadoResultado } from './estadoHelper';
 import { estadoDaEscova } from './resumoMotor';
+import { previsoesDoMotor } from './previsao';
 import { extremosDoLote } from './valorRegra';
 
 export interface DadosDoAnel {
@@ -18,10 +19,13 @@ export function dadosDoAnel(
   telemetria: MotorTelemetria | undefined
 ): DadosDoAnel {
   const escovasDaTelemetria = telemetria?.escovas;
+  const previsoes = previsoesDoMotor(escovasDaTelemetria);
   const escovas = numerosDasEscovas.map((numeroEscova) => ({
     numeroEscova,
     valor: escovasDaTelemetria?.[numeroEscova]?.ultima?.valorCelsius ?? null,
     estado: estadoDaEscova(escovasDaTelemetria?.[numeroEscova]),
+    // Minutos até o limite, como o backend estimou; a cor continua vindo da severidade.
+    previsaoMinutos: previsoes.find((p) => p.numeroEscova === numeroEscova)?.previsao.minutos ?? null,
   }));
   const maiorTemperatura = escovas.reduce<number | null>(
     (maior, e) => (e.valor !== null && (maior === null || e.valor > maior) ? e.valor : maior),

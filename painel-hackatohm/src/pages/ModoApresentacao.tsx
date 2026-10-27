@@ -158,6 +158,7 @@ const MotorUnico: React.FC<{ linha: LinhaFrota & { motor: MotorResponse }; agora
         .sort((a, b) => a.numeroEscova - b.numeroEscova),
     [escovas]
   );
+  const previsoes = useMemo(() => previsoesDoMotor(escovas), [escovas]);
 
   return (
     <div className="space-y-8">
@@ -189,6 +190,7 @@ const MotorUnico: React.FC<{ linha: LinhaFrota & { motor: MotorResponse }; agora
         agora={agora}
         destacada={escovaAtiva}
         onDestacar={setEscovaAtiva}
+        previsoes={previsoes}
       />
     </div>
   );

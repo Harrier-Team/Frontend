@@ -1,4 +1,6 @@
 import React, { useRef } from 'react';
+import { Clock } from 'lucide-react';
+import { formatarMinutos } from '@/utils/tempo';
 import { EstadoPrincipal, ehSeveridadeAnormal } from '../helpers/estadoHelper';
 import { SIMBOLO_ESTADO } from '../helpers/simbolos';
 import { TEMA_ESTADO } from '../helpers/apresentacao';
@@ -11,6 +13,8 @@ export interface EscovaDoAnel {
   valor: number | null;
   /** Severidade do backend ou o motivo de não haver (aguardando amostras, sem regras...). */
   estado: EstadoPrincipal;
+  /** Minutos até o limite pela previsão por tendência (backend); null = sem previsão ativa. */
+  previsaoMinutos?: number | null;
 }
 
 export interface AssimetriaDoAnel {
@@ -101,7 +105,9 @@ export const CollectorRing: React.FC<CollectorRingProps> = ({
   const resumoAria = escovas
     .map(
       (e) =>
-        `escova ${e.numeroEscova}: ${e.valor !== null ? `${formatarGrau(e.valor)} graus` : 'sem leitura'}, ${TEMA_ESTADO[e.estado].label}`
+        `escova ${e.numeroEscova}: ${e.valor !== null ? `${formatarGrau(e.valor)} graus` : 'sem leitura'}, ${TEMA_ESTADO[e.estado].label}${
+          e.previsaoMinutos != null ? `, previsão de atingir o limite ${e.previsaoMinutos === 0 ? 'agora' : `em ${formatarMinutos(e.previsaoMinutos)}`}` : ''
+        }`
     )
     .join('; ');
 
@@ -178,9 +184,14 @@ export const CollectorRing: React.FC<CollectorRingProps> = ({
           const tracejado = semLeitura || desatualizado;
           const Icone = SIMBOLO_ESTADO[escova.estado];
           const neutro = escova.estado === 'Normal';
+          const previsto = escova.previsaoMinutos != null;
           const rotulo = `Escova ${posicao.numeroEscova}: ${
             semLeitura ? 'sem leitura' : `${formatarGrau(escova.valor)} graus`
-          }, ${tema.label}`;
+          }, ${tema.label}${
+            previsto
+              ? `, previsão de atingir o limite ${escova.previsaoMinutos === 0 ? 'agora' : `em ${formatarMinutos(escova.previsaoMinutos)}`}`
+              : ''
+          }`;
           const corValor = anormal ? tema.color : desatualizado ? 'var(--color-ink-2)' : 'var(--color-ink)';
           return (
             <g
@@ -239,6 +250,14 @@ export const CollectorRing: React.FC<CollectorRingProps> = ({
               >
                 {semLeitura ? '—' : formatarGrau(escova.valor)}
               </text>
+              {previsto && (
+                <g aria-hidden="true" opacity={desatualizado ? 0.6 : 1}>
+                  <Clock x={-largura / 2 + 2} y={altura / 2 + 5} width={12} height={12} color={corValor} strokeWidth={2.25} />
+                  <text x={-largura / 2 + 18} y={altura / 2 + 15} fontSize={12} className="num" fill={corValor}>
+                    {formatarMinutos(escova.previsaoMinutos)}
+                  </text>
+                </g>
+              )}
             </g>
           );
         })}
