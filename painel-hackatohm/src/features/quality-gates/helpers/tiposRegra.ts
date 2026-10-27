@@ -87,3 +87,6 @@ export function descreverLimites(tipoRegra: string, parametros: ParametrosRegra)
   const critico = formatarValorGate(tipoRegra, parametros.critico);
   return `Aviso em ${aviso}, crítico em ${critico}`;
 }
+
+export const TIPO_GRADIENTE: TipoRegra = 'temperatura.gradiente_termico';
+export const TIPO_ASSIMETRIA: TipoRegra = 'temperatura.assimetria_escovas';

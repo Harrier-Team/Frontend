@@ -1,0 +1,176 @@
+import { describe, expect, it } from 'vitest';
+import { PontoEscova } from '@/features/telemetria/store/tipos';
+import {
+  afinarMarcadores,
+  cadenciaMediana,
+  calcularEscalaY,
+  calcularTicksX,
+  dividirEmSegmentos,
+  loteProximo,
+  montarLotes,
+  pontosSparkline,
+  recortarJanela,
+  reduzirPontos,
+} from './grafico';
+
+const p = (t: number, v: number, severidade: PontoEscova['severidade'] = 'Normal'): PontoEscova => ({
+  t: t * 1000,
+  v,
+  severidade,
+});
+
+describe('cadenciaMediana', () => {
+  it('usa a cadência de referência sem pontos suficientes', () => {
+    expect(cadenciaMediana([])).toBe(10_000);
+    expect(cadenciaMediana([p(0, 1)])).toBe(10_000);
+  });
+
+  it('usa a mediana, ignorando uma lacuna isolada', () => {
+    const pontos = [p(0, 1), p(10, 1), p(20, 1), p(30, 1), p(200, 1)];
+    expect(cadenciaMediana(pontos)).toBe(10_000);
+  });
+});
+
+describe('dividirEmSegmentos', () => {
+  it('quebra a linha quando o intervalo passa de 3x a cadência', () => {
+    const pontos = [p(0, 1), p(10, 1), p(20, 1), p(60, 1), p(70, 1)];
+    const segmentos = dividirEmSegmentos(pontos, 10_000);
+    expect(segmentos.map((s) => s.length)).toEqual([3, 2]);
+  });
+
+  it('não quebra no limite exato de 3x', () => {
+    const segmentos = dividirEmSegmentos([p(0, 1), p(30, 1)], 10_000);
+    expect(segmentos).toHaveLength(1);
+  });
+
+  it('série vazia não gera segmentos', () => {
+    expect(dividirEmSegmentos([])).toEqual([]);
+  });
+});
+
+describe('recortarJanela', () => {
+  it('mantém só os pontos da janela', () => {
+    const pontos = [p(0, 1), p(100, 2), p(200, 3)];
+    expect(recortarJanela(pontos, 50_000, 200_000).map((x) => x.v)).toEqual([2, 3]);
+  });
+});
+
+describe('reduzirPontos', () => {
+  it('não altera séries pequenas', () => {
+    const pontos = Array.from({ length: 10 }, (_, i) => p(i, i));
+    expect(reduzirPontos(pontos, 50)).toBe(pontos);
+  });
+
+  it('preserva picos, vales, extremidades e pontos de alerta', () => {
+    const pontos = Array.from({ length: 400 }, (_, i) => p(i, 50 + Math.sin(i / 7)));
+    pontos[123] = p(123, 140);
+    pontos[250] = p(250, -10);
+    pontos[301] = p(301, 51, 'AlertaPreditivo');
+    const reduzidos = reduzirPontos(pontos, 60);
+
+    expect(reduzidos.length).toBeLessThan(pontos.length);
+    expect(reduzidos.length).toBeLessThanOrEqual(130);
+    expect(reduzidos[0]).toBe(pontos[0]);
+    expect(reduzidos[reduzidos.length - 1]).toBe(pontos[399]);
+    expect(reduzidos).toContain(pontos[123]);
+    expect(reduzidos).toContain(pontos[250]);
+    expect(reduzidos).toContain(pontos[301]);
+    const ts = reduzidos.map((x) => x.t);
+    expect([...ts].sort((a, b) => a - b)).toEqual(ts);
+  });
+});
+
+describe('calcularEscalaY', () => {
+  it('dá 5 °C de margem acima do maior valor ou do limite crítico', () => {
+    const semLimite = calcularEscalaY([40, 72]);
+    expect(semLimite.max).toBeGreaterThanOrEqual(77);
+    expect(semLimite.min).toBeLessThanOrEqual(35);
+
+    const comLimite = calcularEscalaY([40, 72], 95);
+    expect(comLimite.max).toBeGreaterThanOrEqual(100);
+  });
+
+  it('gera marcas dentro da escala e sem dados enquadra um intervalo útil', () => {
+    const vazia = calcularEscalaY([], null);
+    expect(vazia.max - vazia.min).toBeGreaterThan(0);
+    const escala = calcularEscalaY([60, 61]);
+    expect(escala.max - escala.min).toBeGreaterThanOrEqual(20);
+    expect(escala.ticks[0]).toBe(escala.min);
+    expect(escala.ticks[escala.ticks.length - 1]).toBe(escala.max);
+  });
+});
+
+describe('calcularTicksX', () => {
+  it('alinha as marcas a passos redondos e respeita o alvo', () => {
+    const ticks = calcularTicksX(0, 300_000, 6);
+    expect(ticks.length).toBeLessThanOrEqual(7);
+    expect(ticks.every((t) => t % 60_000 === 0)).toBe(true);
+  });
+
+  it('intervalo inválido não gera marcas', () => {
+    expect(calcularTicksX(10, 10, 5)).toEqual([]);
+  });
+});
+
+describe('montarLotes e loteProximo', () => {
+  const series = [
+    { numeroEscova: 1, pontos: [p(0, 50), p(10, 52), p(20, 55)] },
+    { numeroEscova: 2, pontos: [p(0, 51), p(10, 70), p(20, 96, 'Critico')] },
+  ];
+
+  it('agrupa por instante e calcula o ΔT do lote', () => {
+    const lotes = montarLotes(series);
+    expect(lotes).toHaveLength(3);
+    expect(lotes[1].deltaT).toBe(18);
+    expect(lotes[2].valores[2].severidade).toBe('Critico');
+  });
+
+  it('ΔT é nulo com uma só escova', () => {
+    expect(montarLotes([series[0]])[0].deltaT).toBeNull();
+  });
+
+  it('encontra o lote mais próximo', () => {
+    const lotes = montarLotes(series);
+    expect(loteProximo(lotes, 4_000)).toBe(0);
+    expect(loteProximo(lotes, 6_000)).toBe(1);
+    expect(loteProximo(lotes, 99_000)).toBe(2);
+    expect(loteProximo([], 1)).toBe(-1);
+  });
+});
+
+describe('afinarMarcadores', () => {
+  it('mantém trocas de severidade e espaça os demais', () => {
+    const pontos = [
+      p(0, 80, 'AlertaPreditivo'),
+      p(1, 81, 'AlertaPreditivo'),
+      p(2, 82, 'AlertaPreditivo'),
+      p(3, 96, 'Critico'),
+      p(4, 97, 'Critico'),
+      p(5, 50, 'Normal'),
+    ];
+    const marcadores = afinarMarcadores(pontos, (t) => t / 1000, 2);
+    expect(marcadores.map((m) => m.t / 1000)).toEqual([0, 2, 3]);
+    expect(marcadores.some((m) => m.severidade === 'Normal')).toBe(false);
+  });
+});
+
+describe('pontosSparkline', () => {
+  it('fica dentro da caixa e termina no último valor', () => {
+    const pontos = pontosSparkline([50, 52, 70, 60], 80, 24, 3);
+    expect(pontos).toHaveLength(4);
+    for (const ponto of pontos) {
+      expect(ponto.x).toBeGreaterThanOrEqual(3);
+      expect(ponto.x).toBeLessThanOrEqual(77);
+      expect(ponto.y).toBeGreaterThanOrEqual(3);
+      expect(ponto.y).toBeLessThanOrEqual(21);
+    }
+    expect(pontos[3].x).toBe(77);
+  });
+
+  it('série plana fica no meio e série vazia não desenha', () => {
+    const plana = pontosSparkline([50, 50, 50], 80, 24, 3);
+    expect(new Set(plana.map((p) => p.y)).size).toBe(1);
+    expect(plana[0].y).toBeCloseTo(12);
+    expect(pontosSparkline([], 80, 24, 3)).toEqual([]);
+  });
+});

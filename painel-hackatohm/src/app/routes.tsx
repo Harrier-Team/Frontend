@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { MonitoramentoProvider } from '../hooks/MonitoramentoProvider';
 import { DetalhesMotor } from '../features/motores/pages/DetalhesMotor';
+import { ToastProvider } from '../components/ui/Toast';
 import { VisaoGeral } from '../pages/VisaoGeral';
 import { RegrasQualidade } from '../features/quality-gates/pages/RegrasQualidade';
 
@@ -14,16 +15,18 @@ function ParaVisaoGeral() {
 export function AppRoutes() {
   return (
     <MonitoramentoProvider>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<VisaoGeral />} />
-          <Route path="/motores" element={<ParaVisaoGeral />} />
-          <Route path="/inicio" element={<ParaVisaoGeral />} />
-          <Route path="/motores/:id" element={<DetalhesMotor />} />
-          <Route path="/regras-qualidade" element={<RegrasQualidade />} />
-          <Route path="*" element={<ParaVisaoGeral />} />
-        </Route>
-      </Routes>
+      <ToastProvider>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<VisaoGeral />} />
+            <Route path="/motores" element={<ParaVisaoGeral />} />
+            <Route path="/inicio" element={<ParaVisaoGeral />} />
+            <Route path="/motores/:id" element={<DetalhesMotor />} />
+            <Route path="/regras-qualidade" element={<RegrasQualidade />} />
+            <Route path="*" element={<ParaVisaoGeral />} />
+          </Route>
+        </Routes>
+      </ToastProvider>
     </MonitoramentoProvider>
   );
 }

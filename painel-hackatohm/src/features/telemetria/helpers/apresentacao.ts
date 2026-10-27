@@ -9,9 +9,9 @@ export interface TemaEstado {
   textClass: string;
 }
 
-const neutro = (label: string): TemaEstado => ({
+const neutro = (label: string, color = 'var(--color-ink-3)'): TemaEstado => ({
   label,
-  color: 'var(--color-data-off)',
+  color,
   textClass: 'text-ink-2',
 });
 
@@ -21,8 +21,8 @@ export const TEMA_ESTADO: Record<EstadoPrincipal, TemaEstado> = {
   Atencao: SEVERIDADE_THEME.Atencao,
   AlertaPreditivo: SEVERIDADE_THEME.AlertaPreditivo,
   Critico: SEVERIDADE_THEME.Critico,
-  offline: neutro('Offline'),
-  degradado: neutro('Degradado'),
+  offline: neutro('Offline', 'var(--color-data-off)'),
+  degradado: neutro('Degradado', 'var(--color-data-off)'),
   'aguardando-amostras': neutro('Aguardando amostras'),
   'sem-regras': neutro('Sem regras'),
   'sem-leitura': neutro('Sem leitura'),
