@@ -1,8 +1,11 @@
 import { ResultadoGateRealtime } from '@/features/quality-gates/types/qualityGate';
 import { RegraQualidade, RegraQualidadeRequest, VinculoRegraQualidade } from '@/features/quality-gates/types/regraQualidade';
+import { AlertaManutencao } from '@/features/alertas/types/alerta';
 import { MotorInput, MotorResponse } from '@/features/motores/types/motor';
 import { LeituraEscova, MotorStatusDto } from '@/features/telemetria/types/telemetria';
 import { AmostraSimulada, avaliarLote, consolidarStatus } from './avaliador';
+import { AlertasSimulados, lerConsulta } from './alertas';
+import { validarParametros } from './validacao';
 import {
   CADENCIA_SIMULADA_MS,
   HISTORICO_INICIAL_S,
@@ -24,12 +27,19 @@ interface MotorSimulado {
   silencioEm: number | null;
   ultimo: AmostraSimulada[] | null;
   ultimoAnterior: Map<number, AmostraSimulada>;
+  /** Leituras recentes de cada escova (inclui a última), para a previsão por tendência. */
+  recentes: Map<number, AmostraSimulada[]>;
 }
 
 export interface LoteGerado {
   leituras: LeituraEscova[];
   status: MotorStatusDto;
+  /** Alertas que abriram ou subiram de severidade neste lote (evento `ReceberAlertaManutencao`). */
+  alertas: AlertaManutencao[];
 }
+
+/** Quantas leituras por escova a simulação guarda para a previsão (o máximo da janela do backend). */
+const MAXIMO_RECENTES = 60;
 
 export interface RespostaSimulada {
   status: number;
@@ -38,6 +48,13 @@ export interface RespostaSimulada {
 
 function resposta404(detalhe: string): RespostaSimulada {
   return { status: 404, data: { title: 'Não encontrado', detail: detalhe, status: 404 } };
+}
+
+function resposta400(campo: string, mensagem: string): RespostaSimulada {
+  return {
+    status: 400,
+    data: { title: 'Requisição inválida', detail: mensagem, status: 400, code: 'validation_error', errors: { [campo]: [mensagem] } },
+  };
 }
 
 const iso = (t: number) => new Date(t).toISOString();
@@ -59,6 +76,7 @@ export function criarServidorSimulado(
   const motores: MotorSimulado[] = [];
   const regras: RegraQualidade[] = [];
   const vinculos = new Map<number, Map<string, { ativo: boolean; vinculadoEm: string }>>();
+  const alertas = new AlertasSimulados();
 
   const instanteDoLote = (t: number) => Math.floor(t / cadenciaMs) * cadenciaMs;
   const segundos = (t: number) => (t - instalacao) / 1000 + HISTORICO_INICIAL_S;
@@ -105,6 +123,7 @@ export function criarServidorSimulado(
       silencioEm,
       ultimo: null,
       ultimoAnterior: new Map(),
+      recentes: new Map(),
     };
     motores.push(sim);
     vinculos.set(id, new Map());
@@ -145,6 +164,15 @@ export function criarServidorSimulado(
     ativo: true,
   });
 
+  const previsao = criarRegra({
+    nome: 'Tempo até o limite',
+    descricao: 'Estima quando a escova chega a 95 °C pela tendência das últimas leituras.',
+    tipoRegra: 'temperatura.previsao_tendencia',
+    // Janela de 20 leituras (≈ 1 min na cadência simulada): a inclinação fica estável e a estimativa não oscila.
+    parametros: { aviso: 20, critico: 8, temperaturaLimite: 95, janela: 20 },
+    ativo: true,
+  });
+
   const escovas3 = [1, 2, 3].map((numeroEscova) => ({ numeroEscova, modelo: 'MLX90614' }));
   const escovas2 = [1, 2].map((numeroEscova) => ({ numeroEscova, modelo: 'MLX90614' }));
 
@@ -163,12 +191,16 @@ export function criarServidorSimulado(
     ],
     [adicionarMotor({ nome: 'Motor E', tipo: 'Trifásico 380 V', mac: 'A4:CF:12:8B:05:55', escovas: escovas2 }, 'novo', Infinity), true],
     [adicionarMotor({ nome: 'Motor F', tipo: 'Universal', mac: 'A4:CF:12:8B:06:66', escovas: escovas2 }, 'sem-regras', 0), false],
+    // Aquecimento lento: a previsão dispara minutos antes de o limite estático de aviso.
+    [adicionarMotor({ nome: 'Motor G', tipo: 'Universal', mac: 'A4:CF:12:8B:07:77', escovas: escovas3 }, 'aquecimento-lento', 0), true],
   ];
   for (const [sim, comRegras] of semente) {
     if (!comRegras) continue;
     vincular(sim.motor.id, limiar.id);
     vincular(sim.motor.id, gradiente.id);
     vincular(sim.motor.id, assimetria.id);
+    // A previsão só vale onde a curva é limpa: nos motores com ruído ela oscilaria entre Normal e alerta.
+    if (sim.perfil === 'aquecimento-lento') vincular(sim.motor.id, previsao.id);
   }
   if (maximoDeMotores !== undefined) {
     for (const removido of motores.splice(maximoDeMotores)) vinculos.delete(removido.motor.id);
@@ -189,7 +221,12 @@ export function criarServidorSimulado(
   }
 
   function montar(sim: MotorSimulado, amostras: AmostraSimulada[], anterior: Map<number, AmostraSimulada>): LoteGerado {
-    const porEscova = avaliarLote(amostras, anterior, regrasAtivasDoMotor(sim.motor.id));
+    // Leituras de cada escova anteriores a este lote (a previsão ajusta a reta a elas e à atual).
+    const instante = amostras[0]?.t ?? Infinity;
+    const passado = new Map(
+      [...sim.recentes].map(([numero, lista]) => [numero, lista.filter((a) => a.t < instante)])
+    );
+    const porEscova = avaliarLote(amostras, anterior, regrasAtivasDoMotor(sim.motor.id), passado);
     const leituras: LeituraEscova[] = amostras.map((a) => {
       const gates: ResultadoGateRealtime[] = porEscova.get(a.numeroEscova) ?? [];
       return {
@@ -219,12 +256,16 @@ export function criarServidorSimulado(
         resultadosQualityGates: l.resultadosQualityGates,
       })),
     };
-    return { leituras, status };
+    return { leituras, status, alertas: [] };
   }
 
   function registrar(sim: MotorSimulado, amostras: AmostraSimulada[]) {
     sim.ultimoAnterior = new Map((sim.ultimo ?? []).map((a) => [a.numeroEscova, a]));
     sim.ultimo = amostras;
+    for (const amostra of amostras) {
+      const lista = sim.recentes.get(amostra.numeroEscova) ?? [];
+      sim.recentes.set(amostra.numeroEscova, [...lista, amostra].slice(-MAXIMO_RECENTES));
+    }
   }
 
   function envia(sim: MotorSimulado, t: number): boolean {
@@ -243,7 +284,12 @@ export function criarServidorSimulado(
     for (let t = fim - HISTORICO_INICIAL_S * 1000; t <= fim; t += cadenciaMs) {
       if (!envia(sim, t)) continue;
       const lote = produzirLote(sim, t, anterior);
-      anterior = new Map(lote.leituras.map((l) => [l.numeroEscova, { numeroEscova: l.numeroEscova, valor: l.valorCelsius, t }]));
+      const amostras = lote.leituras.map((l) => ({ numeroEscova: l.numeroEscova, valor: l.valorCelsius, t }));
+      anterior = new Map(amostras.map((a) => [a.numeroEscova, a]));
+      // O passado também tem alertas: quem recarrega a página os encontra, porque vêm do "banco".
+      // Os eventos do histórico não são entregues (aconteceram antes de o painel abrir).
+      registrar(sim, amostras);
+      alertas.processar(sim.motor.id, lote.leituras, t);
       lotes.push(lote);
     }
     return lotes;
@@ -267,6 +313,7 @@ export function criarServidorSimulado(
         sim,
         lote.leituras.map((l) => ({ numeroEscova: l.numeroEscova, valor: l.valorCelsius, t }))
       );
+      lote.alertas = alertas.processar(sim.motor.id, lote.leituras, t);
       gerados.push(lote);
     }
     return gerados;
@@ -313,6 +360,13 @@ export function criarServidorSimulado(
       return { status: 200, data: 'Healthy' };
     }
 
+    if (partes[0] === 'alertas' && partes.length === 1 && m === 'GET') {
+      const consulta = lerConsulta(new URLSearchParams(caminho.split('?')[1] ?? ''));
+      return typeof consulta === 'string'
+        ? resposta400('Consulta', consulta)
+        : { status: 200, data: alertas.listar(consulta) };
+    }
+
     if (partes[0] === 'motores') {
       if (partes.length === 1) {
         if (m === 'GET') return { status: 200, data: motores.map((s) => s.motor) };
@@ -350,6 +404,7 @@ export function criarServidorSimulado(
         if (m === 'DELETE') {
           motores.splice(motores.indexOf(sim), 1);
           vinculos.delete(motorId);
+          alertas.removerDoMotor(motorId);
           return { status: 204 };
         }
       }
@@ -394,17 +449,27 @@ export function criarServidorSimulado(
     if (partes[0] === 'regras-qualidade') {
       if (partes.length === 1) {
         if (m === 'GET') return { status: 200, data: regras };
-        if (m === 'POST') return { status: 201, data: criarRegra(corpo as RegraQualidadeRequest) };
+        if (m === 'POST') {
+          const entrada = corpo as RegraQualidadeRequest;
+          // Omitir o tipo seleciona o limiar estático, como no backend.
+          const tipo = entrada.tipoRegra ?? 'temperatura.limiar_estatico';
+          const erro = validarParametros(tipo, entrada.parametros);
+          if (erro) return resposta400('Parametros', erro);
+          return { status: 201, data: criarRegra({ ...entrada, tipoRegra: tipo }) };
+        }
       }
       const regra = regras.find((r) => r.id === partes[1]);
       if (!regra) return resposta404('Regra não encontrada.');
       if (m === 'GET') return { status: 200, data: regra };
       if (m === 'PUT') {
         const entrada = corpo as RegraQualidadeRequest;
+        const tipo = entrada.tipoRegra ?? 'temperatura.limiar_estatico';
+        const erro = validarParametros(tipo, entrada.parametros);
+        if (erro) return resposta400('Parametros', erro);
         Object.assign(regra, {
           nome: entrada.nome,
           descricao: entrada.descricao ?? null,
-          tipoRegra: entrada.tipoRegra,
+          tipoRegra: tipo,
           parametros: entrada.parametros,
           ativo: entrada.ativo,
         });
@@ -413,6 +478,7 @@ export function criarServidorSimulado(
       if (m === 'DELETE') {
         regras.splice(regras.indexOf(regra), 1);
         vinculos.forEach((mapa) => mapa.delete(regra.id));
+        alertas.desvincularRegra(regra.id);
         return { status: 204 };
       }
     }

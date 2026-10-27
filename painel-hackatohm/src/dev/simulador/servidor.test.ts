@@ -30,7 +30,7 @@ describe('servidor simulado', () => {
   it('lista os motores semeados e responde 404 em motor sem leituras', () => {
     const lista = servidor.tratar('get', '/motores', undefined);
     expect(lista.status).toBe(200);
-    expect((lista.data as unknown[]).length).toBe(6);
+    expect((lista.data as unknown[]).length).toBe(7);
     expect(servidor.tratar('get', '/motores/5/status', undefined).status).toBe(404);
     expect(servidor.tratar('get', '/motores/99', undefined).status).toBe(404);
   });
@@ -58,7 +58,7 @@ describe('servidor simulado', () => {
 
   it('cadastra um motor novo sem leituras e rejeita MAC repetido', () => {
     const corpo = {
-      nome: 'Motor G',
+      nome: 'Motor H',
       tipo: 'Teste',
       sensoresIniciais: [{ macAddress: 'AA:BB:CC:DD:EE:01', numeroEscova: 1, modelo: 'DS18B20' }],
     };

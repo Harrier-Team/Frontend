@@ -3,8 +3,9 @@ import { RegraQualidade } from '@/features/quality-gates/types/regraQualidade';
 import { ContagemSeveridade, MotivoStatus } from '@/features/telemetria/types/telemetria';
 
 /**
- * Avaliador de regras do simulador: imita o que o backend faz com os três
- * tipos de regra (ver Backend/docs/monitoramento-preditivo.md). Existe só para
+ * Avaliador de regras do simulador: imita o que o backend faz com os quatro
+ * tipos de regra (ver Backend/docs/monitoramento-preditivo.md), inclusive a
+ * previsão por tendência (mínimos quadrados, como a regra do backend). Existe só para
  * gerar dados falsos; o painel nunca classifica por temperatura.
  */
 
@@ -47,15 +48,73 @@ function aguardando(regra: RegraQualidade, mensagem: string): ResultadoGateRealt
   });
 }
 
+export const JANELA_PADRAO = 12;
+export const JANELA_MINIMA = 5;
+
+/**
+ * Previsão por tendência: ajusta uma reta (mínimos quadrados) às últimas
+ * leituras da escova, incluindo a atual, e estima em quantos minutos ela
+ * atinge a temperatura limite. Mesma conta da `PrevisaoTendenciaRule` do
+ * backend: o valor observado são os minutos, o limite é o horizonte atingido,
+ * e Normal não leva valores.
+ */
+export function avaliarPrevisao(
+  regra: RegraQualidade,
+  atual: AmostraSimulada,
+  passado: AmostraSimulada[]
+): ResultadoGateRealtime {
+  const { aviso, critico, temperaturaLimite } = regra.parametros;
+  const janela = regra.parametros.janela ?? JANELA_PADRAO;
+  const amostras = [...passado.filter((a) => a.t < atual.t).sort((a, b) => a.t - b.t).slice(-(janela - 1)), atual];
+
+  if (amostras.length < JANELA_MINIMA || temperaturaLimite === undefined) {
+    return aguardando(regra, `Aguardando pelo menos ${JANELA_MINIMA} leituras para estimar a tendência.`);
+  }
+
+  const tempos = amostras.map((a) => (a.t - atual.t) / 60_000);
+  const temperaturas = amostras.map((a) => a.valor);
+  const tempoMedio = tempos.reduce((soma, v) => soma + v, 0) / tempos.length;
+  const temperaturaMedia = temperaturas.reduce((soma, v) => soma + v, 0) / temperaturas.length;
+  const variacaoTempo = tempos.reduce((soma, v) => soma + (v - tempoMedio) ** 2, 0);
+  if (variacaoTempo <= 0) {
+    return aguardando(regra, 'As leituras recentes não cobrem um intervalo de tempo positivo.');
+  }
+
+  const inclinacao =
+    tempos.reduce((soma, v, i) => soma + (v - tempoMedio) * (temperaturas[i] - temperaturaMedia), 0) / variacaoTempo;
+  if (inclinacao <= 0) return resultadoBase(regra, {});
+
+  // Valor da reta no instante atual: reduz o efeito do ruído de uma única leitura.
+  const temperaturaEstimada = temperaturaMedia - inclinacao * tempoMedio;
+  const minutos = Math.max(0, (temperaturaLimite - temperaturaEstimada) / inclinacao);
+  const metadados = { inclinacaoCelsiusPorMinuto: inclinacao, temperaturaLimite, amostras: amostras.length };
+  // O backend monta a mensagem com ponto decimal; o painel monta o próprio texto.
+  const mensagemDiagnostico = `A escova ${atual.numeroEscova} tende a atingir ${temperaturaLimite.toFixed(1)} °C em ~${minutos.toFixed(0)} min (+${inclinacao.toFixed(2)} °C/min).`;
+
+  const severidade: NivelSeveridade | null = minutos <= critico ? 'Critico' : minutos <= aviso ? 'AlertaPreditivo' : null;
+  if (severidade === null) return resultadoBase(regra, {});
+  return resultadoBase(regra, {
+    disparouAlerta: true,
+    severidade,
+    codigoRegra: severidade === 'Critico' ? 'PREVISAO_TENDENCIA_CRITICA' : 'PREVISAO_TENDENCIA_ALERTA',
+    valorObservado: minutos,
+    valorLimite: severidade === 'Critico' ? critico : aviso,
+    mensagemDiagnostico,
+    metadados,
+  });
+}
+
 /**
  * Avalia um lote com as regras ativas. `anterior` traz a leitura anterior de
- * cada escova (para o gradiente). Retorna os resultados por escova; a
- * assimetria é repetida em todas, como faz o backend.
+ * cada escova (para o gradiente) e `passado` as leituras recentes de cada
+ * escova antes deste lote (para a previsão). Retorna os resultados por
+ * escova; a assimetria é repetida em todas, como faz o backend.
  */
 export function avaliarLote(
   lote: AmostraSimulada[],
   anterior: Map<number, AmostraSimulada>,
-  regras: RegraQualidade[]
+  regras: RegraQualidade[],
+  passado: Map<number, AmostraSimulada[]> = new Map()
 ): Map<number, ResultadoGateRealtime[]> {
   const saida = new Map<number, ResultadoGateRealtime[]>();
   for (const amostra of lote) saida.set(amostra.numeroEscova, []);
@@ -107,6 +166,10 @@ export function avaliarLote(
                 mensagemDiagnostico: `Escova ${amostra.numeroEscova} está subindo ${formato(gradiente)} °C/min.`,
               })
         );
+      }
+    } else if (regra.tipoRegra === 'temperatura.previsao_tendencia') {
+      for (const amostra of lote) {
+        saida.get(amostra.numeroEscova)!.push(avaliarPrevisao(regra, amostra, passado.get(amostra.numeroEscova) ?? []));
       }
     } else if (regra.tipoRegra === 'temperatura.assimetria_escovas') {
       if (lote.length < 2) {

@@ -1,4 +1,5 @@
 import { api } from '@/services/api';
+import { definirHubAlertas } from '@/features/alertas/store/alertasStore';
 import { definirHubTelemetria } from '@/features/telemetria/store/telemetriaStore';
 import { criarAdaptador } from './adaptador';
 import { criarHubFalso } from './hubFalso';
@@ -19,4 +20,5 @@ export function instalarSimulador(): void {
   const hub = criarHubFalso(servidor, cadenciaMs);
   api.defaults.adapter = criarAdaptador(servidor, hub);
   definirHubTelemetria(hub);
+  definirHubAlertas(hub);
 }
