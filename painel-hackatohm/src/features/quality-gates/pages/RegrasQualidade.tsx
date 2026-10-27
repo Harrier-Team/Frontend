@@ -107,7 +107,7 @@ export const RegrasQualidade: React.FC = () => {
         <div>
           <h1 className="display text-[28px] leading-tight sm:text-[34px]">Quality gates</h1>
           <p className="mt-2 text-[15px] text-ink-2">
-            Regras de temperatura avaliadas a cada lote: limiar estático, gradiente térmico e assimetria entre escovas.
+            Regras de temperatura avaliadas a cada lote: limite, velocidade de aquecimento, diferença entre escovas e tempo até o limite.
           </p>
         </div>
         {regras.length > 0 && (
@@ -136,7 +136,7 @@ export const RegrasQualidade: React.FC = () => {
       ) : regras.length === 0 ? (
         <EmptyState
           title="Nenhuma regra ainda"
-          description="Defina limites de temperatura, de subida por minuto ou de diferença entre escovas."
+          description="Defina limites de temperatura, de subida por minuto, de diferença entre escovas ou o tempo até atingir uma temperatura."
           action={
             <Button onClick={abrirCriacao}>
               <Plus className="h-4 w-4" aria-hidden="true" />

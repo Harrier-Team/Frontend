@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Switch';
 import {
@@ -9,8 +9,10 @@ import {
 } from '@/features/quality-gates/types/regraQualidade';
 import { TipoRegraSelector } from '@/features/quality-gates/components/TipoRegraSelector';
 import { EscalaLimites } from '@/features/quality-gates/components/EscalaLimites';
+import { CamposPrevisao, CampoPrevisao } from '@/features/quality-gates/components/CamposPrevisao';
 import {
   descreverFaixa,
+  ehPrevisao,
   ehTipoRegra,
   obterTipoRegra,
   TIPO_LIMIAR_ESTATICO,
@@ -18,6 +20,7 @@ import {
 import {
   errosDoServidorParaFormulario,
   FormErrors,
+  montarParametros,
   RegraQualidadeFormValues,
   validarRegraQualidade,
 } from '@/features/quality-gates/helpers/validationHelper';
@@ -31,12 +34,19 @@ interface QualityRuleFormProps {
   onCancel: () => void;
 }
 
+/** Limites dependem do equipamento: nenhum valor sugerido. Cada tipo recomeça daqui, sem restos do anterior. */
+const parametrosVazios = (): ParametrosRegra => ({
+  aviso: Number.NaN,
+  critico: Number.NaN,
+  temperaturaLimite: Number.NaN,
+  janela: Number.NaN,
+});
+
 const valoresIniciais: RegraQualidadeFormValues = {
   nome: '',
   descricao: '',
   tipoRegra: TIPO_LIMIAR_ESTATICO,
-  // Limites dependem do equipamento: nenhum valor sugerido.
-  parametros: { aviso: Number.NaN, critico: Number.NaN },
+  parametros: parametrosVazios(),
   ativo: true,
 };
 
@@ -49,6 +59,8 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
 }) => {
   const [values, setValues] = useState<RegraQualidadeFormValues>(valoresIniciais);
   const [errors, setErrors] = useState<FormErrors>({});
+  // O efeito dos erros do servidor só reage a uma resposta nova, mas precisa do tipo vigente.
+  const tipoAtual = useRef<string>(TIPO_LIMIAR_ESTATICO);
 
   useEffect(() => {
     // Sincroniza o formulário quando o registro editado muda.
@@ -59,7 +71,7 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
             nome: regra.nome,
             descricao: regra.descricao ?? '',
             tipoRegra: ehTipoRegra(regra.tipoRegra) ? regra.tipoRegra : TIPO_LIMIAR_ESTATICO,
-            parametros: regra.parametros,
+            parametros: { ...parametrosVazios(), ...regra.parametros },
             ativo: regra.ativo,
           }
         : valoresIniciais
@@ -68,8 +80,12 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
   }, [regra]);
 
   useEffect(() => {
+    tipoAtual.current = values.tipoRegra;
+  }, [values.tipoRegra]);
+
+  useEffect(() => {
     // Falha HTTP: os erros por campo aparecem no campo, e os valores digitados ficam.
-    const doServidor = errosDoServidorParaFormulario(errosServidor);
+    const doServidor = errosDoServidorParaFormulario(errosServidor, tipoAtual.current);
     // oxlint-disable-next-line react/set-state-in-effect
     if (Object.keys(doServidor).length > 0) setErrors(doServidor);
   }, [errosServidor]);
@@ -93,18 +109,20 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
     setValues((current) => ({
       ...current,
       tipoRegra: tipo,
-      // Cada tipo tem unidade e faixa próprias: o valor digitado não vale para o novo tipo.
-      parametros: { aviso: Number.NaN, critico: Number.NaN } as ParametrosRegra,
+      // Cada tipo tem unidade e faixa próprias: o valor digitado não vale para o novo tipo
+      // (e os campos extras da previsão não podem ir no corpo dos outros).
+      parametros: parametrosVazios(),
     }));
     setErrors({});
   };
 
-  const updateLimit = (key: 'aviso' | 'critico', value: string) => {
+  const updateLimit = (key: CampoPrevisao, value: string) => {
     updateValue('parametros', {
       ...values.parametros,
       [key]: value === '' ? Number.NaN : Number(value),
     });
     limparErro(key);
+    limparErro('parametros');
     if (key === 'aviso') limparErro('critico');
   };
 
@@ -118,7 +136,7 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
       nome: values.nome.trim(),
       descricao: values.descricao.trim() || null,
       tipoRegra: values.tipoRegra,
-      parametros: values.parametros,
+      parametros: montarParametros(values.tipoRegra, values.parametros),
       ativo: values.ativo,
     });
   };
@@ -165,6 +183,10 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
         {errors.descricao && <p className="field-error">{errors.descricao}</p>}
       </div>
 
+      {ehPrevisao(values.tipoRegra) ? (
+        <CamposPrevisao parametros={values.parametros} errors={errors} onChange={updateLimit} />
+      ) : (
+        <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="regra-aviso" className="field-label">
@@ -210,6 +232,8 @@ export const QualityRuleForm: React.FC<QualityRuleFormProps> = ({
           critico={values.parametros.critico}
         />
       </div>
+        </>
+      )}
 
       <div className="flex items-center justify-between gap-4 rounded-xl border border-line px-4 py-3">
         <span id="regra-ativa-label" className="text-sm text-ink">

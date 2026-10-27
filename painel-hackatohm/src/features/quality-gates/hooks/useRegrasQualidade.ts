@@ -8,6 +8,7 @@ import { regraQualidadeService } from '@/features/quality-gates/services/regraQu
 import { obterMensagemErro } from '@/utils/errorHelper';
 import { ehTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
 import { aposAlterarRegras } from '@/features/quality-gates/helpers/aposAlterarRegras';
+import { montarParametros } from '@/features/quality-gates/helpers/validationHelper';
 
 export function useRegrasQualidade() {
   const [regras, setRegras] = useState<RegraQualidade[]>([]);
@@ -96,7 +97,7 @@ export function useRegrasQualidade() {
       nome: regra.nome,
       descricao: regra.descricao,
       tipoRegra: regra.tipoRegra,
-      parametros: regra.parametros,
+      parametros: montarParametros(regra.tipoRegra, regra.parametros),
       ativo: !regra.ativo,
     });
   };

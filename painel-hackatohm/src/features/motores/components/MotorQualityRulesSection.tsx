@@ -3,8 +3,15 @@ import { Trash2 } from 'lucide-react';
 import { useRegrasQualidade } from '@/features/quality-gates/hooks/useRegrasQualidade';
 import { useRegrasQualidadeMotor } from '../hooks/useRegrasQualidadeMotor';
 import { RegraQualidade, VinculoRegraQualidade } from '@/features/quality-gates/types/regraQualidade';
-import { descreverLimites, ehTipoRegra, formatarValorGate, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
+import {
+  descreverLimites,
+  ehPrevisao,
+  ehTipoRegra,
+  formatarValorGate,
+  obterTipoRegra,
+} from '@/features/quality-gates/helpers/tiposRegra';
 import { EscalaLimites } from '@/features/quality-gates/components/EscalaLimites';
+import { EscalaAntecedencia } from '@/features/quality-gates/components/EscalaAntecedencia';
 import { SerieEscova } from '@/features/telemetria/store/tipos';
 import { valorAtualDaRegra } from '@/features/telemetria/helpers/valorRegra';
 import { obterMensagemErro } from '../../../utils/errorHelper';
@@ -174,7 +181,15 @@ const VinculoRow: React.FC<VinculoRowProps> = ({ vinculo, escovas, operando, onT
           {' · '}
           {descreverLimites(regra.tipoRegra, regra.parametros)}
         </p>
-        {ehTipoRegra(regra.tipoRegra) && (
+        {ehPrevisao(regra.tipoRegra) && (
+          <EscalaAntecedencia
+            aviso={regra.parametros.aviso}
+            critico={regra.parametros.critico}
+            temperaturaLimite={regra.parametros.temperaturaLimite}
+            className="mt-3 max-w-md"
+          />
+        )}
+        {ehTipoRegra(regra.tipoRegra) && !ehPrevisao(regra.tipoRegra) && (
           <EscalaLimites
             tipoRegra={regra.tipoRegra}
             aviso={regra.parametros.aviso}

@@ -4,7 +4,12 @@ import { RegraQualidade } from '@/features/quality-gates/types/regraQualidade';
 import { IconButton } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Switch';
 import { Panel } from '@/components/ui/Panel';
-import { agruparRegrasPorTipo, descreverLimites, ehRegraEditavel } from '@/features/quality-gates/helpers/tiposRegra';
+import {
+  agruparRegrasPorTipo,
+  descreverLimites,
+  ehRegraEditavel,
+  ROTULO_CATEGORIA,
+} from '@/features/quality-gates/helpers/tiposRegra';
 
 interface QualityRuleListProps {
   regras: RegraQualidade[];
@@ -22,7 +27,10 @@ function textoDeUso(n: number | undefined): string {
   return n === 1 ? 'Usada em 1 motor' : `Usada em ${n} motores`;
 }
 
-/** Catálogo agrupado por tipo, cada grupo com a unidade dos seus limites. */
+/**
+ * Catálogo agrupado pela categoria do backend (Preditivo, Aceleração, Condição)
+ * e, dentro dela, por tipo, cada grupo com a unidade dos seus limites.
+ */
 export const QualityRuleList: React.FC<QualityRuleListProps> = ({
   regras,
   uso,
@@ -33,9 +41,12 @@ export const QualityRuleList: React.FC<QualityRuleListProps> = ({
   onDelete,
 }) => (
   <div className="space-y-10">
-    {agruparRegrasPorTipo(regras).map(({ info, regras: doTipo }) => (
+    {agruparRegrasPorTipo(regras).map(({ info, regras: doTipo }, indice, grupos) => (
       <section key={info.tipo} aria-labelledby={`grupo-${info.tipo}`} className="space-y-3">
         <div>
+          {info.categoria && info.categoria !== grupos[indice - 1]?.info.categoria && (
+            <p className="eyebrow mb-1.5">{ROTULO_CATEGORIA[info.categoria]}</p>
+          )}
           <h2 id={`grupo-${info.tipo}`} className="display text-base">
             {info.rotulo}
             {info.unidade && <span className="num ml-2 text-[13px] text-ink-3">{info.unidade}</span>}

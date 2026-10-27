@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   agruparRegrasPorTipo,
+  agruparTiposPorCategoria,
   descreverFaixa,
   descreverLimites,
+  ehPrevisao,
   ehRegraEditavel,
+  formatarValorELimite,
   formatarValorGate,
   LISTA_TIPOS_REGRA,
   nomeRegraDistinto,
@@ -47,11 +50,32 @@ describe('formatarValorGate', () => {
 });
 
 describe('catálogo de tipos', () => {
-  it('tem três tipos com nome amigável e o técnico como subtítulo', () => {
+  it('tem quatro tipos com nome amigável e o técnico como subtítulo', () => {
     expect(LISTA_TIPOS_REGRA.map((t) => [t.rotulo, t.subtitulo])).toEqual([
       ['Limite de temperatura', 'Limiar estático'],
       ['Velocidade de aquecimento', 'Gradiente térmico'],
       ['Diferença entre escovas', 'Assimetria entre escovas'],
+      ['Tempo até o limite', 'Previsão por tendência'],
+    ]);
+  });
+
+  it('o tipo de previsão é preditivo, em minutos, e ehPrevisao o reconhece', () => {
+    const info = obterTipoRegra('temperatura.previsao_tendencia');
+    expect(info.conhecido).toBe(true);
+    expect(info.categoria).toBe('Preditivo');
+    expect(info.unidade).toBe('min');
+    expect(info.aguardaQuando).toBe('Nas primeiras 5 leituras de cada escova.');
+    expect(ehPrevisao('temperatura.previsao_tendencia')).toBe(true);
+    expect(ehPrevisao('temperatura.limiar_estatico')).toBe(false);
+    expect(ehPrevisao(undefined)).toBe(false);
+    expect(ehRegraEditavel({ tipoRegra: 'temperatura.previsao_tendencia' })).toBe(true);
+  });
+
+  it('o seletor agrupa pela categoria do backend', () => {
+    expect(agruparTiposPorCategoria().map((g) => [g.rotulo, g.tipos.map((t) => t.rotulo)])).toEqual([
+      ['Preditivo', ['Tempo até o limite']],
+      ['Aceleração', ['Velocidade de aquecimento']],
+      ['Condição', ['Limite de temperatura', 'Diferença entre escovas']],
     ]);
   });
 
@@ -108,5 +132,43 @@ describe('nomeRegraDistinto', () => {
   });
   it('mantém nomes próprios', () => {
     expect(nomeRegraDistinto('Assimetria rígida', info)).toBe('Assimetria rígida');
+  });
+});
+
+describe('previsão por tendência: formatação', () => {
+  it('o observado é uma estimativa em minutos e o limite é o horizonte', () => {
+    expect(formatarValorGate('temperatura.previsao_tendencia', 8.4)).toBe('~8 min');
+    expect(formatarValorGate('temperatura.previsao_tendencia', 80)).toBe('~1 h 20 min');
+    expect(formatarValorGate('temperatura.previsao_tendencia', 0)).toBe('agora');
+    expect(formatarValorGate('temperatura.previsao_tendencia', 10, 'limite')).toBe('10 min');
+  });
+
+  it('valor e limite não usam o sinal de maior ou igual na previsão', () => {
+    expect(formatarValorELimite('temperatura.previsao_tendencia', 8.4, 10)).toBe('~8 min · horizonte 10 min');
+    expect(formatarValorELimite('temperatura.limiar_estatico', 96.1, 95)).toBe('96,1 °C ≥ 95 °C');
+    expect(formatarValorELimite('outro.tipo', 12, 10)).toBe('12 ≥ 10');
+  });
+
+  it('descreve a antecedência da regra', () => {
+    expect(
+      descreverLimites('temperatura.previsao_tendencia', { aviso: 30, critico: 10, temperaturaLimite: 95 })
+    ).toBe('Avisa 30 min antes de 95 °C; crítico 10 min antes');
+  });
+
+  it('descreve a faixa em minutos', () => {
+    expect(descreverFaixa(obterTipoRegra('temperatura.previsao_tendencia'))).toBe('em minutos, maiores que zero');
+  });
+
+  it('agrupa a previsão antes dos demais, pela ordem das categorias', () => {
+    const grupos = agruparRegrasPorTipo([
+      { tipoRegra: 'temperatura.limiar_estatico', nome: 'A' },
+      { tipoRegra: 'temperatura.previsao_tendencia', nome: 'P' },
+      { tipoRegra: 'temperatura.gradiente_termico', nome: 'G' },
+    ]);
+    expect(grupos.map((g) => g.info.tipo)).toEqual([
+      'temperatura.previsao_tendencia',
+      'temperatura.gradiente_termico',
+      'temperatura.limiar_estatico',
+    ]);
   });
 });
