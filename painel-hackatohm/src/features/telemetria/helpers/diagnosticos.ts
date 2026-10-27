@@ -1,5 +1,6 @@
 import { NivelSeveridade, ResultadoGateRealtime } from '@/features/quality-gates/types/qualityGate';
-import { TIPO_ASSIMETRIA } from '@/features/quality-gates/helpers/tiposRegra';
+import { TIPO_ASSIMETRIA, TIPO_GRADIENTE } from '@/features/quality-gates/helpers/tiposRegra';
+import { formatarGrau } from './statusHelper';
 import { LeituraEscova } from '@/features/telemetria/types/telemetria';
 import { ehSeveridadeAnormal, estadoResultado, RANK_SEVERIDADE } from './estadoHelper';
 
@@ -125,4 +126,46 @@ export function resumirDiagnosticos(grupos: GrupoDiagnostico[]): ResumoDiagnosti
     }
   }
   return resumo;
+}
+
+const numeroDe = (valor: unknown): number | null =>
+  typeof valor === 'number' && Number.isFinite(valor) ? valor : null;
+
+/** "3 s", "1,5 s", "2 min" ou "2 min 5 s". */
+export function formatarIntervalo(segundos: number): string {
+  if (segundos < 60) {
+    const texto = Number.isInteger(segundos) ? String(segundos) : segundos.toFixed(1).replace('.', ',');
+    return `${texto} s`;
+  }
+  const minutos = Math.floor(segundos / 60);
+  const resto = Math.round(segundos - minutos * 60);
+  return resto > 0 ? `${minutos} min ${resto} s` : `${minutos} min`;
+}
+
+export interface MetadadoGate {
+  rotulo: string;
+  valor: string;
+}
+
+/**
+ * Metadados que explicam o resultado, por tipo: gradiente com a temperatura
+ * anterior e o intervalo entre amostras; assimetria com mínima e máxima do lote.
+ * Chaves ausentes ou não numéricas são omitidas, nunca inventadas.
+ */
+export function metadadosDoGate(resultado: ResultadoGateRealtime): MetadadoGate[] {
+  const meta = resultado.metadados;
+  if (!meta || estadoResultado(resultado) === 'aguardando-amostras') return [];
+  const itens: MetadadoGate[] = [];
+  if (resultado.tipoRegra === TIPO_GRADIENTE) {
+    const anterior = numeroDe(meta.temperaturaAnterior);
+    const intervalo = numeroDe(meta.intervaloSegundos);
+    if (anterior !== null) itens.push({ rotulo: 'Temperatura anterior', valor: `${formatarGrau(anterior)} °C` });
+    if (intervalo !== null) itens.push({ rotulo: 'Intervalo entre amostras', valor: formatarIntervalo(intervalo) });
+  } else if (resultado.tipoRegra === TIPO_ASSIMETRIA) {
+    const minima = numeroDe(meta.temperaturaMinima);
+    const maxima = numeroDe(meta.temperaturaMaxima);
+    if (minima !== null) itens.push({ rotulo: 'Mínima do lote', valor: `${formatarGrau(minima)} °C` });
+    if (maxima !== null) itens.push({ rotulo: 'Máxima do lote', valor: `${formatarGrau(maxima)} °C` });
+  }
+  return itens;
 }

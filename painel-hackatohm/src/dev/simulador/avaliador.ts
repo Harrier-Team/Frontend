@@ -93,12 +93,14 @@ export function avaliarLote(
         }
         const gradiente = (amostra.valor - antes.valor) / minutos;
         const severidade = gradiente <= 0 ? 'Normal' : severidadeDe(gradiente, aviso, critico);
+        const metadados = { temperaturaAnterior: antes.valor, intervaloSegundos: (amostra.t - antes.t) / 1000 };
         saida.get(amostra.numeroEscova)!.push(
           severidade === 'Normal'
-            ? resultadoBase(regra, {})
+            ? resultadoBase(regra, { metadados })
             : resultadoBase(regra, {
                 disparouAlerta: true,
                 severidade,
+                metadados,
                 codigoRegra: severidade === 'Critico' ? 'GRADIENTE_CRITICO' : 'GRADIENTE_ALERTA',
                 valorObservado: gradiente,
                 valorLimite: severidade === 'Critico' ? critico : aviso,

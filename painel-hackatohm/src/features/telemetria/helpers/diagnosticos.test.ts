@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { gate, gateAguardando, gateAlerta } from '@/features/telemetria/testing/fabricas';
-import { agruparDiagnosticos, resumirDiagnosticos } from './diagnosticos';
+import { agruparDiagnosticos, formatarIntervalo, metadadosDoGate, resumirDiagnosticos } from './diagnosticos';
 
 const assimetria = (sobrescrever = {}) =>
   gate({
@@ -89,5 +89,44 @@ describe('resumirDiagnosticos', () => {
       { numeroEscova: 1, resultadosQualityGates: [gate({ severidade: 'SemClassificacao' })] },
     ]);
     expect(resumirDiagnosticos(grupos)).toMatchObject({ dentroDoLimite: 0, semClassificacao: 1, alertas: 0 });
+  });
+});
+
+describe('metadadosDoGate', () => {
+  it('gradiente mostra temperatura anterior e intervalo', () => {
+    const itens = metadadosDoGate(
+      gate({
+        tipoRegra: 'temperatura.gradiente_termico',
+        metadados: { temperaturaAnterior: 72.1, intervaloSegundos: 3 },
+      })
+    );
+    expect(itens).toEqual([
+      { rotulo: 'Temperatura anterior', valor: '72,1 °C' },
+      { rotulo: 'Intervalo entre amostras', valor: '3 s' },
+    ]);
+  });
+
+  it('assimetria mostra mínima e máxima', () => {
+    const itens = metadadosDoGate(
+      assimetria({ metadados: { temperaturaMinima: 40, temperaturaMaxima: 58 } })
+    );
+    expect(itens.map((i) => i.valor)).toEqual(['40,0 °C', '58,0 °C']);
+  });
+
+  it('chaves ausentes ou inválidas são omitidas sem quebrar', () => {
+    expect(metadadosDoGate(gate({ tipoRegra: 'temperatura.gradiente_termico', metadados: null }))).toEqual([]);
+    expect(
+      metadadosDoGate(
+        gate({ tipoRegra: 'temperatura.gradiente_termico', metadados: { temperaturaAnterior: 'x', intervaloSegundos: 5 } })
+      )
+    ).toEqual([{ rotulo: 'Intervalo entre amostras', valor: '5 s' }]);
+    expect(metadadosDoGate(gate({ metadados: { temperaturaAnterior: 50 } }))).toEqual([]);
+    expect(metadadosDoGate(gateAguardando())).toEqual([]);
+  });
+
+  it('formata intervalos', () => {
+    expect(formatarIntervalo(1.5)).toBe('1,5 s');
+    expect(formatarIntervalo(120)).toBe('2 min');
+    expect(formatarIntervalo(125)).toBe('2 min 5 s');
   });
 });

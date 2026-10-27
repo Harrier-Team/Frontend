@@ -1,6 +1,7 @@
 import React from 'react';
 import { ResultadoGateRealtime } from '@/features/quality-gates/types/qualityGate';
 import { formatarValorGate, nomeRegraDistinto, obterTipoRegra } from '@/features/quality-gates/helpers/tiposRegra';
+import { metadadosDoGate } from '../helpers/diagnosticos';
 import { ehSeveridadeAnormal, estadoResultado, EstadoPrincipal } from '../helpers/estadoHelper';
 import { SeverityBadge } from './SeverityBadge';
 
@@ -22,6 +23,7 @@ export const GateRow: React.FC<GateRowProps> = ({ resultado, escopo, esmaecido =
   const tipo = obterTipoRegra(resultado.tipoRegra);
   // O cabeçalho do grupo já diz o tipo: o nome só aparece quando acrescenta algo.
   const nome = nomeRegraDistinto(resultado.nomeRegra, tipo) ?? (comTipo ? tipo.rotulo : null);
+  const metadados = metadadosDoGate(resultado);
   const temValores = !aguardando && resultado.valorObservado !== null && resultado.valorLimite !== null;
 
   return (
@@ -51,6 +53,16 @@ export const GateRow: React.FC<GateRowProps> = ({ resultado, escopo, esmaecido =
             </p>
           )}
         </div>
+      )}
+      {metadados.length > 0 && (
+        <dl className="num col-span-2 flex flex-wrap gap-x-5 gap-y-0.5 text-xs text-ink-3">
+          {metadados.map((item) => (
+            <div key={item.rotulo} className="flex gap-1.5">
+              <dt>{item.rotulo}</dt>
+              <dd className="text-ink-2">{item.valor}</dd>
+            </div>
+          ))}
+        </dl>
       )}
     </div>
   );
