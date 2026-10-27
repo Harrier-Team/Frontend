@@ -2,13 +2,14 @@ import React from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import harrierMark from '../assets/harrier-mark.png';
 import { useConexaoHub } from '@/features/telemetria/hooks/useTelemetriaStore';
+import { SIMULADOR_ATIVO } from '@/dev/simuladorAtivo';
 
 const linkBase =
   'relative flex h-14 items-center px-1 text-sm transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-px after:transition-colors';
 
 const ConexaoAoVivo: React.FC = () => {
   const statusConexaoHub = useConexaoHub();
-  const ao_vivo = statusConexaoHub === 'conectado';
+  const conectado = statusConexaoHub === 'conectado';
   const texto = {
     conectado: 'Hub conectado',
     conectando: 'Conectando',
@@ -22,15 +23,45 @@ const ConexaoAoVivo: React.FC = () => {
         aria-hidden="true"
         className="h-1.5 w-1.5 rounded-full"
         style={{
-          background: ao_vivo ? 'var(--color-flare)' : 'var(--color-sev-atencao)',
-          boxShadow: ao_vivo ? '0 0 10px rgb(241 237 228 / 0.7)' : undefined,
-          animation: ao_vivo ? undefined : 'flare-breathe 1.6s ease-in-out infinite',
+          background: conectado ? 'var(--color-flare)' : 'var(--color-sev-atencao)',
+          boxShadow: conectado ? '0 0 10px color-mix(in srgb, var(--color-flare) 70%, transparent)' : undefined,
+          animation: conectado ? undefined : 'flare-breathe 1.6s ease-in-out infinite',
         }}
       />
-      <span className={ao_vivo ? '' : 'text-sev-atencao'}>{texto}</span>
+      <span className={`hidden sm:inline ${conectado ? '' : 'text-sev-atencao'}`}>{texto}</span>
+      <span className="sr-only sm:hidden">{texto}</span>
     </div>
   );
 };
+
+/** Faixa fina logo abaixo do cabeçalho; não empurra o conteúdo. */
+const FaixaHubDesconectado: React.FC = () => {
+  const conexao = useConexaoHub();
+  if (conexao === 'conectado' || conexao === 'conectando') return null;
+  return (
+    <div
+      role="status"
+      className="absolute inset-x-0 top-full border-b px-5 py-1 text-center text-xs text-sev-atencao sm:px-8"
+      style={{
+        borderColor: 'color-mix(in srgb, var(--color-sev-atencao) 35%, var(--color-line))',
+        background: 'color-mix(in srgb, var(--color-sev-atencao) 10%, var(--color-canvas))',
+      }}
+    >
+      {conexao === 'reconectando'
+        ? 'Reconectando… os valores abaixo podem estar desatualizados.'
+        : 'Sem conexão com o servidor. Os valores abaixo podem estar desatualizados.'}
+    </div>
+  );
+};
+
+const BadgeSimulacao: React.FC = () => (
+  <span
+    className="rounded-full border border-line-strong px-2.5 py-0.5 text-xs text-ink-2"
+    title="Os dados desta tela são fictícios (VITE_SIMULADOR=true)"
+  >
+    Simulação
+  </span>
+);
 
 export const Header: React.FC = () => {
   const { pathname } = useLocation();
@@ -38,7 +69,7 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-md">
-      <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center gap-8 px-5 sm:px-8">
+      <div className="mx-auto flex h-14 w-full max-w-[1280px] items-center gap-5 px-5 sm:gap-8 sm:px-8">
         <Link to="/" className="flex items-center gap-3" aria-label="Harrier, início">
           <img src={harrierMark} alt="" className="h-8 w-auto" />
           <span
@@ -49,7 +80,7 @@ export const Header: React.FC = () => {
           </span>
         </Link>
 
-        <nav aria-label="Principal" className="flex items-center gap-5">
+        <nav aria-label="Principal" className="flex items-center gap-4 sm:gap-5">
           <Link
             to="/"
             aria-current={emMotores ? 'page' : undefined}
@@ -71,10 +102,12 @@ export const Header: React.FC = () => {
           </NavLink>
         </nav>
 
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-4">
+          {SIMULADOR_ATIVO && <BadgeSimulacao />}
           <ConexaoAoVivo />
         </div>
       </div>
+      <FaixaHubDesconectado />
     </header>
   );
 };

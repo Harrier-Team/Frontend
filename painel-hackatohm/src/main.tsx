@@ -11,12 +11,23 @@ if (!rootElement) {
   throw new Error('Elemento raiz da aplicação não foi encontrado.');
 }
 
-createRoot(rootElement).render(
-  <StrictMode>
-    <AppErrorBoundary>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AppErrorBoundary>
-  </StrictMode>
-);
+async function iniciar(raiz: HTMLElement) {
+  // A condição fica escrita aqui, e não numa constante importada, para o bundler
+  // removê-la (junto com o import dinâmico) na compilação de produção.
+  if (import.meta.env.DEV && import.meta.env.VITE_SIMULADOR === 'true') {
+    const { instalarSimulador } = await import('./dev/simulador');
+    instalarSimulador();
+  }
+
+  createRoot(raiz).render(
+    <StrictMode>
+      <AppErrorBoundary>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AppErrorBoundary>
+    </StrictMode>
+  );
+}
+
+void iniciar(rootElement);
